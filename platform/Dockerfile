@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM registry.dmz.home/kinga/stream-forge/python:3.11-slim
 
 # Устанавливаем общие системные зависимости, если они нужны
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
