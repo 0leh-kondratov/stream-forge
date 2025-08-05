@@ -17,3 +17,5 @@
       changes:
         - $SERVICE_PATH/**/*
         - libs/**/*
+    - when: manual # Добавляет кнопку "Play" в UI для этого job'а
+      allow_failure: false
