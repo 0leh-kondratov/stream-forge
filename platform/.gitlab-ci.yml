@@ -8,3 +8,21 @@ build-base-image:
   variables:
     SERVICE_NAME: base
     SERVICE_PATH: platform
+
+apply-rbac:
+  stage: setup
+  image: bitnami/kubectl:latest
+  script:
+    - kubectl apply -f $CI_PROJECT_DIR/input/cred-kafka-yaml/full-access-sa.yaml
+    - kubectl apply -f $CI_PROJECT_DIR/input/cred-kafka-yaml/full-access-sa-binding.yaml
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - input/cred-kafka-yaml/full-access-sa.yaml
+        - input/cred-kafka-yaml/full-access-sa-binding.yaml
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - input/cred-kafka-yaml/full-access-sa.yaml
+        - input/cred-kafka-yaml/full-access-sa-binding.yaml
+    - when: manual
+      allow_failure: false

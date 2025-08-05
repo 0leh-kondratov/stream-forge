@@ -8,3 +8,12 @@ build-dummy-service:
   variables:
     SERVICE_NAME: dummy-service
     SERVICE_PATH: services/dummy-service
+
+deploy-dummy-service:
+  stage: deploy
+  image: bitnami/kubectl:latest # Образ с kubectl
+  script:
+    - kubectl apply -f $CI_PROJECT_DIR/services/dummy-service/k8s/dummy-service-deployment.yaml
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"' # Запускать только для коммитов в main
+      when: on_success # Запускать только если предыдущие стадии успешны

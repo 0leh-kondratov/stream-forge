@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gitlab-deployer
+  namespace: stf # Убедитесь, что это ваш целевой namespace
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: dummy-service-deployer-role
+  namespace: stf # Убедитесь, что это ваш целевой namespace
+rules:
+  - apiGroups: ["apps"] # Для Deployment
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""] # Для Service
+    resources: ["services"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: gitlab-deployer-binding
+  namespace: stf # Убедитесь, что это ваш целевой namespace
+subjects:
+  - kind: ServiceAccount
+    name: gitlab-deployer
+    namespace: stf
+roleRef:
+  kind: Role
+  name: dummy-service-deployer-role
+  apiGroup: rbac.authorization.k8s.io
