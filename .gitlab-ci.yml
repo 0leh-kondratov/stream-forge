@@ -11,3 +11,4 @@ include:
   - '/services/arango-connector/.gitlab-ci.yml'
   - '/services/dummy-service/.gitlab-ci.yml'
   - '/platform/.gitlab-ci.yml'
+  - '/.gitlab/ci-templates/Kubernetes-Deploy.gitlab-ci.yml' # Включаем шаблон для деплоя в Kubernetes

@@ -22,16 +22,4 @@ deploy:
   image: bitnami/kubectl:1.28
   stage: deploy
   script:
-  - echo "🛠 Создание ConfigMap..."
-  - echo "ARANGO_URL=$ARANGO_URL" > .env-config
-  - echo "ARANGO_USER=$ARANGO_USER" >> .env-config
-  - echo "ARANGO_PASSWORD=$ARANGO_PASSWORD" > .env-secret
-  - echo "KAFKA_PASSWORD=$KAFKA_PASSWORD" >> .env-secret
-  - echo "KAFKA_BOOTSTRAP_SERVERS=$KAFKA_BOOTSTRAP_SERVERS" >> .env-config
-  - echo ""
-
-
-
-    - kubectl delete -f k8s/queue-manager-statefulset.yaml
-    - sleep 5
-    - kubectl apply -f k8s/queue-manager-statefulset.yaml
+    - kubectl apply -f $CI_PROJECT_DIR/services/dummy-service/k8s/dummy-service-deployment.yaml

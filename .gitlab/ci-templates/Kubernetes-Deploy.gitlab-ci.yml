@@ -1,0 +1,10 @@
+.deploy_kubernetes_service:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  script:
+    - kubectl apply -f $CI_PROJECT_DIR/$K8S_MANIFEST_PATH
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: on_success
+    - when: manual
+      allow_failure: false

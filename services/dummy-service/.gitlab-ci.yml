@@ -2,6 +2,9 @@ include:
   - project: 'kinga/stream-forge'
     ref: main
     file: '/.gitlab/ci-templates/Python-Service.gitlab-ci.yml'
+  - project: 'kinga/stream-forge'
+    ref: main
+    file: '/.gitlab/ci-templates/Kubernetes-Deploy.gitlab-ci.yml'
 
 build-dummy-service:
   extends: .build_python_service
@@ -10,10 +13,6 @@ build-dummy-service:
     SERVICE_PATH: services/dummy-service
 
 deploy-dummy-service:
-  stage: deploy
-  image: bitnami/kubectl:latest # Образ с kubectl
-  script:
-    - kubectl apply -f $CI_PROJECT_DIR/services/dummy-service/k8s/dummy-service-deployment.yaml
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"' # Запускать только для коммитов в main
-      when: on_success # Запускать только если предыдущие стадии успешны
+  extends: .deploy_kubernetes_service
+  variables:
+    K8S_MANIFEST_PATH: services/dummy-service/k8s/dummy-service-deployment.yaml
