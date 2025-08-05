@@ -25,7 +25,9 @@ class KafkaCommandConsumer:
         self._task = None
 
     async def start(self):
-        ssl_context = ssl.create_default_context(cafile=self.ca_path)
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        ssl_context.verify_mode = ssl.CERT_REQUIRED
+        ssl_context.load_verify_locations(cafile=self.ca_path)
         self.consumer = AIOKafkaConsumer(
             self.topic,
             bootstrap_servers=self.bootstrap_servers,

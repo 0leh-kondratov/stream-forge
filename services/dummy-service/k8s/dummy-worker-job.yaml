@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
         - name: dummy
-          image: registry.dmz.home/streamforge/dummy-service:v0.0.1
+          image: registry.dmz.home/kinga/stream-forge/dummy-service:1.0.0
           imagePullPolicy: Always
           envFrom:
             - configMapRef:
