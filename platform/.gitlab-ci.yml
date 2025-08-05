@@ -1,6 +1,0 @@
-build-base-image:
-  extends: .build_docker_image
-  variables:
-    IMAGE_CONTEXT: platform
-    IMAGE_DOCKERFILE: Dockerfile.base
-    IMAGE_DESTINATION: registry.dmz.home/kinga/stream-forge/base:$(cat $CI_PROJECT_DIR/platform/VERSION)
