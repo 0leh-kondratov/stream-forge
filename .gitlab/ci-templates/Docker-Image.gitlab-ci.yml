@@ -1,11 +1,22 @@
 .build_docker_image:
   stage: build
   image: gcr.io/kaniko-project/executor:debug
+  variables:
+    SSL_CERT_DIR: /kaniko/ssl/certs # Указываем Kaniko, где искать CA-сертификаты
+  before_script:
+    # Создаем директорию для сертификатов, если ее нет
+    - mkdir -p $SSL_CERT_DIR
+    # Копируем dev-ca.crt в директорию сертификатов Kaniko
+    - cp $CI_PROJECT_DIR/platform/devcontainer/dev-ca.crt $SSL_CERT_DIR/ca-certificates.crt
+    # Настраиваем аутентификацию для Kaniko
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
   script:
     - /kaniko/executor
       --context $CI_PROJECT_DIR/$IMAGE_CONTEXT
       --dockerfile $IMAGE_DOCKERFILE
       --destination $IMAGE_DESTINATION
+
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
