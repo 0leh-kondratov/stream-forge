@@ -10,3 +10,4 @@ include:
   - '/services/arango-connector/.gitlab-ci.yml'
   - '/services/dummy-service/.gitlab-ci.yml'
   - '/platform/.gitlab-ci.yml' # Включаем новый файл для платформы
+  - '/.gitlab/ci-templates/Docker-Image.gitlab-ci.yml' # Включаем шаблон для сборки Docker-образов

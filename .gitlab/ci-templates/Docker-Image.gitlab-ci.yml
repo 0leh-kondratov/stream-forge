@@ -1,0 +1,19 @@
+.build_docker_image:
+  stage: build
+  image: gcr.io/kaniko-project/executor:debug
+  script:
+    - /kaniko/executor
+      --context $CI_PROJECT_DIR/$IMAGE_CONTEXT
+      --dockerfile $IMAGE_DOCKERFILE
+      --destination $IMAGE_DESTINATION
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - $IMAGE_CONTEXT/$IMAGE_DOCKERFILE
+        - $IMAGE_CONTEXT/**/*
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - $IMAGE_CONTEXT/$IMAGE_DOCKERFILE
+        - $IMAGE_CONTEXT/**/*
+    - when: manual
+      allow_failure: false
