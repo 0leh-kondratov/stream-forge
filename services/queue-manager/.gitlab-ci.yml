@@ -1,0 +1,10 @@
+include:
+  - project: 'kinga/stream-forge'
+    ref: main
+    file: '/.gitlab/ci-templates/Python-Service.gitlab-ci.yml'
+
+build-queue-manager:
+  extends: .build_python_service
+  variables:
+    SERVICE_NAME: queue-manager
+    SERVICE_PATH: services/queue-manager

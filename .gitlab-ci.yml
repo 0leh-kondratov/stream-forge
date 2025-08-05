@@ -1,0 +1,11 @@
+stages:
+  - build
+  - test
+  - deploy
+
+include:
+  - '/services/queue-manager/.gitlab-ci.yml'
+  - '/services/loader-api-trades/.gitlab-ci.yml'
+  - '/services/loader-api-candles/.gitlab-ci.yml'
+  - '/services/arango-connector/.gitlab-ci.yml'
+  - '/services/dummy-service/.gitlab-ci.yml'

@@ -1,0 +1,10 @@
+include:
+  - project: 'kinga/stream-forge'
+    ref: main
+    file: '/.gitlab/ci-templates/Python-Service.gitlab-ci.yml'
+
+build-loader-api-trades:
+  extends: .build_python_service
+  variables:
+    SERVICE_NAME: loader-api-trades
+    SERVICE_PATH: services/loader-api-trades

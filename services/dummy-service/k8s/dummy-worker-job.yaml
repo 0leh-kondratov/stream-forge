@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: queue-dummy-test
+  namespace: stf
+spec:
+  template:
+    metadata:
+      labels:
+        app: queue-dummy-test
+    spec:
+      containers:
+        - name: dummy
+          image: registry.dmz.home/streamforge/dummy-service:v0.0.1
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: queue-manager-config
+            - secretRef:
+                name: queue-manager-secret
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: QUEUE_ID
+              value: loader-btcusdt-dummy-2024-06-01-testid
+            - name: SYMBOL
+              value: BTCUSDT
+            - name: TYPE
+              value: dummy
+            - name: INTERVAL
+              value: 5m
+            - name: TIME_RANGE
+              value: 2024-06-01:2024-06-01
+            - name: TELEMETRY_PRODUCER_ID
+              value: dummy-test
+            - name: KAFKA_TOPIC
+              value: loader-btcusdt-dummy-2024-06-01-testid
+      restartPolicy: Never
+  backoffLimit: 1

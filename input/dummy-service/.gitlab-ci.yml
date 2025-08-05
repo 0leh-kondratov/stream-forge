@@ -1,0 +1,37 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  SSL_CERT_DIR: /kaniko/ssl/certs
+  KUBECONFIG: /kubeconfig/config
+
+build:
+  image: gcr.io/kaniko-project/executor:v1.11.0-debug
+  stage: build
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - >
+      /kaniko/executor
+      --context $CI_PROJECT_DIR
+      --dockerfile $CI_PROJECT_DIR/Dockerfile
+      --destination $CI_REGISTRY_IMAGE:$VERSION
+
+deploy:
+  image: bitnami/kubectl:1.28
+  stage: deploy
+  script:
+  - echo "🛠 Создание ConfigMap..."
+  - echo "ARANGO_URL=$ARANGO_URL" > .env-config
+  - echo "ARANGO_USER=$ARANGO_USER" >> .env-config
+  - echo "ARANGO_PASSWORD=$ARANGO_PASSWORD" > .env-secret
+  - echo "KAFKA_PASSWORD=$KAFKA_PASSWORD" >> .env-secret
+  - echo "KAFKA_BOOTSTRAP_SERVERS=$KAFKA_BOOTSTRAP_SERVERS" >> .env-config
+  - echo ""
+
+
+
+    - kubectl delete -f k8s/queue-manager-statefulset.yaml
+    - sleep 5
+    - kubectl apply -f k8s/queue-manager-statefulset.yaml

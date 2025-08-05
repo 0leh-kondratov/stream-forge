@@ -1,0 +1,10 @@
+include:
+  - project: 'kinga/stream-forge'
+    ref: main
+    file: '/.gitlab/ci-templates/Python-Service.gitlab-ci.yml'
+
+build-dummy-service:
+  extends: .build_python_service
+  variables:
+    SERVICE_NAME: dummy-service
+    SERVICE_PATH: services/dummy-service

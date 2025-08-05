@@ -1,0 +1,38 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+
+.gitlab-ci.yml
+
+# Git
+.git
+.gitignore
+
+# OS
+.DS_Store
+
+# Env files
+.env
+*.env
+
+# Test artifacts
+*.log
+coverage/
+pytest_cache/
+tests/
+
+# Docker-related
+docker-compose.yml
+.dockerignore
+
+# Build output
+build/
+dist/
+*.egg-info/
+
+# CI/CD
+*.tar
+*.gz
+*.zip
+*.whl
+k8s/

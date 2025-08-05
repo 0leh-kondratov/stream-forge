@@ -1,0 +1,59 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Logs and debug
+*.log
+*.out
+*.err
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Environment variables and secrets
+.env
+*.env
+secrets/
+
+# Docker and Kubernetes
+*.pid
+*.sock
+*.db
+*.tar
+*.pidfile
+*.pid.lock
+
+# CI/CD artifacts
+coverage/
+*.cover
+coverage.xml
+*.lcov
+pytest_cache/
+.cache/
+.tox/
+.kubectl.config
+kubeconfig
+.kube/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Pip tools
+pip-wheel-metadata/

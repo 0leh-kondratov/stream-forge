@@ -1,0 +1,6 @@
+aiokafka
+loguru
+uvloop
+python-dotenv
+httpx
+pydantic

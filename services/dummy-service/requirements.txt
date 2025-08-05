@@ -1,0 +1,7 @@
+loguru
+aiokafka
+python-dotenv
+prometheus_client
+fastapi
+uvicorn[standard]
+-e ../../libs/streamforge_utils

@@ -1,0 +1,4 @@
+# Уникальные зависимости
+python-arango
+# Ссылка на общую библиотеку
+-e ../../libs/streamforge_utils
