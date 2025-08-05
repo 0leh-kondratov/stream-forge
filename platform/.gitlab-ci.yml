@@ -3,7 +3,7 @@ include:
     ref: main
     file: '/.gitlab/ci-templates/Python-Service.gitlab-ci.yml'
 
-build-loader-api-trades:
+build-base-image:
   extends: .build_python_service
   variables:
     SERVICE_NAME: base
