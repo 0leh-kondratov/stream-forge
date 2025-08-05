@@ -1,3 +1,5 @@
+import asyncio
+
 # app/telemetry.py
 import os
 import json
@@ -28,6 +30,7 @@ class TelemetryProducer:
             ssl_context=ssl_context,
         )
         await self.producer.start()
+        logger.debug("Telemetry producer started.")
 
     async def stop(self):
         if self.producer:

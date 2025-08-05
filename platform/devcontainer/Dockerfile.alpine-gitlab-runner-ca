@@ -1,0 +1,14 @@
+FROM registry.dmz.home/lib/k8s/devcontainer/gitlab-runner:alpine3.21-bleeding
+
+USER root
+
+COPY dev-ca.crt /tmp/dev-ca.crt
+
+# Установка пакета и добавление сертификата
+RUN apk add --no-cache ca-certificates && \
+    mkdir -p /usr/share/ca-certificates && \
+    echo "Копируем CA..." && \
+    cp /tmp/dev-ca.crt /usr/share/ca-certificates/dev-ca.crt && \
+    cat /usr/share/ca-certificates/dev-ca.crt >> /etc/ssl/certs/ca-certificates.crt
+
+USER gitlab-runner

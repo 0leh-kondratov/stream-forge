@@ -1,0 +1,103 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ns-manager-binding
+  namespace: test
+subjects:
+- kind: ServiceAccount
+  name: ns-manager
+  namespace: devtools
+roleRef:
+  kind: Role
+  name: namespace-admin
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ns-manager-binding
+  namespace: test0
+subjects:
+- kind: ServiceAccount
+  name: ns-manager
+  namespace: devtools
+roleRef:
+  kind: Role
+  name: namespace-admin
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ns-manager-binding
+  namespace: test1
+subjects:
+- kind: ServiceAccount
+  name: ns-manager
+  namespace: devtools
+roleRef:
+  kind: Role
+  name: namespace-admin
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ns-manager-binding
+  namespace: tensorboard
+subjects:
+- kind: ServiceAccount
+  name: ns-manager
+  namespace: devtools
+roleRef:
+  kind: Role
+  name: namespace-admin
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ns-manager-binding
+  namespace: rlmodel1
+subjects:
+- kind: ServiceAccount
+  name: ns-manager
+  namespace: devtools
+roleRef:
+  kind: Role
+  name: namespace-admin
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ns-manager-binding
+  namespace: devtools
+subjects:
+- kind: ServiceAccount
+  name: ns-manager
+  namespace: devtools
+roleRef:
+  kind: Role
+  name: namespace-admin
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ns-manager-binding
+  namespace: kafka
+subjects:
+- kind: ServiceAccount
+  name: ns-manager
+  namespace: devtools
+roleRef:
+  kind: Role
+  name: namespace-admin
+  apiGroup: rbac.authorization.k8s.io

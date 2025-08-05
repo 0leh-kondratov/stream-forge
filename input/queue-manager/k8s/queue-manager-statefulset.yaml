@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: queue-manager
+  namespace: stf
+spec:
+  serviceName: queue-manager
+  replicas: 1
+  selector:
+    matchLabels:
+      app: queue-manager
+  template:
+    metadata:
+      labels:
+        app: queue-manager
+    spec:
+      serviceAccountName: full-access-sa
+      containers:
+        - name: queue-manager
+          image: registry.dmz.home/streamforge/queue-manager:v2.0.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: queue-manager-config
+            - secretRef:
+                name: queue-manager-secret
+          volumeMounts:
+            - name: ca-cert
+              mountPath: /usr/local/share/ca-certificates/ca.crt
+              subPath: ca.crt
+      volumes:
+        - name: ca-cert
+          configMap:
+            name: home-certificates
+      nodeSelector:
+        streamforge-node: "true"

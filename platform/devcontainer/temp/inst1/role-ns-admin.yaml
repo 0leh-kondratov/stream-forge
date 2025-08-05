@@ -1,0 +1,94 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: namespace-admin
+  namespace: test
+rules:
+- apiGroups: ["", "apps", "batch", "networking.k8s.io", "autoscaling", "cert-manager.io"]
+  resources: ["*"]
+  verbs: ["*"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: namespace-admin
+  namespace: test0
+rules:
+- apiGroups: ["", "apps", "batch", "networking.k8s.io", "autoscaling", "cert-manager.io"]
+  resources: ["*"]
+  verbs: ["*"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: namespace-admin
+  namespace: test1
+rules:
+- apiGroups: ["", "apps", "batch", "networking.k8s.io", "autoscaling", "cert-manager.io"]
+  resources: ["*"]
+  verbs: ["*"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: namespace-admin
+  namespace: tensorboard
+rules:
+- apiGroups: ["", "apps", "batch", "networking.k8s.io", "autoscaling", "cert-manager.io"]
+  resources: ["*"]
+  verbs: ["*"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: namespace-admin
+  namespace: rlmodel1
+rules:
+- apiGroups: ["", "apps", "batch", "networking.k8s.io", "autoscaling", "cert-manager.io"]
+  resources: ["*"]
+  verbs: ["*"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: namespace-admin
+  namespace: devtools
+rules:
+- apiGroups: ["", "apps", "batch", "networking.k8s.io", "autoscaling", "cert-manager.io"]
+  resources: ["*"]
+  verbs: ["*"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: namespace-admin
+  namespace: kafka
+rules:
+- apiGroups: ["", "apps", "batch", "networking.k8s.io", "autoscaling", "cert-manager.io"]
+  resources: ["*"]
+  verbs: ["*"]
+- apiGroups: ["kafka.strimzi.io"]
+  resources:
+    - kafkas
+    - kafkaconnects
+    - kafkaconnectors
+    - kafkamirrormakers
+    - kafkamirrormaker2s
+    - kafkatopics
+    - kafkasinks
+    - kafkasources
+    - kafkausers
+    - kafkaquotas
+    - kafkabridges
+    - kafkaacls
+    - kafkarebalances
+    - kafkamirrormaker2s
+    - kafkaconnectors
+    - kafkamirrormakers
+  verbs: ["*"]

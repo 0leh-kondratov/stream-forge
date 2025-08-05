@@ -1,0 +1,12 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ns-manager-pv-access
+subjects:
+- kind: ServiceAccount
+  name: ns-manager
+  namespace: devtools
+roleRef:
+  kind: ClusterRole
+  name: ns-manager-pv-admin
+  apiGroup: rbac.authorization.k8s.io

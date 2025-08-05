@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ssh-gitlab-runner
+  namespace: devtools
+spec:
+  serviceName: ssh-gitlab-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ssh-gitlab-runner
+  template:
+    metadata:
+      labels:
+        app: ssh-gitlab-runner
+    spec:
+      nodeName: k2w-1
+      serviceAccountName: ns-manager
+      enableServiceLinks: true
+      containers:
+        - name: ssh-runner
+          image: registry.dmz.home/lib/k8s/devcontainer/dev_kinga:v0.0.16
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 22
+          volumeMounts:
+            - name: home-dir
+              mountPath: /home
+            - name: gitlab-runner-config
+              mountPath: /etc/gitlab-runner/config.toml
+              subPath: config.toml
+              readOnly: true
+            - name: ca-certs
+              mountPath: /usr/local/share/ca-certificates/dev-ca.crt
+              subPath: dev-ca.crt
+              readOnly: true
+          env:
+            - name: USER_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: ssh-user-config
+                  key: USER_NAME
+            - name: USER_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: ssh-user-config
+                  key: USER_ID
+            - name: USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ssh-user-secret
+                  key: USER_PASSWORD
+            - name: SSH_AUTHORIZED_KEYS
+              valueFrom:
+                secretKeyRef:
+                  name: ssh-user-secret
+                  key: ssh_authorized_keys
+      volumes:
+        - name: home-dir
+          persistentVolumeClaim:
+            claimName: ssh-home-pvc
+        - name: gitlab-runner-config
+          configMap:
+            name: gitlab-runner-config
+        - name: ca-certs
+          configMap:
+            name: dev-ca-config
+

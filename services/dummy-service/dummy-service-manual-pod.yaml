@@ -1,0 +1,61 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dummy-service-manual-run
+  namespace: stf # Используйте ваш целевой namespace
+  labels:
+    app: dummy-service
+    purpose: manual-run
+spec:
+  restartPolicy: Never # Pod завершится после выполнения команды
+  containers:
+    - name: dummy-service
+      image: registry.dmz.home/kinga/stream-forge/dummy-service:1.0.0 # Используйте ваш актуальный образ и версию
+      env:
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: "k3-kafka-bootstrap.kafka:9093"
+        - name: KAFKA_USER
+          value: "user-streamforge"
+        - name: KAFKA_PASSWORD
+          value: "qqIJ511mX1c2FOpNZDGaw5WqblS1pxeD" # В продакшене используйте Secret
+        - name: QUEUE_EVENTS_TOPIC
+          value: "queue-events"
+        - name: QUEUE_CONTROL_TOPIC
+          value: "queue-control"
+        - name: QUEUE_ID
+          value: "dummy-test-local"
+        - name: TELEMETRY_PRODUCER_ID
+          value: "dummy-local-instance"
+        - name: CA_PATH
+          value: "/usr/local/share/ca-certificates/ca.crt" # Путь монтирования CA-сертификата
+        # Дополнительные переменные окружения, если нужны для вашего сценария
+        - name: ARANGO_DB
+          value: "streamforge"
+        - name: ARANGO_PASSWORD
+          value: "7ZAxJ7w1ItEoKmqWdE" # В продакшене используйте Secret
+        - name: ARANGO_URL
+          value: "http://abase-3.dmz.home:8529"
+        - name: ARANGO_USER
+          value: "root"
+        - name: KAFKA_TOPIC
+          value: "BTCUSDT-rest"
+        - name: SYMBOL
+          value: "BTCUSDT"
+        - name: TIME_RANGE
+          value: "2024-01-01:2024-01-02"
+        - name: TYPE
+          value: "dummy"
+      volumeMounts:
+        - name: kafka-ca-volume
+          mountPath: /usr/local/share/ca-certificates/ca.crt
+          subPath: dev-ca.crt # Имя файла сертификата внутри ConfigMap
+          readOnly: true
+      command: ["python3.11"]
+      args: ["-m", "app.main", "--debug", "--simulate-loading"] # Команда для запуска dummy-service
+  volumes:
+    - name: kafka-ca-volume
+      configMap:
+        name: dev-ca-certificates # Имя вашего ConfigMap с CA-сертификатом
+        items:
+          - key: dev-ca.crt # Ключ, под которым хранится сертификат в ConfigMap
+            path: dev-ca.crt

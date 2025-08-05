@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ssh-xrdp-server
+  namespace: devtools
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ssh-xrdp
+  template:
+    metadata:
+      labels:
+        app: ssh-xrdp
+    spec:
+      nodeName: k2w-1
+      serviceAccountName: ns-manager
+      containers:
+        - name: ssh-xrdp-container
+          image: registry.dmz.home/lib/k8s/devcontainer/dev_kinga:v0.0.13
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 22    # SSH
+          volumeMounts:
+            - name: home-dir
+              mountPath: /home
+      volumes:
+        - name: home-dir
+          persistentVolumeClaim:
+            claimName: ssh-home-pvc
+

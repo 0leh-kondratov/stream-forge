@@ -1,0 +1,39 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaUser
+metadata:
+  name: user-streamforge
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: k3
+spec:
+  authentication:
+    type: scram-sha-512
+  authorization:
+    type: simple
+    acls:
+      # Чтение и запись ко всем топикам
+      - resource:
+          type: topic
+          name: "*"
+          patternType: literal
+        operation: Read
+      - resource:
+          type: topic
+          name: "*"
+          patternType: literal
+        operation: Write
+
+      # Разрешить создание топиков (если используется auto.create.topics.enable=true)
+      - resource:
+          type: topic
+          name: "*"
+          patternType: literal
+        operation: Create
+
+      # Чтение всех consumer group
+      - resource:
+          type: group
+          name: "*"
+          patternType: literal
+        operation: Read
+

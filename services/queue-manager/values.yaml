@@ -1,0 +1,170 @@
+# values.yaml for queue-manager
+
+replicaCount: 1
+
+image:
+  repository: registry.dmz.home/kinga/stream-forge/queue-manager
+  tag: v2.0.0 # Should match the version in the Dockerfile
+
+service:
+  port: 8000
+
+ingress:
+  enabled: true
+  className: traefik
+  hosts:
+    - host: queue-manager.dmz.home
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: queue-manager-tls
+      hosts:
+        - queue-manager.dmz.home
+  annotations:
+    cert-manager.io/cluster-issuer: homelab-ca-issuer
+
+serviceAccount:
+  rbac:
+    rules:
+      - apiGroups: ["batch"]
+        resources: ["jobs"]
+        verbs: ["get", "list", "watch", "create", "delete"]
+      - apiGroups: [""]
+        resources: ["pods", "pods/log"]
+        verbs: ["get", "list", "watch"]
+      - apiGroups: [""]
+        resources: ["configmaps", "secrets"]
+        verbs: ["get", "list", "watch"]
+
+env:
+  # Environment variables loaded from ConfigMap and Secret
+  - name: ARANGO_URL
+    valueFrom:
+      configMapKeyRef:
+        name: {{ include "python-microservice.fullname" . }}-config
+        key: ARANGO_URL
+  - name: ARANGO_DB
+    valueFrom:
+      configMapKeyRef:
+        name: {{ include "python-microservice.fullname" . }}-config
+        key: ARANGO_DB
+  - name: ARANGO_USER
+    valueFrom:
+      configMapKeyRef:
+        name: {{ include "python-microservice.fullname" . }}-config
+        key: ARANGO_USER
+  - name: K8S_NAMESPACE
+    valueFrom:
+      configMapKeyRef:
+        name: {{ include "python-microservice.fullname" . }}-config
+        key: K8S_NAMESPACE
+  - name: KAFKA_BOOTSTRAP_SERVERS
+    valueFrom:
+      configMapKeyRef:
+        name: {{ include "python-microservice.fullname" . }}-config
+        key: KAFKA_BOOTSTRAP_SERVERS
+  - name: KAFKA_CLUSTER_NAME
+    valueFrom:
+      configMapKeyRef:
+        name: {{ include "python-microservice.fullname" . }}-config
+        key: KAFKA_CLUSTER_NAME
+  - name: KAFKA_NAMESPACE
+    valueFrom:
+      configMapKeyRef:
+        name: {{ include "python-microservice.fullname" . }}-config
+        key: KAFKA_NAMESPACE
+  - name: KAFKA_USER_PRODUSER
+    valueFrom:
+      configMapKeyRef:
+        name: {{ include "python-microservice.fullname" . }}-config
+        key: KAFKA_USER_PRODUSER
+  - name: KAFKA_USER_CONSUMER
+    valueFrom:
+      configMapKeyRef:
+        name: {{ include "python-microservice.fullname" . }}-config
+        key: KAFKA_USER_CONSUMER
+  - name: QUEUE_EVENTS_TOPIC
+    valueFrom:
+      configMapKeyRef:
+        name: {{ include "python-microservice.fullname" . }}-config
+        key: QUEUE_EVENTS_TOPIC
+  - name: QUEUE_CONTROL_TOPIC
+    valueFrom:
+      configMapKeyRef:
+        name: {{ include "python-microservice.fullname" . }}-config
+        key: QUEUE_CONTROL_TOPIC
+  - name: CA_PATH
+    valueFrom:
+      configMapKeyRef:
+        name: {{ include "python-microservice.fullname" . }}-config
+        key: CA_PATH
+  - name: LOADER_IMAGE
+    valueFrom:
+      configMapKeyRef:
+        name: {{ include "python-microservice.fullname" . }}-config
+        key: LOADER_IMAGE
+  - name: ARANGO_CONNECTOR_IMAGE
+    valueFrom:
+      configMapKeyRef:
+        name: {{ include "python-microservice.fullname" . }}-config
+        key: ARANGO_CONNECTOR_IMAGE
+  - name: ARANGO_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: {{ include "python-microservice.fullname" . }}-secret
+        key: ARANGO_PASSWORD
+  - name: KAFKA_PASSWORD_PRODUSER
+    valueFrom:
+      secretKeyRef:
+        name: {{ include "python-microservice.fullname" . }}-secret
+        key: KAFKA_PASSWORD_PRODUSER
+  - name: KAFKA_PASSWORD_CONSUMER
+    valueFrom:
+      secretKeyRef:
+        name: {{ include "python-microservice.fullname" . }}-secret
+        key: KAFKA_PASSWORD_CONSUMER
+
+config:
+  DEBUG: "true"
+  ARANGO_URL: http://abase-1.dmz.home:8529
+  ARANGO_DB: streamforge
+  ARANGO_USER: root
+  K8S_NAMESPACE: stf
+  KAFKA_BOOTSTRAP_SERVERS: k3-kafka-bootstrap.kafka:9093
+  KAFKA_CLUSTER_NAME: k3
+  KAFKA_NAMESPACE: kafka
+  KAFKA_USER_PRODUSER: user-streamforge
+  KAFKA_USER_CONSUMER: user-streamforge
+  QUEUE_EVENTS_TOPIC: queue-events
+  QUEUE_CONTROL_TOPIC: queue-control
+  CA_PATH: /usr/local/share/ca-certificates/ca.crt
+  LOADER_IMAGE: registry.dmz.home/kinga/stream-forge/loader-producer:v0.1.0 # Updated to v0.1.0
+  ARANGO_CONNECTOR_IMAGE: registry.dmz.home/kinga/stream-forge/arango-connector:v0.1.0 # Updated to v0.1.0
+
+secrets:
+  ARANGO_PASSWORD: "changeme"
+  KAFKA_PASSWORD_PRODUSER: "changeme"
+  KAFKA_PASSWORD_CONSUMER: "changeme"
+
+nodeSelector:
+  streamforge-node: "true"
+
+# Override default probes if needed
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3

@@ -54,6 +54,7 @@ class KafkaCommandConsumer:
         logger.debug("Kafka consumer stopped")
 
     async def consume(self):
+        logger.info(f"Kafka consumer initialized with queue_id: {self.queue_id}")
         try:
             async for msg in self.consumer:
                 try:
@@ -61,16 +62,23 @@ class KafkaCommandConsumer:
                     command = payload.get("command")
                     target_id = payload.get("queue_id")
                     logger.debug(f"Received command: {payload}")
+                    logger.info(f"Payload type: {type(payload)}, target_id type: {type(target_id)}, self.queue_id type: {type(self.queue_id)}")
+
+                    logger.info(f"Comparing target_id: '{target_id}' with self.queue_id: '{self.queue_id}'. Match: {target_id == self.queue_id}")
 
                     if target_id != self.queue_id:
                         continue
 
                     if command == "ping":
+                        logger.info(f"Processing PING command for queue_id: {self.queue_id}")
                         dummy_pings_total.inc()
                         pong_payload = {
                             "ping_ts": payload.get("sent_at"),
                             "ponged_at": time.time(),
+                            "queue_id": self.queue_id,
                         }
+                        logger.info(f"Attempting to send pong with payload: {pong_payload}")
+                        logger.info("About to send pong event.")
                         await self.telemetry.send_event("pong", pong_payload)
                         dummy_pongs_total.inc()
                         logger.info("Processed ping → sent pong")

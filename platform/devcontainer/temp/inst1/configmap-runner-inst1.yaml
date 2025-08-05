@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gitlab-runner-config-inst1
+  namespace: devtools
+data:
+  config.toml: |
+    concurrent = 1
+    check_interval = 0
+    log_level = "info"
+
+    [session_server]
+      session_timeout = 1800
+
+    [[runners]]
+      name = "mworker1"
+      url = "https://gitlab.dmz.home"
+      id = 55
+      token: "REDACTED"
+      token_obtained_at = 2025-05-11T03:32:21Z
+      token_expires_at = 0001-01-01T00:00:00Z
+      executor = "shell"
+      [runners.custom_build_dir]
+      [runners.cache]
+        MaxUploadedArchiveSize = 0
+        [runners.cache.s3]
+        [runners.cache.gcs]
+        [runners.cache.azure]
+

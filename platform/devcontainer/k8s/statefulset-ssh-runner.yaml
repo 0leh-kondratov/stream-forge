@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: ssh-runner
+  namespace: devtools
+spec:
+  serviceName: ssh-runner-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ssh-runner
+  template:
+    metadata:
+      labels:
+        app: ssh-runner
+    spec:
+      nodeName: k2w-1
+      serviceAccountName: ns-manager
+      enableServiceLinks: true
+      containers:
+        - name: ssh-container
+          image: registry.dmz.home/lib/k8s/devcontainer/dev_kinga:v0.0.14
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 22
+          env:
+            - name: USER_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: ssh-user-config
+                  key: USER_NAME
+            - name: USER_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: ssh-user-config
+                  key: USER_ID
+            - name: USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ssh-user-secret
+                  key: USER_PASSWORD
+            - name: SSH_AUTHORIZED_KEYS
+              valueFrom:
+                secretKeyRef:
+                  name: ssh-user-secret
+                  key: ssh_authorized_keys
+          volumeMounts:
+            - name: kinga-home
+              mountPath: /home/kinga
+            - name: ca-certs
+              mountPath: /usr/local/share/ca-certificates/dev-ca.crt
+              subPath: dev-ca.crt
+              readOnly: true
+
+        - name: ssh-runner
+          image: registry.dmz.home/lib/k8s/devcontainer/gitlab-runner:ubuntu-bleeding-ca
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 999
+            runAsGroup: 999
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              echo "Запуск GitLab Runner sidecar...";
+              gitlab-runner run \
+                --working-directory /home/gitlab-runner \
+                --config /home/gitlab-runner/config.toml
+          volumeMounts:
+            - name: runner-home
+              mountPath: /home/gitlab-runner
+            - name: ca-certs
+              mountPath: /usr/local/share/ca-certificates/dev-ca.crt
+              subPath: dev-ca.crt
+              readOnly: true
+
+      volumes:
+        - name: kinga-home
+          persistentVolumeClaim:
+            claimName: ssh-kinga-home-pvc
+        - name: runner-home
+          persistentVolumeClaim:
+            claimName: ssh-runner-home-pvc
+        - name: ca-certs
+          configMap:
+            name: dev-ca-config
