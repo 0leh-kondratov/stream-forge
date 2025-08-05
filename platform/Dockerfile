@@ -11,7 +11,7 @@ RUN update-ca-certificates
 RUN pip install uvloop loguru aiokafka
 
 # Копируем и устанавливаем нашу общую библиотеку
-COPY ./libs/streamforge_utils /app/libs/streamforge_utils
+COPY ../libs/streamforge_utils /app/libs/streamforge_utils
 RUN pip install -e /app/libs/streamforge_utils
 
 WORKDIR /app
