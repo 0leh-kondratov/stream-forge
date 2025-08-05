@@ -390,7 +390,7 @@ graph TD
 
 Автоматизация сборки, тестирования и развертывания является основой для быстрой и надежной доставки изменений.
 
-#### **9.1. `GitLab Runner` как исполнитель пайплайнов
+#### **9.1. `GitLab Runner` как исполнитель пайплайнов**
 
 `GitLab Runner` с `kubernetes` executor'ом используется для выполнения CI/CD задач. Он динамически создает поды в Kubernetes для каждой задачи (job), что обеспечивает изоляцию и масштабируемость конвейера. Для сборки Docker-образов без использования Docker-in-Docker применяется `Kaniko`.
 
@@ -406,6 +406,124 @@ CI/CD пайплайн проекта StreamForge организован в не
 
 **Как запускаются job'ы:**
 Каждый job в пайплайне имеет определенные правила (`rules`), которые определяют, когда он должен быть запущен. Job'ы могут запускаться автоматически при изменениях в определенных файлах (например, при изменении кода сервиса или его `Dockerfile`), а также могут быть настроены на ручной запуск (`when: manual`) через интерфейс GitLab CI. Это обеспечивает гибкость и контроль над процессом развертывания.
+
+##### **9.1.2. Детализация конфигурации пайплайнов**
+
+Конфигурация CI/CD пайплайнов в StreamForge построена на принципах модульности и переиспользования кода с использованием возможностей GitLab CI `include` и `extends`.
+
+**Основной файл `.gitlab-ci.yml`:**
+
+Этот файл является точкой входа для всего пайплайна. Он определяет общие стадии (`stages`) и включает (`include`) конфигурации для отдельных сервисов и компонентов платформы. Это позволяет держать основной файл чистым и легко управляемым.
+
+Пример `/.gitlab-ci.yml`:
+```yaml
+stages:
+  - setup
+  - build
+  - test
+  - deploy
+
+include:
+  - '/services/queue-manager/.gitlab-ci.yml'
+  - '/services/loader-api-trades/.gitlab-ci.yml'
+  - '/services/loader-api-candles/.gitlab-ci.yml'
+  - '/services/arango-connector/.gitlab-ci.yml'
+  - '/services/dummy-service/.gitlab-ci.yml'
+  - 'platform/.gitlab-ci.yml' # Включаем конфигурацию для платформы (базовый образ, RBAC)
+```
+
+**Шаблоны CI/CD (`.gitlab/ci-templates/`):**
+
+Для обеспечения единообразия и переиспользования логики сборки и тестирования, используются общие шаблоны. Например, `Python-Service.gitlab-ci.yml` содержит общую конфигурацию для сборки Docker-образов Python-сервисов.
+
+Пример `/.gitlab/ci-templates/Python-Service.gitlab-ci.yml`:
+```yaml
+.build_python_service:
+  stage: build
+  image: gcr.io/kaniko-project/executor:debug
+  script:
+    - SERVICE_VERSION=$(cat $CI_PROJECT_DIR/$SERVICE_PATH/VERSION)
+    - /kaniko/executor
+      --context $CI_PROJECT_DIR/$SERVICE_PATH
+      --dockerfile Dockerfile
+      --destination $CI_REGISTRY_IMAGE/$SERVICE_NAME:$SERVICE_VERSION
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - $SERVICE_PATH/**/*
+        - libs/**/*
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - $SERVICE_PATH/**/*
+        - libs/**/*
+    - when: manual
+      allow_failure: false
+```
+
+**Конфигурация для отдельных сервисов (`services/<service-name>/.gitlab-ci.yml`):**
+
+Каждый микросервис имеет свой собственный `.gitlab-ci.yml` файл, который включает общий шаблон и расширяет его, предоставляя специфичные для сервиса переменные.
+
+Пример `services/dummy-service/.gitlab-ci.yml`:
+```yaml
+include:
+  - project: 'kinga/stream-forge'
+    ref: main
+    file: '/.gitlab/ci-templates/Python-Service.gitlab-ci.yml'
+
+build-dummy-service:
+  extends: .build_python_service
+  variables:
+    SERVICE_NAME: dummy-service
+    SERVICE_PATH: services/dummy-service
+
+deploy-dummy-service:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  script:
+    - kubectl apply -f $CI_PROJECT_DIR/services/dummy-service/k8s/dummy-service-deployment.yaml
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: on_success
+```
+
+**Конфигурация для компонентов платформы (`platform/.gitlab-ci.yml`):**
+
+Аналогично сервисам, компоненты платформы (например, сборка базового образа, применение RBAC) имеют свои собственные конфигурационные файлы.
+
+Пример `platform/.gitlab-ci.yml`:
+```yaml
+include:
+  - project: 'kinga/stream-forge'
+    ref: main
+    file: '/.gitlab/ci-templates/Python-Service.gitlab-ci.yml' # Используем тот же шаблон для сборки базового образа
+
+build-base-image:
+  extends: .build_python_service
+  variables:
+    SERVICE_NAME: base
+    SERVICE_PATH: platform # Указываем путь к Dockerfile и VERSION для базового образа
+
+apply-rbac:
+  stage: setup
+  image: bitnami/kubectl:latest
+  script:
+    - kubectl apply -f $CI_PROJECT_DIR/input/cred-kafka-yaml/full-access-sa.yaml
+    - kubectl apply -f $CI_PROJECT_DIR/input/cred-kafka-yaml/full-access-sa-binding.yaml
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - input/cred-kafka-yaml/full-access-sa.yaml
+        - input/cred-kafka-yaml/full-access-sa-binding.yaml
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - input/cred-kafka-yaml/full-access-sa.yaml
+        - input/cred-kafka-yaml/full-access-sa-binding.yaml
+    - when: manual
+      allow_failure: false
+```
+
+Такая структура обеспечивает гибкость, переиспользование и легкую масштабируемость CI/CD пайплайнов в проекте StreamForge.
 
 #### **9.2. `ArgoCD` для декларативного управления состоянием кластера**
 
