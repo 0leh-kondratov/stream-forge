@@ -33,3 +33,13 @@ build-base-image:
     # Разрешить ручной запуск job'а
     - when: manual
       allow_failure: false # Установите true, если пайплайн должен продолжаться, даже если этот ручной job завершится с ошибкой
+  # Добавляем volume и volumeMount для Kaniko, чтобы он доверял кастомным CA
+  volumes:
+    - name: kaniko-custom-ca
+      configMap:
+        name: kaniko-custom-ca # Имя ConfigMap, созданного ранее
+  volumeMounts:
+    - name: kaniko-custom-ca
+      mountPath: /kaniko/ssl/certs/ca-certificates.crt
+      subPath: ca-certificates.crt # Имя файла внутри ConfigMap
+      readOnly: true
