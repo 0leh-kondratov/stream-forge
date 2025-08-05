@@ -7,4 +7,3 @@ pydantic==2.7.1
 aiokafka==0.10.0
 python-arango==7.6.1
 prometheus-client==0.20.0
--e ../../libs/streamforge_utils
