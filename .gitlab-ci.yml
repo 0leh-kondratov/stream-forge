@@ -9,3 +9,4 @@ include:
   - '/services/loader-api-candles/.gitlab-ci.yml'
   - '/services/arango-connector/.gitlab-ci.yml'
   - '/services/dummy-service/.gitlab-ci.yml'
+  - '/platform/.gitlab-ci.yml'
