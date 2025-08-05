@@ -1,20 +1,10 @@
-build-base-image:
-  stage: build
-  image: gcr.io/kaniko-project/executor:debug
-  script:
-    - BASE_IMAGE_VERSION=$(cat $CI_PROJECT_DIR/platform/VERSION)
-    - /kaniko/executor
-      --context $CI_PROJECT_DIR/platform
-      --dockerfile Dockerfile.base
-      --destination registry.dmz.home/kinga/stream-forge/base:$BASE_IMAGE_VERSION
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
-      changes:
-        - platform/Dockerfile.base
-        - platform/**/*
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      changes:
-        - platform/Dockerfile.base
-        - platform/**/*
-    - when: manual
-      allow_failure: false
+include:
+  - project: 'kinga/stream-forge'
+    ref: main
+    file: '/.gitlab/ci-templates/Python-Service.gitlab-ci.yml'
+
+build-loader-api-trades:
+  extends: .build_python_service
+  variables:
+    SERVICE_NAME: base
+    SERVICE_PATH: platform
