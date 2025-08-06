@@ -1,0 +1,38 @@
+apiVersion: v1
+data:
+  set_index.lua: |
+    function cb_set_index(tag, timestamp, record)
+        local t = os.time()
+        if timestamp and type(timestamp) == "table" and timestamp[1] > 0 then
+            t = timestamp[1]
+        end
+
+        local namespace = "unknown"
+        local app = "unknown"
+
+        if record["kubernetes"] then
+            namespace = record["kubernetes"]["namespace_name"] or "unknown"
+            if record["kubernetes"]["labels"] then
+                app = record["kubernetes"]["labels"]["app"] or "unknown"
+            end
+        end
+
+        local date = os.date("%Y.%m.%d", t)
+        record["log_index"] = "app-" .. app .. "-" .. namespace .. "-" .. date
+
+        return 1, timestamp, record
+    end
+kind: ConfigMap
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","data":{"set_index.lua":"function cb_set_index(tag, timestamp, record)\n    local t = os.time()\n    if timestamp and type(timestamp) == \"table\" and timestamp[1] \u003e 0 then\n        t = timestamp[1]\n    end\n\n    local namespace = \"unknown\"\n    local app = \"unknown\"\n\n    if record[\"kubernetes\"] then\n        namespace = record[\"kubernetes\"][\"namespace_name\"] or \"unknown\"\n        if record[\"kubernetes\"][\"labels\"] then\n            app = record[\"kubernetes\"][\"labels\"][\"app\"] or \"unknown\"\n        end\n    end\n\n    local date = os.date(\"%Y.%m.%d\", t)\n    record[\"log_index\"] = \"app-\" .. app .. \"-\" .. namespace .. \"-\" .. date\n\n    return 1, timestamp, record\nend\n"},"kind":"ConfigMap","metadata":{"annotations":{},"name":"fluent-bit-lua","namespace":"logging"}}
+    meta.helm.sh/release-name: efk
+    meta.helm.sh/release-namespace: logging
+  creationTimestamp: "2025-05-02T02:57:58Z"
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  name: fluent-bit-lua
+  namespace: logging
+  resourceVersion: "12465567"
+  uid: 543835fa-1cd7-43eb-bce3-8eb9c9afedc0

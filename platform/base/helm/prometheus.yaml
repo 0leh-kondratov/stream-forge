@@ -1,0 +1,56 @@
+USER-SUPPLIED VALUES:
+alertmanager:
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 500Mi
+          storageClassName: nfs-client
+fullnameOverride: prometheus
+grafana:
+  ingress:
+    annotations:
+      cert-manager.io/cluster-issuer: homelab-ca-issuer
+    enabled: true
+    hosts:
+    - grafana.dmz.home
+    ingressClassName: nginx
+    tls:
+    - hosts:
+      - grafana.dmz.home
+      secretName: grafana-tls
+  persistence:
+    accessModes:
+    - ReadWriteOnce
+    enabled: true
+    size: 1Gi
+    storageClassName: nfs-client
+prometheus:
+  ingress:
+    annotations:
+      cert-manager.io/cluster-issuer: homelab-ca-issuer
+    enabled: true
+    hosts:
+    - prometheus.dmz.home
+    ingressClassName: nginx
+    tls:
+    - hosts:
+      - prometheus.dmz.home
+      secretName: prometheus-tls
+  prometheusSpec:
+    podMonitorSelector: {}
+    serviceMonitorNamespaceSelector: {}
+    serviceMonitorSelector: {}
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 20Gi
+          storageClassName: nfs-client

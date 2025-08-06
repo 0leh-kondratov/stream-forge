@@ -1,0 +1,110 @@
+USER-SUPPLIED VALUES:
+cull:
+  adminUsers: true
+  concurrency: 10
+  enabled: true
+  every: 600
+  maxAge: 0
+  removeNamedServers: false
+  timeout: 7200
+  users: false
+hub:
+  config:
+    JupyterHub:
+      admin_access: true
+      authenticator_class: dummy
+  db:
+    type: sqlite-memory
+  extraVolumeMounts:
+  - mountPath: /srv/jupyterhub
+    name: hub-db-dir
+  extraVolumes:
+  - hostPath:
+      path: /data/home/jovyan/hub-db
+      type: DirectoryOrCreate
+    name: hub-db-dir
+  networkPolicy:
+    enabled: false
+  nodeSelector:
+    kubernetes.io/hostname: k2w-8
+ingress:
+  enabled: true
+  hosts:
+  - jupyterhub.dmz.home
+  ingressClassName: traefik
+  tls:
+  - hosts:
+    - jupyterhub.dmz.home
+    secretName: jupyterhub-tls
+prePuller:
+  continuous:
+    enabled: false
+  hook:
+    enabled: false
+  pause:
+    image:
+      name: registry.k8s.io/pause
+      tag: "3.10"
+proxy:
+  chp:
+    nodeSelector:
+      kubernetes.io/hostname: k2w-8
+  secretToken: 30619430da4de42362b6585ab3f1c4e033e807cceb3673481c4c04d6bbd40057
+  service:
+    type: ClusterIP
+singleuser:
+  defaultUrl: /lab
+  extraPodConfig:
+    imagePullSecrets:
+    - name: regcred
+    securityContext:
+      fsGroup: 1000
+      runAsGroup: 100
+      runAsUser: 1001
+  fsGid: 100
+  image:
+    name: registry.dmz.home/streamforge/core-modules/jupyter-python311
+    pullPolicy: Always
+    tag: v0.0.2
+  memory:
+    guarantee: 1G
+  networkTools:
+    image:
+      name: quay.io/jupyterhub/k8s-network-tools
+      tag: 4.2.0
+  nodeSelector:
+    kubernetes.io/hostname: k2w-8
+  profileList:
+  - default: true
+    display_name: Custom Notebook
+    kubespawner_override:
+      image: registry.dmz.home/streamforge/core-modules/jupyter-python311:v0.0.2
+  startTimeout: 120
+  storage:
+    extraVolumeMounts:
+    - mountPath: /home/
+      name: gf-home
+    - mountPath: /data/project
+      name: gf-projects
+    - mountPath: /data/venv
+      name: gf-venv
+    - mountPath: /srv/jupyterhub
+      name: hub-db-dir
+    extraVolumes:
+    - hostPath:
+        path: /data/home
+        type: Directory
+      name: gf-home
+    - hostPath:
+        path: /data/project
+        type: Directory
+      name: gf-projects
+    - hostPath:
+        path: /data/venv
+        type: Directory
+      name: gf-venv
+    - hostPath:
+        path: /data/home/jovyan/hub-db
+        type: DirectoryOrCreate
+      name: hub-db-dir
+  uid: 1001

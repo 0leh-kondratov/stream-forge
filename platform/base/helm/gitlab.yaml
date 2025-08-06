@@ -1,0 +1,80 @@
+USER-SUPPLIED VALUES:
+certsSecretName: home-certificates
+gitlabUrl: https://gitlab.dmz.home/
+image:
+  image: gitlab/gitlab-runner
+  pullPolicy: Always
+  registry: registry-1.docker.io
+  tag: bleeding
+imagePullSecrets:
+- name: regcred
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: false
+nodeSelector:
+  kubernetes.io/hostname: k2w-9
+rbac:
+  create: false
+registerRunner: false
+runners:
+  config: |
+    [[runners]]
+      name = "k2m-runner"
+      url = "https://gitlab.dmz.home/"
+      token: "REDACTED"
+      executor = "kubernetes"
+      [runners.kubernetes]
+        namespace = "gitlab"
+        image = "ubuntu:22.04"
+        privileged = true
+        service_account = "full-access-sa"
+        image_pull_secrets = ["regcred"]
+        cpu_request = "100m"
+        memory_request = "128Mi"
+        cpu_limit = "500m"
+        memory_limit = "512Mi"
+        helper_image = "gitlab/gitlab-runner-helper:x86_64-bleeding"
+        poll_timeout = 300
+        volume_mounts = [
+          { name = "docker-config", mount_path = "/kaniko/.docker" }
+        ]
+
+        [[runners.kubernetes.volumes.secret]]
+          name = "home-certificates"
+          mount_path = "/kaniko/ssl/certs"
+
+        [[runners.kubernetes.volumes.pvc]]
+          name = "runner-home"
+          mount_path = "/home/gitlab-runner"
+          claim_name = "gitlab-runner-home"
+          read_only = false
+
+      [runners.cache]
+        Type = "s3"
+        Path = "runner"
+        Shared = true
+        [runners.cache.s3]
+          ServerAddress = "minio.dmz.home"
+          AccessKey = "nKxHydVYrbEDmKCmEe0t"
+          SecretKey = "r4zgRqeflSMpXlpTOevrhFLbIDJuh410IvnZ2BCj"
+          BucketName = "runner-cache"
+          Insecure = true
+  secret: "REDACTED"
+securityContext:
+  fsGroup: 65533
+  runAsUser: 999
+serviceAccount:
+  create: false
+  name: full-access-sa
+volumes:
+- name: runner-home
+  persistentVolumeClaim:
+    claimName: gitlab-runner-home
+- name: docker-config
+  projected:
+    sources:
+    - secret: "REDACTED":
+        - key: .dockerconfigjson
+          path: config.json
+        name: regcred

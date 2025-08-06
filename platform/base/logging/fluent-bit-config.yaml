@@ -1,0 +1,88 @@
+apiVersion: v1
+data:
+  filter-lua.conf: |
+    [FILTER]
+        Name    lua
+        Match   *
+        script  /fluent-bit/scripts/set_index.lua
+        call    cb_set_index
+  fluent-bit.conf: |
+    [SERVICE]
+        Flush        1
+        Daemon       Off
+        Log_Level    WARNING
+        Lua_File     /fluent-bit/scripts/set_index.lua
+
+    @INCLUDE input-forward.conf
+    @INCLUDE filter-lua.conf
+    @INCLUDE output-file.conf
+    @INCLUDE output-elasticsearch.conf
+  input-forward.conf: |
+    [INPUT]
+        Name    forward
+        Listen  0.0.0.0
+        Port    24224
+        Tag     *
+        Buffer_Chunk_Size 32k
+        Buffer_Max_Size   512k
+  output-elasticsearch.conf: |
+    [OUTPUT]
+        Name                  es
+        Match                 *
+        Host                  elasticsearch
+        Port                  9200
+        Logstash_Format       On
+        Logstash_Prefix_Key   log_index
+        Suppress_Type_Name    On
+        Replace_Dots          On
+        Retry_Limit           False
+        Time_Key              @timestamp
+        Time_Key_Format       %Y-%m-%dT%H:%M:%S
+
+        # Если нужен логин (Elasticsearch 8+), раскомментируй:
+        # HTTP_User             elastic
+        # HTTP_Passwd           <your-password>
+  output-file.conf: |
+    [OUTPUT]
+        Name   file
+        Match  *
+        Path   /logs/
+        File   app.log
+        Format plain
+  set_index.lua: |
+    function cb_set_index(tag, timestamp, record)
+        local t = os.time()
+        if timestamp and type(timestamp) == "table" and timestamp[1] > 0 then
+            t = timestamp[1]
+        end
+
+        local prefix = "unknown"
+        local app = "unknown"
+
+        local parts = {}
+        for part in string.gmatch(tag, "([^.]+)") do
+            table.insert(parts, part)
+        end
+        if #parts >= 2 then
+            prefix = parts[1]  -- internal / external
+            app = parts[2]
+        end
+
+        local date = os.date("%Y.%m.%d", t)
+        record["log_index"] = prefix .. "-" .. app .. "-" .. date
+        return 1, timestamp, record
+    end
+kind: ConfigMap
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","data":{"filter-lua.conf":"[FILTER]\n    Name    lua\n    Match   *\n    script  /fluent-bit/scripts/set_index.lua\n    call    cb_set_index\n","fluent-bit.conf":"[SERVICE]\n    Flush        1\n    Daemon       Off\n    Log_Level    debug\n    Lua_File     /fluent-bit/scripts/set_index.lua\n\n@INCLUDE input-forward.conf\n@INCLUDE filter-lua.conf\n@INCLUDE output-file.conf\n@INCLUDE output-elasticsearch.conf\n","input-forward.conf":"[INPUT]\n    Name    forward\n    Listen  0.0.0.0\n    Port    24224\n    Tag     *\n    Buffer_Chunk_Size 32k\n    Buffer_Max_Size   512k\n","output-elasticsearch.conf":"[OUTPUT]\n    Name                  es\n    Match                 *\n    Host                  elasticsearch\n    Port                  9200\n    Logstash_Format       On\n    Logstash_Prefix_Key   log_index\n    Suppress_Type_Name    On\n    Replace_Dots          On\n    Retry_Limit           False\n    Time_Key              @timestamp\n    Time_Key_Format       %Y-%m-%dT%H:%M:%S\n\n    # Если нужен логин (Elasticsearch 8+), раскомментируй:\n    # HTTP_User             elastic\n    # HTTP_Passwd           \u003cyour-password\u003e\n","output-file.conf":"[OUTPUT]\n    Name   file\n    Match  *\n    Path   /logs/\n    File   app.log\n    Format plain\n","set_index.lua":"function cb_set_index(tag, timestamp, record)\n    local t = os.time()\n    if timestamp and type(timestamp) == \"table\" and timestamp[1] \u003e 0 then\n        t = timestamp[1]\n    end\n\n    local prefix = \"unknown\"\n    local app = \"unknown\"\n\n    local parts = {}\n    for part in string.gmatch(tag, \"([^.]+)\") do\n        table.insert(parts, part)\n    end\n    if #parts \u003e= 2 then\n        prefix = parts[1]  -- internal / external\n        app = parts[2]\n    end\n\n    local date = os.date(\"%Y.%m.%d\", t)\n    record[\"log_index\"] = prefix .. \"-\" .. app .. \"-\" .. date\n    return 1, timestamp, record\nend\n"},"kind":"ConfigMap","metadata":{"annotations":{},"name":"fluent-bit-config","namespace":"logging"}}
+    meta.helm.sh/release-name: efk
+    meta.helm.sh/release-namespace: logging
+  creationTimestamp: "2025-05-02T02:57:58Z"
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  name: fluent-bit-config
+  namespace: logging
+  resourceVersion: "28139486"
+  uid: 1eaa1ed0-2327-45d3-8270-4a8c5c007b36

@@ -1,0 +1,19 @@
+Прочитай и проанализируй для добавления к документации docs/StreamForge.md
+из каталога
+platform/base/helm/
+ʼ''
+helm list -A NAME NAMESPACE REVISION UPDATED STATUS CHART APP VERSION argocd argocd 1 2025-04-30 22:54:36.679676662 +0000 UTC deployed argo-cd-7.9.0 v2.14.11
+efk logging 1 2025-05-02 02:57:56.701159178 +0000 UTC deployed efk-stack-0.3.0 1.0
+gitlab-runner gitlab 1 2025-07-11 07:30:03.981847695 +0200 CEST deployed gitlab-runner-0.78.1 18.1.1
+gpu-operator-1746515483 gpu-operator 1 2025-05-06 07:11:30.543380322 +0000 UTC deployed gpu-operator-v24.9.2 v24.9.2
+ingress-nginx ingress-nginx 1 2025-04-18 22:43:58.789338005 +0000 UTC deployed ingress-nginx-4.12.1 1.12.1
+jhub notebooks 1 2025-07-31 08:02:48.068346517 +0200 CEST deployed jupyterhub-4.2.0 5.3.0
+kafka-ui kafka 1 2025-07-31 23:24:20.635870762 +0200 CEST deployed kafka-ui-0.7.6 v0.7.2
+metallb metallb 1 2025-04-18 22:39:32.810780339 +0000 UTC deployed metallb-0.14.9 v0.14.9
+prometheus monitoring 1 2025-05-03 02:23:46.012115387 +0000 UTC deployed kube-prometheus-stack-71.1.0 v0.82.0
+sc-nfs nfs-provisioner 1 2025-04-18 22:50:11.380054057 +0000 UTC deployed nfs-subdir-external-provisioner-4.0.18 4.0.2
+stf-runner stf 1 2025-07-19 00:46:39.715050991 +0200 CEST deployed gitlab-runner-0.79.0 18.2.0
+traefik traefik 2 2025-06-27 04:01:49.451241232 +0200 CEST deployed traefik-36.1.0 v3.4.1
+'''
+нужно по функционалу распределить по всем разделам
+Обрабатывай по одному приложении за один раз и продолжай по запросу

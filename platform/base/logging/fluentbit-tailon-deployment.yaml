@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "10"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"name":"fluentbit-tailon","namespace":"logging"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"fluentbit-tailon"}},"template":{"metadata":{"labels":{"app":"fluentbit-tailon"}},"spec":{"containers":[{"image":"fluent/fluent-bit:1.8","name":"fluent-bit","ports":[{"containerPort":24224,"name":"forward"}],"volumeMounts":[{"mountPath":"/fluent-bit/etc/","name":"config"},{"mountPath":"/logs/","name":"logshare"},{"mountPath":"/fluent-bit/scripts/","name":"lua"}]},{"args":["--bind=0.0.0.0:8080","/logs/app.log"],"image":"gvalkov/tailon:latest","name":"tailon","ports":[{"containerPort":8080,"name":"http"}],"volumeMounts":[{"mountPath":"/logs/","name":"logshare"}]}],"nodeSelector":{"kubernetes.io/hostname":"k2w-6"},"volumes":[{"configMap":{"name":"fluent-bit-config"},"name":"config"},{"configMap":{"name":"fluent-bit-config"},"name":"lua"},{"name":"logshare","persistentVolumeClaim":{"claimName":"fluentbit-tailon-pvc"}}]}}}}
+  creationTimestamp: "2025-05-08T23:44:38Z"
+  generation: 10
+  name: fluentbit-tailon
+  namespace: logging
+  resourceVersion: "47948538"
+  uid: 6cdb5f2a-2e42-48d8-b032-ca380b9cea79
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: fluentbit-tailon
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/restartedAt: "2025-05-09T01:59:20Z"
+      creationTimestamp: null
+      labels:
+        app: fluentbit-tailon
+    spec:
+      containers:
+      - image: fluent/fluent-bit:1.8
+        imagePullPolicy: IfNotPresent
+        name: fluent-bit
+        ports:
+        - containerPort: 24224
+          name: forward
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /fluent-bit/etc/
+          name: config
+        - mountPath: /logs/
+          name: logshare
+        - mountPath: /fluent-bit/scripts/
+          name: lua
+      - args:
+        - --bind=0.0.0.0:8080
+        - /logs/app.log
+        image: gvalkov/tailon:latest
+        imagePullPolicy: Always
+        name: tailon
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /logs/
+          name: logshare
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        kubernetes.io/hostname: k2w-6
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: fluent-bit-config
+        name: config
+      - configMap:
+          defaultMode: 420
+          name: fluent-bit-config
+        name: lua
+      - name: logshare
+        persistentVolumeClaim:
+          claimName: fluentbit-tailon-pvc
+status:
+  availableReplicas: 1
+  conditions:
+  - lastTransitionTime: "2025-05-08T23:44:38Z"
+    lastUpdateTime: "2025-05-09T01:59:24Z"
+    message: ReplicaSet "fluentbit-tailon-67f6f56d4d" has successfully progressed.
+    reason: NewReplicaSetAvailable
+    status: "True"
+    type: Progressing
+  - lastTransitionTime: "2025-06-30T22:41:18Z"
+    lastUpdateTime: "2025-06-30T22:41:18Z"
+    message: Deployment has minimum availability.
+    reason: MinimumReplicasAvailable
+    status: "True"
+    type: Available
+  observedGeneration: 10
+  readyReplicas: 1
+  replicas: 1
+  updatedReplicas: 1

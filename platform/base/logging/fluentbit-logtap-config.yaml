@@ -1,0 +1,37 @@
+apiVersion: v1
+data:
+  fluent-bit.conf: |
+    [SERVICE]
+        Flush        1
+        Daemon       Off
+        Log_Level    info
+        Lua_File     /fluent-bit/scripts/set_index.lua
+
+    [INPUT]
+        Name    forward
+        Listen  0.0.0.0
+        Port    24224
+        Tag     python.**
+
+    [FILTER]
+        Name    lua
+        Match   *
+        script  /fluent-bit/scripts/set_index.lua
+        call    cb_set_index
+
+    [OUTPUT]
+        Name   file
+        Match  *
+        Path   /logs/
+        File   app.log
+        Format plain
+kind: ConfigMap
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","data":{"fluent-bit.conf":"[SERVICE]\n    Flush        1\n    Daemon       Off\n    Log_Level    info\n    Lua_File     /fluent-bit/scripts/set_index.lua\n\n[INPUT]\n    Name    forward\n    Listen  0.0.0.0\n    Port    24224\n    Tag     python.**\n\n[FILTER]\n    Name    lua\n    Match   *\n    script  /fluent-bit/scripts/set_index.lua\n    call    cb_set_index\n\n[OUTPUT]\n    Name   file\n    Match  *\n    Path   /logs/\n    File   app.log\n    Format plain\n"},"kind":"ConfigMap","metadata":{"annotations":{},"name":"fluentbit-logtap-config","namespace":"logging"}}
+  creationTimestamp: "2025-05-08T23:46:22Z"
+  name: fluentbit-logtap-config
+  namespace: logging
+  resourceVersion: "12481958"
+  uid: 146c3543-d2a8-406a-a33f-876d3204ee33

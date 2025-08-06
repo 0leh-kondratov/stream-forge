@@ -1,0 +1,274 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: knp
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: k3
+spec:
+  replicas: 3
+  roles:
+    - controller
+    - broker
+  storage:
+    type: persistent-claim
+    class: nfs-client
+    size: 2Gi
+    deleteClaim: true
+  jvmOptions:
+    -Xms: "512m"
+    -Xmx: "1g"
+  template:
+    pod:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - k2w-3
+                      - k2w-6
+                      - k2w-7
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: strimzi.io/name
+                    operator: In
+                    values:
+                      - k3-kafka    
+              topologyKey: kubernetes.io/hostname
+
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: k3
+  namespace: kafka
+  annotations:
+    strimzi.io/node-pools: enabled
+    strimzi.io/kraft: enabled
+spec:
+  clusterCa:
+    generateCertificateAuthority: false
+  clientsCa:
+    generateCertificateAuthority: false
+  kafka:
+    version: 4.0.0
+    metadataVersion: 4.0-IV3
+#   interBrokerListenerName: tls
+    listeners:
+      - name: plain
+        port: 9092
+        type: internal
+        tls: false
+        authentication:
+          type: scram-sha-512
+#        configuration:
+#          useServiceDnsDomain: true
+      - name: tls
+        port: 9093
+        type: internal
+        tls: true
+        authentication:
+          type: scram-sha-512
+#        configuration:
+#          useServiceDnsDomain: true
+      - name: external
+        port: 9094
+        type: ingress
+        tls: true
+        authentication:
+          type: scram-sha-512
+        configuration:
+          class: traefik
+          hostTemplate: kafka-{nodeId}.dmz.home
+          bootstrap:
+            host: kafka.dmz.home
+          brokerCertChainAndKey:
+            secretName: kafka-tls
+            certificate: tls.crt
+            key: tls.key
+#        configuration:
+#          useServiceDnsDomain: true          
+      - name: sasl
+        port: 9095
+        type: internal
+        tls: true
+        authentication:
+          type: scram-sha-512
+#        configuration:
+#          useServiceDnsDomain: true
+    authorization:
+      type: simple
+      superUsers:
+        - CN=k3-admin
+    config:
+      inter.broker.protocol.version: "4.0"
+      log.message.format.version: "4.0"
+      offsets.topic.replication.factor: 3
+      transaction.state.log.replication.factor: 3
+      transaction.state.log.min.isr: 2
+      default.replication.factor: 2
+      min.insync.replicas: 2
+      authorizer.class.name: org.apache.kafka.metadata.authorizer.StandardAuthorizer
+    template:
+      pod:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: kubernetes.io/hostname
+                      operator: In
+                      values:
+                        - k2w-3
+                        - k2w-6
+                        - k2w-7
+          podAntiAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchExpressions:
+                    - key: strimzi.io/name
+                      operator: In
+                      values:
+                        - k2-kafka
+                topologyKey: kubernetes.io/hostname
+  kafkaExporter:
+    topicRegex: ".*"
+    groupRegex: ".*"
+    template:
+      pod:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: kubernetes.io/hostname
+                      operator: In
+                      values:
+                        - k2w-3
+                        - k2w-6
+                        - k2w-7
+  entityOperator:
+    topicOperator: {}
+    userOperator: {}
+    template:
+      pod:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: kubernetes.io/hostname
+                      operator: In
+                      values:
+                        - k2w-3
+                        - k2w-6
+                        - k2w-7
+
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: test-topic
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: k3
+spec:
+  partitions: 1
+  replicas: 1
+
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaUser
+metadata:
+  name: k3-admin
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: k3
+spec:
+  authentication:
+    type: scram-sha-512
+  authorization:
+    type: simple
+    acls:
+      - resource:
+          type: topic
+          name: test-topic
+          patternType: literal
+        operation: Write
+      - resource:
+          type: topic
+          name: test-topic
+          patternType: literal
+        operation: Describe
+      - resource:
+          type: group
+          name: test-group
+          patternType: literal
+        operation: Read
+
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaUser
+metadata:
+  name: k3-consumer
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: k3
+spec:
+  authentication:
+    type: scram-sha-512
+  authorization:
+    type: simple
+    acls:
+      - resource:
+          type: topic
+          name: test-topic
+          patternType: literal
+        operation: Write
+      - resource:
+          type: topic
+          name: test-topic
+          patternType: literal
+        operation: Describe
+      - resource:
+          type: group
+          name: test-group
+          patternType: literal
+        operation: Read
+
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaUser
+metadata:
+  name: k3-produser
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: k3
+spec:
+  authentication:
+    type: scram-sha-512
+  authorization:
+    type: simple
+    acls:
+      - resource:
+          type: topic
+          name: test-topic
+          patternType: literal
+        operation: Write
+      - resource:
+          type: topic
+          name: test-topic
+          patternType: literal
+        operation: Describe
+      - resource:
+          type: group
+          name: test-group
+          patternType: literal
+        operation: Read
+
+---
