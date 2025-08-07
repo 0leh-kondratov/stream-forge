@@ -1,20 +1,20 @@
-# StreamForge: Innovative Platform for Cryptocurrency Data Processing
+# StreamForge: A High-Performance, Event-Driven Platform for Real-Time Cryptocurrency Data Analytics
 
-This document provides a comprehensive description of the **StreamForge** project—an advanced platform designed for highly efficient collection, comprehensive processing, and in-depth analysis of cryptocurrency data in real-time. The project is developed using modern Cloud Native technologies and architectural patterns, ensuring scalability, reliability, and flexibility of the solution.
+**StreamForge** is an advanced, event-driven platform engineered for the high-throughput ingestion, processing, and analysis of real-time cryptocurrency market data. Built on a foundation of modern Cloud-Native technologies and architectural patterns, StreamForge delivers a scalable, resilient, and flexible solution for tackling the unique challenges of the digital asset landscape.
 
-## 1.1. Cryptocurrency Data: Challenges and Solutions
+## 1.1. The Challenge of Cryptocurrency Data
 
-In the contemporary landscape of digital assets, cryptocurrency data serves as a fundamental basis for analytical processes and real-time decision-making. Characteristic features of this data include high volatility, continuous availability, and significant volumes of transactions and state updates (e.g., order book dynamics, high-frequency trading operations, time series aggregation). This imposes increased demands on the methodologies for their collection, processing, and extraction of valuable information, emphasizing the need for creating reliable and high-performance data pipelines.
+In the fast-paced world of digital assets, cryptocurrency data is the lifeblood of analytics and automated decision-making. This data is characterized by extreme volatility, 24/7 availability, and immense volume, encompassing everything from high-frequency trades to continuous order book updates. These characteristics demand a new generation of data pipelines—ones that are not only high-performance but also exceptionally reliable.
 
-Key challenges include:
-- **Diversity of Sources:** Data originates from various points via REST APIs for historical data and WebSockets for real-time data, requiring the integration of heterogeneous streams.
-- **Scalability and Speed:** The system must withstand extreme loads, processing intensive data streams without delays.
-- **Reliability:** Guaranteeing data integrity and rapid recovery after potential failures.
-- **Orchestration Complexity:** Effective coordination of complex task sequences is necessary, such as "load -> save -> graph building -> model training."
+Key technical hurdles include:
+- **Heterogeneous Data Ingestion:** Integrating disparate data streams from a multitude of sources, including REST APIs for historical data and WebSocket feeds for real-time market events.
+- **Extreme Scalability:** Architecting a system capable of processing massive, bursty data streams without introducing latency.
+- **Data Integrity and Fault Tolerance:** Ensuring guaranteed data delivery and designing for rapid, automated recovery from component failures.
+- **Complex Workflow Orchestration:** Managing sophisticated, multi-stage data processing workflows, such as a "load -> persist -> build graph -> train model" sequence, in a coordinated and reliable manner.
 
-## 1.2. StreamForge: An Event-Driven Platform
+## 1.2. The StreamForge Solution: A Decoupled, Event-Driven Architecture
 
-StreamForge represents an innovative event-driven platform designed for highly efficient data processing. A fundamental architectural principle is decentralized interaction between components, eliminating direct service calls. All inter-service communication occurs via the powerful message broker **Apache Kafka**. Each microservice publishes its generated data to the common bus, while other services subscribe to the topics of interest. This paradigm ensures exceptional flexibility, autonomy, and interchangeability of system components. Task orchestration is implemented through `queue-manager`, which dynamically activates the corresponding modules to perform specified operations.
+StreamForge is architected as a fully event-driven platform, designed from the ground up for maximum efficiency and resilience. The core principle is the complete decoupling of services through a central nervous system: **Apache Kafka**. Instead of direct, brittle service-to-service calls, components communicate asynchronously. Each microservice is a self-contained unit that publishes events (its work
 
 The application of this approach guarantees high scalability, adaptability to changing requirements, and increased fault tolerance of the entire system.
 
@@ -43,64 +43,64 @@ These powerful functionalities make StreamForge an indispensable tool for anyone
 
 # StreamForge Table of Contents
 
-- [StreamForge: Overview](README.md)
+- [StreamForge: Overview](#streamforge-innovative-platform-for-cryptocurrency-data-processing)
     - [1.1. Cryptocurrency Data: Challenges and Solutions](#11-cryptocurrency-data-challenges-and-solutions)
     - [1.2. StreamForge: An Event-Driven Platform](#12-streamforge-an-event-driven-platform)
     - [1.3. Project Mission](#13-project-mission)
     - [1.4. Practical Use Cases](#14-practical-use-cases)
 
-- [Part II: Architecture and Functioning](StreamForge_II_Architecture_and_Functioning.md)
-    - [Chapter 2: High-Level Architecture](StreamForge_II_Architecture_and_Functioning.md#chapter-2-high-level-architecture)
-        - [2.1. Core Architectural Principles](StreamForge_II_Architecture_and_Functioning.md#21-core-architectural-principles)
-        - [2.2. Data Flow in the System](StreamForge_II_Architecture_and_Functioning.md#22-data-flow-in-the-system)
-    - [Chapter 3: Apache Kafka as a Central Component](StreamForge_II_Architecture_and_Functioning.md#chapter-3-apache-kafka-as-a-central-component)
-        - [Topic "queue-control"](StreamForge_II_Architecture_and_Functioning.md#topic-queue-control)
-        - [Topic "queue-events"](StreamForge_II_Architecture_and_Functioning.md#topic-queue-events)
-    - [Chapter 4: Microservices](StreamForge_II_Architecture_and_Functioning.md#chapter-4-microservices)
-        - [4.1. queue-manager: Central Control Component](StreamForge_II_Architecture_and_Functioning.md#41-queue-manager-central-control-component)
-        - [4.2. Data Collection: loader-*: Modules for Data Ingestion](StreamForge_II_Architecture_and_Functioning.md#42-data-collection-loader-modules-for-data-ingestion)
-        - [4.3. Data Storage: arango-connector — Persistence Component](StreamForge_II_Architecture_and_Functioning.md#43-data-storage-arango-connector-persistence-component)
-        - [4.4. Analytical Layer: graph-builder and gnn-trainer — Analytics and Machine Learning Core](StreamForge_II_Architecture_and_Functioning.md#44-analytical-layer-graph-builder-and-gnn-trainer-analytics-and-machine-learning-core)
-        - [4.5. dummy-service: Auxiliary Tool for Testing](StreamForge_II_Architecture_and_Functioning.md#45-dummy-service-auxiliary-tool-for-testing)
+- [Part II: Architecture and Functioning](#part-ii-architecture-and-functioning)
+    - [Chapter 2: High-Level Architecture](#chapter-2-high-level-architecture)
+        - [2.1. Core Architectural Principles](#21-core-architectural-principles)
+        - [2.2. Data Flow in the System](#22-data-flow-in-the-system)
+    - [Chapter 3: Apache Kafka as a Central Component](#chapter-3-apache-kafka-as-a-central-component)
+        - [Topic "queue-control"](#topic-queue-control)
+        - [Topic "queue-events"](#topic-queue-events)
+    - [Chapter 4: Microservices](#chapter-4-microservices)
+        - [4.1. queue-manager: Central Control Component](#41-queue-manager-central-control-component)
+        - [4.2. Data Collection: loader-*: Modules for Data Ingestion](#42-data-collection-loader-modules-for-data-ingestion)
+        - [4.3. Data Storage: arango-connector — Persistence Component](#43-data-storage-arango-connector-persistence-component)
+        - [4.4. Analytical Layer: graph-builder and gnn-trainer — Analytics and Machine Learning Core](#44-analytical-layer-graph-builder-and-gnn-trainer-analytics-and-machine-learning-core)
+        - [4.5. dummy-service: Auxiliary Tool for Testing](#45-dummy-service-auxiliary-tool-for-testing)
 
-- [Part III: Infrastructure and Environment](StreamForge_III_Infrastructure_and_Environment.md)
-    - [Chapter 5: Platform Fundamentals: Kubernetes and Virtualization](StreamForge_III_Infrastructure_and_Environment.md#chapter-5-platform-fundamentals-kubernetes-and-virtualization)
-        - [5.1. Foundation: Proxmox VE](StreamForge_III_Infrastructure_and_Environment.md#51-foundation-proxmox-ve)
-        - [5.2. Cluster Deployment: Kubespray](StreamForge_III_Infrastructure_and_Environment.md#52-cluster-deployment-kubespray)
-        - [5.3. Network Infrastructure](StreamForge_III_Infrastructure_and_Environment.md#53-network-infrastructure)
-        - [5.4. Ingress and Gateway API: Traffic Management](StreamForge_III_Infrastructure_and_Environment.md#54-ingress-and-gateway-api-traffic-management)
-        - [5.5. DNS and TLS](StreamForge_III_Infrastructure_and_Environment.md#55-dns-and-tls)
-            - [`script.sh` for TLS Certificate Generation](StreamForge_III_Infrastructure_and_Environment.md#scriptsh-for-tls-certificate-generation)
-    - [Chapter 6: Data Management: Storage and Access Strategies](StreamForge_III_Infrastructure_and_Environment.md#chapter-6-data-management-storage-and-access-strategies)
-        - [6.1. Overview of Storage Solutions](StreamForge_III_Infrastructure_and_Environment.md#61-overview-of-storage-solutions)
-        - [6.2. Object Storage Minio](StreamForge_III_Infrastructure_and_Environment.md#62-object-storage-minio)
-    - [Chapter 7: Data Platform: Information Management](StreamForge_III_Infrastructure_and_Environment.md#chapter-7-data-platform-information-management)
-        - [7.1. Strimzi Kafka Operator](StreamForge_III_Infrastructure_and_Environment.md#71-strimzi-kafka-operator)
-        - [7.2. ArangoDB: Multi-Model Database](StreamForge_III_Infrastructure_and_Environment.md#72-arangodb-multi-model-database)
-        - [7.3. PostgreSQL (Zalando Operator)](StreamForge_III_Infrastructure_and_Environment.md#73-postgresql-zalando-operator)
-        - [7.4. Autoscaling with KEDA](StreamForge_III_Infrastructure_and_Environment.md#74-autoscaling-with-keda)
-        - [7.5. Kafka UI](StreamForge_III_Infrastructure_and_Environment.md#75-kafka-ui)
-    - [Chapter 8: Monitoring and Observability: Comprehensive System Control](StreamForge_III_Infrastructure_and_Environment.md#chapter-8-monitoring-and-observability-comprehensive-system-control)
-        - [8.1. Metrics: Prometheus, NodeExporter, cAdvisor](StreamForge_III_Infrastructure_and_Environment.md#81-metrics-prometheus-nodeexporter-cadvisor)
-        - [8.2. Logs: Fluent-bit, Elasticsearch, Kibana](StreamForge_III_Infrastructure_and_Environment.md#82-logs-fluent-bit-elasticsearch-kibana)
-        - [8.3. Grafana and Alertmanager](StreamForge_III_Infrastructure_and_Environment.md#83-grafana-and-alertmanager)
-    - [Chapter 9: Automation and GitOps: Optimizing Deployment Processes](StreamForge_III_Infrastructure_and_Environment.md#chapter-9-automation-and-gitops-optimizing-deployment-processes)
-        - [9.1. GitLab Runner](StreamForge_III_Infrastructure_and_Environment.md#91-gitlab-runner)
-            - [9.1.1. Runner: Configuration Features](StreamForge_III_Infrastructure_and_Environment.md#911-runner-configuration-features)
-            - [9.1.2. Pipeline Structure](StreamForge_III_Infrastructure_and_Environment.md#912-pipeline-structure)
-            - [9.1.3. Integration and Modularity](StreamForge_III_Infrastructure_and_Environment.md#913-integration-and-modularity)
-        - [9.2. ArgoCD](StreamForge_III_Infrastructure_and_Environment.md#92-argocd)
-        - [9.3. Reloader](StreamForge_III_Infrastructure_and_Environment.md#93-reloader)
-    - [Chapter 10: Security and Additional Capabilities](StreamForge_III_Infrastructure_and_Environment.md#chapter-10-security-and-additional-capabilities)
-        - [10.1. HashiCorp Vault](StreamForge_III_Infrastructure_and_Environment.md#101-hashicorp-vault)
-        - [10.2. Keycloak](StreamForge_III_Infrastructure_and_Environment.md#102-keycloak)
-        - [10.3. NVIDIA GPU Operator](StreamForge_III_Infrastructure_and_Environment.md#103-nvidia-gpu-operator)
-        - [10.4. Other Utilities](StreamForge_III_Infrastructure_and_Environment.md#104-other-utilities)
+- [Part III: Infrastructure and Environment](#part-iii-infrastructure-and-environment)
+    - [Chapter 5: Platform Fundamentals: Kubernetes and Virtualization](#chapter-5-platform-fundamentals-kubernetes-and-virtualization)
+        - [5.1. Foundation: Proxmox VE](#51-foundation-proxmox-ve)
+        - [5.2. Cluster Deployment: Kubespray](#52-cluster-deployment-kubespray)
+        - [5.3. Network Infrastructure](#53-network-infrastructure)
+        - [5.4. Ingress and Gateway API: Traffic Management](#54-ingress-and-gateway-api-traffic-management)
+        - [5.5. DNS and TLS](#55-dns-and-tls)
+            - [`script.sh` for TLS Certificate Generation](#scriptsh-for-tls-certificate-generation)
+    - [Chapter 6: Data Management: Storage and Access Strategies](#chapter-6-data-management-storage-and-access-strategies)
+        - [6.1. Overview of Storage Solutions](#61-overview-of-storage-solutions)
+        - [6.2. Object Storage Minio](#62-object-storage-minio)
+    - [Chapter 7: Data Platform: Information Management](#chapter-7-data-platform-information-management)
+        - [7.1. Strimzi Kafka Operator](#71-strimzi-kafka-operator)
+        - [7.2. ArangoDB: Multi-Model Database](#72-arangodb-multi-model-database)
+        - [7.3. PostgreSQL (Zalando Operator)](#73-postgresql-zalando-operator)
+        - [7.4. Autoscaling with KEDA](#74-autoscaling-with-keda)
+        - [7.5. Kafka UI](#75-kafka-ui)
+    - [Chapter 8: Monitoring and Observability: Comprehensive System Control](#chapter-8-monitoring-and-observability-comprehensive-system-control)
+        - [8.1. Metrics: Prometheus, NodeExporter, cAdvisor](#81-metrics-prometheus-nodeexporter-cadvisor)
+        - [8.2. Logs: Fluent-bit, Elasticsearch, Kibana](#82-logs-fluent-bit-elasticsearch-kibana)
+        - [8.3. Grafana and Alertmanager](#83-grafana-and-alertmanager)
+    - [Chapter 9: Automation and GitOps: Optimizing Deployment Processes](#chapter-9-automation-and-gitops-optimizing-deployment-processes)
+        - [9.1. GitLab Runner](#91-gitlab-runner)
+            - [9.1.1. Runner: Configuration Features](#911-runner-configuration-features)
+            - [9.1.2. Pipeline Structure](#912-pipeline-structure)
+            - [9.1.3. Integration and Modularity](#913-integration-and-modularity)
+        - [9.2. ArgoCD](#92-argocd)
+        - [9.3. Reloader](#93-reloader)
+    - [Chapter 10: Security and Additional Capabilities](#chapter-10-security-and-additional-capabilities)
+        - [10.1. HashiCorp Vault](#101-hashicorp-vault)
+        - [10.2. Keycloak](#102-keycloak)
+        - [10.3. NVIDIA GPU Operator](#103-nvidia-gpu-operator)
+        - [10.4. Other Utilities](#104-other-utilities)
 
-- [Part IV: Future Prospects: StreamForge Roadmap](StreamForge_IV_What_Next_My_Development_Plans.md)
-    - [Chapter 11: Self-Healing Engine: Automated Functionality Recovery](StreamForge_IV_What_Next_My_Development_Plans.md#chapter-11-self-healing-engine-automated-functionality-recovery)
-    - [Chapter 12: Chaos Engineering: System Resilience Verification](StreamForge_IV_What_Next_My_Development_Plans.md#chapter-12-chaos-engineering-system-resilience-verification)
-    - [Chapter 13: Progressive Delivery: Safe Deployment Strategies](StreamForge_IV_What_Next_My_Development_Plans.md#chapter-13-progressive-delivery-safe-deployment-strategies)
+- [Part IV: Future Prospects: StreamForge Roadmap](#part-iv-future-prospects-streamforge-roadmap)
+    - [Chapter 11: Self-Healing Engine: Automated Functionality Recovery](#chapter-11-self-healing-engine-automated-functionality-recovery)
+    - [Chapter 12: Chaos Engineering: System Resilience Verification](#chapter-12-chaos-engineering-system-resilience-verification)
+    - [Chapter 13: Progressive Delivery: Safe Deployment Strategies](#chapter-13-progressive-delivery-safe-deployment-strategies)
 
 - [Part V: Technical Details and Appendices](StreamForge_V_Technical_Details_and_Appendices.md)
     - [Appendix A: Data Schemas and API](StreamForge_V_Technical_Details_and_Appendices.md#appendix-a-data-schemas-and-api)
