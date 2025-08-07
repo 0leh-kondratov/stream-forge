@@ -1,27 +1,27 @@
 ## Part III: Infrastructure and Environment
 
-The **StreamForge** platform is deployed within a high-performance local laboratory and is built upon a foundation of open technologies, focused on ensuring reliability, scalability, and manageability. The central element of the infrastructure is a **Kubernetes** cluster, operating in a virtualized environment and utilizing modern DevOps methodologies and cloud architectural patterns.
+The **StreamForge** platform is deployed within a high-performance, on-premises environment engineered for maximum reliability, scalability, and operational efficiency. The infrastructure is built upon a curated stack of enterprise-grade open-source technologies. At its core is a **Kubernetes** cluster, operating within a virtualized environment and managed through modern GitOps methodologies and cloud-native architectural patterns.
 
 ### Chapter 5: Platform Fundamentals: Kubernetes and Virtualization
 
 #### 5.1. Foundation: Proxmox VE
 
-**Proxmox VE** is used as the base virtualization layer—a mature, enterprise-grade platform that provides isolation of computing environments, high availability, and centralized resource management. Virtual machines deployed on Proxmox VE, serve as hosts for Kubernetes cluster nodes.
+**Proxmox VE** serves as the foundational virtualization layer—a mature, enterprise-grade platform that provides robust isolation of computing environments, high availability, and centralized resource management. Virtual machines deployed on Proxmox VE serve as the hosts for the Kubernetes cluster nodes.
 
 #### 5.2. Cluster Deployment: Kubespray
 
-The Kubernetes cluster is deployed using **Kubespray**—an automated tool recommended by CNCF for production environments. Kubespray ensures an idempotent and repeatable setup process, including the installation of control-plane components, configuration of network topology, and integration with TLS solutions, guaranteeing consistency and reproducibility of deployment.
+The Kubernetes cluster is deployed using **Kubespray**—a CNCF-conformant, automated tool for production-ready environments. Kubespray delivers an idempotent and repeatable deployment process, encompassing control-plane installation, network topology configuration, and TLS integration, thereby guaranteeing cluster consistency and reproducibility.
 
 #### 5.3. Network Infrastructure
 
-StreamForge's network infrastructure is designed to ensure high reliability and adaptability, focusing on fault tolerance and transparent external access:
+StreamForge's network infrastructure is engineered for high reliability and adaptability, with a focus on fault tolerance and transparent external access:
 
 - **kube-vip** provides a virtual IP address for High Availability (HA) access to the Kubernetes API, allowing automatic traffic redirection in case of a control plane node failure.
 - **MetalLB** version `0.14.9` is used in Layer2 mode to support `LoadBalancer` type services in a bare-metal environment, eliminating the need for a hardware load balancer.
 
 #### 5.4. Ingress and Gateway API: Traffic Management
 
-Two Ingress controllers are used in StreamForge for managing incoming traffic, ensuring flexible routing and fault tolerance:
+A dual Ingress controller strategy is employed in StreamForge to manage incoming traffic, ensuring flexible routing and high availability:
 
 - **Traefik** (v36.1.0) — the primary Ingress controller, utilizing the new **Gateway API** for declarative routing and traffic management at L7 (HTTP/HTTPS) and L4 (TCP/UDP) layers.
 - **ingress-nginx** (v4.12.1) — a backup Ingress controller, providing compatibility and additional fault tolerance.
@@ -40,12 +40,12 @@ Settings include:
 
 ##### `script.sh` for TLS Certificate Generation
 
-The `/platform/base/cert/script.sh` script automates the TLS certificate creation cycle, including:
+The `/platform/base/cert/script.sh` script automates the full lifecycle of TLS certificate generation, including:
 1. Configuration of generation and storage parameters;
 2. Creation of CSR with SAN fields (FQDN + IP);
 3. Formation of a `CertificateRequest` resource and submission to `cert-manager`;
 4. Waiting for execution and saving PEM files;
-5. Certificate validation using `openssl`.
+5. Certificate validation via `openssl`.
 
 ---
 
@@ -56,12 +56,12 @@ Persistent data storage is a critically important aspect for ensuring long-term 
 #### 6.1. Overview of Storage Solutions
 
 - **Linstor Piraeus** — a fault-tolerant block storage (RWO) for critical services such as PostgreSQL and ArangoDB, ensuring high availability and data integrity.
-- **GlusterFS** and **NFS Subdir External Provisioner** (v4.0.18) — used to provide shared volumes with RWX (ReadWriteMany) mode, which is ideal for JupyterHub and shared data. The main access path: `192.168.1.6:/data0/k2`.
+- **GlusterFS** and **NFS Subdir External Provisioner** (v4.0.18) — provide shared volumes with RWX (ReadWriteMany) access mode, which is ideal for collaborative environments like JupyterHub and for shared datasets. The primary access path is `192.168.1.6:/data0/k2`.
 
 #### 6.2. Object Storage Minio
 
-**Minio** — an S3-compatible object storage, used for:
-- storing model artifacts (GNN, PPO),
+- **Minio** — an S3-compatible object storage, serves as the primary repository for:
+- storing model artifacts (e.g., GNN, PPO),
 - backing up services and metadata.
 
 Ensures high availability and integration with Kubernetes via StatefulSet.
@@ -72,25 +72,25 @@ Ensures high availability and integration with Kubernetes via StatefulSet.
 
 #### 7.1. Strimzi Kafka Operator
 
-**Strimzi** provides a full lifecycle management for Apache Kafka in a Kubernetes environment, including deployment, updates, topic configuration, encryption, and monitoring. Integration is achieved through `KafkaUser`, `KafkaTopic`, and `KafkaConnect` resources.
+**Strimzi** automates the full lifecycle management of Apache Kafka within a Kubernetes environment, including deployment, updates, topic configuration, encryption, and monitoring. Integration is achieved declaratively through Custom Resources such as `KafkaUser`, `KafkaTopic`, and `KafkaConnect`.
 
 #### 7.2. ArangoDB: Multi-Model Database
 
-ArangoDB is a multi-model database that effectively combines document- and graph-oriented data models within a single engine:
+ArangoDB is a multi-model database that natively integrates document and graph data models within a single engine:
 - **Documents**: used for storing historical candles and events, providing flexibility and scalability.
 - **Graphs**: applied to describe complex relationships between assets and trading operations, which is critically important for the functioning of Graph Neural Networks (GNN).
 
 #### 7.3. PostgreSQL (Zalando Operator)
 
-**Zalando Operator** ensures the deployment and management of PostgreSQL clusters with high availability, automatic backup, and failover mechanisms. This solution is used for storing structured tables containing information about Return on Investment (ROI), agent action logs, and metadata about experiments.
+The **Zalando Operator** manages the deployment and operation of PostgreSQL clusters with high availability, automated backups, and failover mechanisms. This solution is used for storing structured relational data, including Return on Investment (ROI) tables, agent action logs, and experiment metadata.
 
 #### 7.4. Autoscaling with KEDA
 
-**KEDA** (Kubernetes Event-driven Autoscaling) is a component that dynamically scales the number of consumer pods based on the volume of messages in Apache Kafka. This ensures optimal adaptation to peak and low loads without the need for manual intervention, leading to reduced operational costs and minimized idle time.
+**KEDA** (Kubernetes Event-driven Autoscaling) enables dynamic, event-driven scaling of consumer pods based on the message backlog in Apache Kafka. This ensures optimal adaptation to fluctuating workloads without manual intervention, which optimizes resource utilization, reduces operational costs, and minimizes processing latency.
 
 #### 7.5. Kafka UI
 
-**Kafka UI** is a web interface developed by `provectuslabs` that provides intuitive visual control over topics, consumer groups, users, and messages in Apache Kafka.
+**Kafka UI**, a web interface from `provectuslabs`, offers an intuitive visual control plane for managing topics, consumer groups, users, and messages in Apache Kafka.
 
 Parameters:
 - Access at `https://kafka-ui.dmz.home`
@@ -102,11 +102,11 @@ Parameters:
 
 ### Chapter 8: Monitoring and Observability: Comprehensive System Control
 
-To ensure stable operation and prompt incident response, StreamForge implements a comprehensive monitoring and observability system.
+To ensure stable operation and enable rapid incident response, StreamForge leverages a comprehensive observability stack.
 
 #### 8.1. Metrics: Prometheus, NodeExporter, cAdvisor
 
-- **Prometheus** — a time-series collection and storage system used for aggregating system and application metrics.
+- **Prometheus** — the core time-series database for collecting and storing system and application metrics.
 - **cAdvisor** — a tool for monitoring container resources and performance.
 - **NodeExporter** — an exporter for operating system and host metrics.
 
@@ -117,7 +117,7 @@ Components:
 
 #### 8.2. Logs: Fluent-bit, Elasticsearch, Kibana
 
-The **EFK stack** (Elasticsearch, Fluent-bit, Kibana) is used for centralized collection, routing, and analysis of logs in the StreamForge system:
+A centralized logging pipeline based on the **EFK stack** (Elasticsearch, Fluent-bit, Kibana) is implemented for system-wide log aggregation, routing, and analysis:
 
 - **Fluent-bit** applies a Lua filter for dynamic index creation based on tags (e.g., `internal-myapp-2025.08.07`), providing flexibility in log indexing.
 - **Elasticsearch** provides full-text search, aggregations, and log storage.
@@ -125,18 +125,18 @@ The **EFK stack** (Elasticsearch, Fluent-bit, Kibana) is used for centralized co
 
 #### 8.3. Grafana and Alertmanager
 
-- **Grafana** — a data visualization platform integrated with Prometheus, Elasticsearch, and PostgreSQL for a comprehensive view of metrics and logs.
-- **Alertmanager** — a component responsible for routing and sending alerts via email and Telegram based on defined rules.
+- **Grafana** — the primary platform for data visualization, integrated with Prometheus, Elasticsearch, and PostgreSQL to provide a unified view of system metrics and logs.
+- **Alertmanager** — manages the routing, grouping, and dispatching of alerts via email and Telegram based on predefined rules.
 
 ---
 
 ### Chapter 9: Automation and GitOps: Optimizing Deployment Processes
 
-StreamForge implements a GitOps approach that automates and simplifies deployment and infrastructure management processes, minimizing manual intervention and increasing reliability.
+StreamForge is managed through a strict GitOps methodology, which automates and streamlines deployment and infrastructure management, thereby minimizing manual intervention and enhancing system reliability.
 
 #### 9.1. GitLab Runner
 
-The CI/CD pipeline is built on GitLab CI and uses `kaniko` for secure container image building without the need for a Docker Daemon.
+CI/CD pipelines are powered by GitLab CI, utilizing `kaniko` for secure, daemonless container image builds directly within the Kubernetes cluster.
 
 - The Runner operates in a `kubernetes` executor with a `nodeSelector` on node `k2w-9` for optimal resource distribution.
 - Minio-based caching is supported to speed up the build process.
@@ -161,7 +161,7 @@ Each service (e.g., `dummy-service`) uses `SERVICE_NAME`, `SERVICE_PATH` variabl
 
 #### 9.2. ArgoCD
 
-**ArgoCD** is a declarative GitOps tool designed for automated management of Kubernetes cluster state based on a Git repository. It provides:
+**ArgoCD** is the declarative GitOps engine responsible for the automated management of the Kubernetes cluster state based on a Git repository. It provides:
 
 - **Single Source of Truth:** The `iac_kubeadm` repository (`gitlab.dmz.home`) serves as the single source of truth for cluster configuration.
 - **TLS Support:** Secure communication with GitLab is ensured via TLS.
@@ -171,7 +171,7 @@ Each service (e.g., `dummy-service`) uses `SERVICE_NAME`, `SERVICE_PATH` variabl
 
 #### 9.3. Reloader
 
-**Reloader** is a utility that ensures automatic reloading of pods in Kubernetes when associated `Secret` or `ConfigMap` objects change. This guarantees that applications always use the latest configuration without manual intervention, maintaining consistency of deployed components.
+**Reloader** is a lightweight controller that automates the rolling update of pods when their associated `Secret` or `ConfigMap` objects are modified. This guarantees that applications always use the latest configuration without manual intervention.
 
 ---
 
@@ -179,15 +179,15 @@ Each service (e.g., `dummy-service`) uses `SERVICE_NAME`, `SERVICE_PATH` variabl
 
 #### 10.1. HashiCorp Vault
 
-**HashiCorp Vault** is used in combination with the `Vault CSI Driver` for secure and dynamic delivery of temporary secrets to Kubernetes pods, preventing their persistent storage within the cluster.
+**HashiCorp Vault** is integrated with the `Vault CSI Driver` to facilitate the secure and dynamic injection of temporary secrets into Kubernetes pods, preventing their persistent storage within the cluster.
 
 #### 10.2. Keycloak
 
-**Keycloak** is a unified authentication and access management (IAM) server for all platform services. It supports SSO (Single Sign-On) and OpenID Connect standards, and integrates with Grafana, Kibana, and ArgoCD for centralized user and permission management.
+**Keycloak** serves as the central Identity and Access Management (IAM) solution for all platform services. It supports SSO (Single Sign-On) and OpenID Connect standards, integrating with Grafana, Kibana, and ArgoCD for centralized user and permission management.
 
 #### 10.3. NVIDIA GPU Operator
 
-**NVIDIA GPU Operator** automatically detects and configures GPUs in a Kubernetes cluster, eliminating the need for manual driver installation.
+The **NVIDIA GPU Operator** automates the management of NVIDIA GPU resources within the Kubernetes cluster, including driver installation and configuration, thereby abstracting hardware complexities.
 
 - Version: `v24.9.2`
 - GNN Training Support: Provides the necessary infrastructure for efficient Graph Neural Network training.
@@ -195,5 +195,5 @@ Each service (e.g., `dummy-service`) uses `SERVICE_NAME`, `SERVICE_PATH` variabl
 
 #### 10.4. Other Utilities
 
-- `kubed` — a utility for synchronizing configurations between namespaces in Kubernetes, ensuring configuration consistency.
-- `Mailrelay` — a centralized SMTP bus used for sending notifications from various system components, such as Alertmanager, CronJobs, and CI/CD pipelines.
+- `kubed` — a controller for synchronizing Kubernetes resources (e.g., Secrets, ConfigMaps) between namespaces, ensuring configuration consistency.
+- `Mailrelay` — a centralized SMTP relay for dispatching notifications from various system components, including Alertmanager, CronJobs, and CI/CD pipelines.
