@@ -22,8 +22,6 @@ The StreamForge architecture is engineered around several core principles to del
 
 The following diagram illustrates the data flow for a typical historical data ingestion workflow within the StreamForge ecosystem:
 
-![StreamForge Data Flow Diagram](digram.png)
-
 **Step-by-step process description:**
 1.  **Workflow Initiation:** A user or automated process initiates a data processing workflow via a request to the `queue-manager` API.
 2.  **State Registration:** `queue-manager` registers the new workflow in ArangoDB, assigning it a unique `queue_id` and an initial `pending` status.
