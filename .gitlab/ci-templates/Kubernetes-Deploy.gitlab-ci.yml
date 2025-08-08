@@ -3,6 +3,27 @@
   image: bitnami/kubectl:latest
   script:
     - kubectl apply -f $CI_PROJECT_DIR/$K8S_MANIFEST_PATH
+  after_script:
+    - |
+      if [ "$CI_JOB_STATUS" == "success" ]; then
+        BADGE_COLOR="brightgreen"
+        BADGE_TEXT="passing"
+      else
+        BADGE_COLOR="red"
+        BADGE_TEXT="failed"
+      fi
+      apt-get update -y && apt-get install -y --no-install-recommends curl git
+      git config --global user.email "gitlab-ci@dmz.home"
+      git config --global user.name "GitLab CI"
+      mkdir -p badges/main
+      curl -s "https://img.shields.io/badge/${CI_JOB_NAME}-${BADGE_TEXT}-${BADGE_COLOR}" > "badges/main/${CI_JOB_NAME}.svg"
+      git add "badges/main/${CI_JOB_NAME}.svg"
+      if git diff --staged --quiet; then
+        echo "No changes to commit"
+      else
+        git commit -m "ci: update ${CI_JOB_NAME} badge to ${BADGE_TEXT} [skip ci]"
+        git push https://oauth2:${GIT_PUSH_TOKEN}@gitlab.dmz.home/kinga/stream-forge.git HEAD:main
+      fi
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
       when: on_success
