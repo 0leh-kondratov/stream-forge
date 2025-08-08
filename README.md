@@ -1,8 +1,8 @@
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)  [![linkedin](https://img.shields.io/badge/linkedin-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/)
 
-## Состояние сервисов
+### Status service
 
-| Сервис | Version | Build | Test | Deploy |
+| Service | Version | Build | Test | Deploy |
 | :--- | :---: | :---: | :--: | :----: |
 | **queue-manager** | ![version-queue-manager](badges/main/version-queue-manager.svg) | ![build-queue-manager](badges/main/build-queue-manager.svg) | ![test-queue-manager](badges/main/test-queue-manager.svg) | ![deploy-queue-manager](badges/main/deploy-queue-manager.svg) |
 | **dummy-service** | ![version-dummy-service](badges/main/version-dummy-service.svg) | ![build-dummy-service](badges/main/build-dummy-service.svg) | | ![deploy-dummy-service](badges/main/deploy-dummy-service.svg) |
