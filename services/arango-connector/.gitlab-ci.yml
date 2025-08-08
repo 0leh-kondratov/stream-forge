@@ -2,9 +2,24 @@ include:
   - project: 'kinga/stream-forge'
     ref: main
     file: '/.gitlab/ci-templates/Python-Service.gitlab-ci.yml'
+  - project: 'kinga/stream-forge'
+    ref: main
+    file: '/.gitlab/ci-templates/Kubernetes-Deploy.gitlab-ci.yml'
 
 build-arango-connector:
   extends: .build_python_service
   variables:
     SERVICE_NAME: arango-connector
     SERVICE_PATH: services/arango-connector
+
+test-arango-connector:
+  extends: .test_python_service
+  variables:
+    SERVICE_PATH: services/arango-connector
+  when: manual
+
+deploy-arango-connector:
+  extends: .deploy_kubernetes_service
+  variables:
+    K8S_MANIFEST_PATH: services/arango-connector/k8s/deployment.yaml
+  when: manual
