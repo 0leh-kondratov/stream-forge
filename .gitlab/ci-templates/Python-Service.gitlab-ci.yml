@@ -1,6 +1,6 @@
 .build_python_service:
   stage: build
-  image: registry.dmz.home/kinga/stream-forge/kaniko-plus:v0.0.2
+  image: registry.dmz.home/kinga/stream-forge/kaniko-plus:v0.0.3
   script:
     # Переменные $SERVICE_NAME и $SERVICE_PATH должны быть определены в job'е сервиса
     - SERVICE_VERSION=$(cat $CI_PROJECT_DIR/$SERVICE_PATH/VERSION)
