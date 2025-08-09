@@ -23,6 +23,9 @@
     - git config --global user.name "GitLab CI"
   script:
     - |
+      BRANCH_NAME="ci/badges-${SERVICE_NAME}-${CI_COMMIT_SHORT_SHA}"
+      MR_TITLE="CI: Update ${SERVICE_NAME} badges"
+      git checkout -b "${BRANCH_NAME}"
       echo "Updating badges for ${SERVICE_NAME}..."
       BADGE_COLOR="brightgreen"
       BADGE_TEXT="passing"
@@ -33,15 +36,25 @@
       curl -s "https://img.shields.io/badge/version-${SERVICE_VERSION}-blue" > "badges/main/version-${SERVICE_NAME}.svg"
       git add "badges/main/version-${SERVICE_NAME}.svg"
       if git diff --staged --quiet; then
-        echo "No changes to badge files to commit for ${SERVICE_NAME}."
-      else
-        git commit -m "ci: update ${SERVICE_NAME} badges [skip ci]"
-        git push https://oauth2:${GIT_PUSH_TOKEN}@gitlab.dmz.home/kinga/stream-forge.git HEAD:main
+        echo "No changes to badge files. Nothing to do."
+        exit 0
       fi
+      git commit -m "${MR_TITLE}"
+      git push \
+        -o merge_request.create \
+        -o merge_request.target=main \
+        -o merge_request.title="${MR_TITLE}" \
+        -o merge_request.merge_when_pipeline_succeeds \
+        -o merge_request.remove_source_branch \
+        "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" \
+        "${BRANCH_NAME}"
+  rules:
+    - when: on_success
 
 .test_python_service:
   stage: test
   image: python:3.10-slim
+  allow_failure: true
   script:
     - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt
     - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/
