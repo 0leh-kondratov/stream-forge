@@ -6,11 +6,7 @@
     - SERVICE_VERSION=$(cat $CI_PROJECT_DIR/$SERVICE_PATH/VERSION)
     - mkdir -p /kaniko/.docker
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-    - >
-      /kaniko/executor
-      --context $CI_PROJECT_DIR
-      --dockerfile $CI_PROJECT_DIR/Dockerfile
-      --destination $CI_REGISTRY_IMAGE:$VERSION
+    - /kaniko/executor --context $CI_PROJECT_DIR/$SERVICE_PATH --dockerfile $CI_PROJECT_DIR/$SERVICE_PATH/Dockerfile --destination $CI_REGISTRY_IMAGE:$SERVICE_VERSION --destination $CI_REGISTRY_IMAGE:latest
   after_script:
     - |
       if [ "$CI_JOB_STATUS" == "success" ]; then
