@@ -2,9 +2,27 @@ include:
   - project: 'kinga/stream-forge'
     ref: main
     file: '/.gitlab/ci-templates/Python-Service.gitlab-ci.yml'
+  - project: 'kinga/stream-forge'
+    ref: main
+    file: '/.gitlab/ci-templates/Kubernetes-Deploy.gitlab-ci.yml'
 
 build-loader-api-candles:
   extends: .build_python_service
   variables:
     SERVICE_NAME: loader-api-candles
     SERVICE_PATH: services/loader-api-candles
+    CI_REGISTRY_IMAGE: $CI_REGISTRY/kinga/stream-forge/loader-api-candles
+
+update-badge-loader-api-candles:
+  extends: .update_badge_python_service
+  needs:
+    - build-loader-api-candles
+  variables:
+    SERVICE_NAME: loader-api-candles
+    SERVICE_PATH: services/loader-api-candles
+
+test-loader-api-candles:
+  extends: .test_python_service
+  variables:
+    SERVICE_PATH: services/loader-api-candles
+  when: manual

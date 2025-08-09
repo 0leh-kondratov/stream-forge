@@ -11,6 +11,21 @@ build-dummy-service:
   variables:
     SERVICE_NAME: dummy-service
     SERVICE_PATH: services/dummy-service
+    CI_REGISTRY_IMAGE: $CI_REGISTRY/kinga/stream-forge/dummy-service
+
+update-badge-dummy-service:
+  extends: .update_badge_python_service
+  needs:
+    - build-dummy-service
+  variables:
+    SERVICE_NAME: dummy-service
+    SERVICE_PATH: services/dummy-service
+
+test-dummy-service:
+  extends: .test_python_service
+  variables:
+    SERVICE_PATH: services/dummy-service
+  when: manual
 
 deploy-dummy-service:
   extends: .deploy_kubernetes_service
