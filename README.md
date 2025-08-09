@@ -12,6 +12,17 @@
 | **loader-api-candles** | ![version-loader-api-candles](badges/main/version-loader-api-candles.svg) | ![build-loader-api-candles](badges/main/build-loader-api-candles.svg) | ![test-loader-arango-connector](badges/main/test-loader-arango-connector.svg) | ![badges/main/deploy-api-candles.svg](badges/main/deploy-api-candles.svg) |
 | **loader-api-trades** | ![version-loader-api-trades](badges/main/version-loader-api-trades.svg) | ![build-loader-api-trades](badges/main/build-loader-api-trades.svg) | ![test-loader-api-trades](badges/main/test-loader-api-trades.svg) | ![deploy-api-trades.svg](badges/main/deploy-api-trades.svg) |
 
+### Статус сервисов
+
+| Сервис | Сборка | Тесты | Развертывание | Версия |
+|---|---|---|---|---|
+| **arango-connector** | ![build-arango-connector](badges/main/build-arango-connector.svg) | ![test-arango-connector](badges/main/test-loader-arango-connector.svg) | ![deploy-arango-connector](badges/main/deploy-arango-connector.svg) | ![version-arango-connector](badges/main/version-arango-connector.svg) |
+| **dummy-service** | ![build-dummy-service](badges/main/build-dummy-service.svg) | ![test-dummy-service](badges/main/test-dummy-service.svg) | ![deploy-dummy-service](badges/main/deploy-dummy-service.svg) | ![version-dummy-service](badges/main/version-dummy-service.svg) |
+| **loader-api-candles** | ![build-loader-api-candles](badges/main/build-loader-api-candles.svg) | ![test-loader-api-candles](badges/main/test-loader-api-candles.svg) | ![deploy-api-candles](badges/main/deploy-api-candles.svg) | ![version-loader-api-candles](badges/main/version-loader-api-candles.svg) |
+| **loader-api-trades** | ![build-loader-api-trades](badges/main/build-loader-api-trades.svg) | ![test-loader-api-trades](badges/main/test-loader-api-trades.svg) | ![deploy-api-trades](badges/main/deploy-api-trades.svg) | ![version-loader-api-trades](badges/main/version-loader-api-trades.svg) |
+| **queue-manager** | ![build-queue-manager](badges/main/build-queue-manager.svg) | ![test-queue-manager](badges/main/test-queue-manager.svg) | ![deploy-queue-manager](badges/main/deploy-queue-manager.svg) | ![version-queue-manager](badges/main/version-queue-manager.svg) |
+
+
 
 # StreamForge: A High-Performance, Event-Driven Platform for Real-Time Cryptocurrency Data Analytics
 
