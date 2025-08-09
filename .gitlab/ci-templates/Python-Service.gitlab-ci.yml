@@ -99,7 +99,7 @@
   script:
     # Install test dependencies
     - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt
-    - pip install pytest httpx python-arango # Install pytest, httpx, and python-arango
+    - pip install --no-cache-dir --verbose pytest httpx python-arango # Install pytest, httpx, and python-arango
     # Run integration tests
     - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/integration/
   rules:
