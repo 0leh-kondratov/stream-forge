@@ -21,6 +21,15 @@ update-badge-dummy-service:
     SERVICE_NAME: dummy-service
     SERVICE_PATH: services/dummy-service
 
+integration-test-dummy-service:
+  extends: .integration_test_python_service
+  needs:
+    - build-dummy-service
+  variables:
+    SERVICE_NAME: dummy-service
+    SERVICE_PATH: services/dummy-service
+  when: manual # Make it manual for now, user can change later
+
 test-dummy-service:
   extends: .test_python_service
   variables:

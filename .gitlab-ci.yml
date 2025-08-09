@@ -2,6 +2,7 @@ stages:
   - setup
   - build
   - test
+  - integration-test
   - deploy
   - badges
 
