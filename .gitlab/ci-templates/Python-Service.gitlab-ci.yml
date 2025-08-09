@@ -4,10 +4,13 @@
   script:
     # Переменные $SERVICE_NAME и $SERVICE_PATH должны быть определены в job'е сервиса
     - SERVICE_VERSION=$(cat $CI_PROJECT_DIR/$SERVICE_PATH/VERSION)
-    - /kaniko/executor
-      --context $CI_PROJECT_DIR/$SERVICE_PATH
-      --dockerfile Dockerfile
-      --destination $CI_REGISTRY_IMAGE/$SERVICE_NAME:$SERVICE_VERSION
+   - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - >
+      /kaniko/executor
+      --context $CI_PROJECT_DIR
+      --dockerfile $CI_PROJECT_DIR/Dockerfile
+      --destination $CI_REGISTRY_IMAGE:$VERSION
+      --destination $CI_REGISTRY_IMAGE:latest
   after_script:
     - |
       if [ "$CI_JOB_STATUS" == "success" ]; then
