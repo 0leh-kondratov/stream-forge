@@ -14,6 +14,10 @@
     paths:
       - $SERVICE_PATH/VERSION
     expire_in: 1 hour
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - $SERVICE_PATH/**/*
 
 .update_badge_python_service:
   stage: badges
@@ -52,3 +56,8 @@
     - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt
     - pip install pytest # Install pytest
     - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - $SERVICE_PATH/**/*
+    - when: manual
