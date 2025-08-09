@@ -8,6 +8,8 @@ include:
 
 build-dummy-service:
   extends: .build_python_service
+  needs:
+    - test-dummy-service
   variables:
     SERVICE_NAME: dummy-service
     SERVICE_PATH: services/dummy-service
@@ -16,7 +18,7 @@ build-dummy-service:
 update-badge-dummy-service:
   extends: .update_badge_python_service
   needs:
-    - build-dummy-service
+    - integration-test-dummy-service
   variables:
     SERVICE_NAME: dummy-service
     SERVICE_PATH: services/dummy-service
