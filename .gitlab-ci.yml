@@ -7,20 +7,15 @@ stages:
 
 build-kaniko-plus-image:
   stage: build
-  image: docker:latest
-  services:
-    - docker:dind
-  variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
-    KANIKO_PLUS_IMAGE: registry.dmz.home/kinga/stream-forge/kaniko-plus:v0.0.1
+  image: gcr.io/kaniko-project/executor:debug
   script:
-    - apk add --no-cache ca-certificates
-    - cp platform/ci-images/kaniko-plus/ca.crt /usr/local/share/ca-certificates/ca.crt
-    - update-ca-certificates
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD registry.dmz.home
-    - docker build -t $KANIKO_PLUS_IMAGE platform/ci-images/kaniko-plus/
-    - docker push $KANIKO_PLUS_IMAGE
+    # Copy ca.crt to Kaniko's trusted certs store
+    - cp platform/ci-images/kaniko-plus/ca.crt /kaniko/ssl/certs/ca-certificates.crt
+    # Build the image using Kaniko
+    - /kaniko/executor
+      --context $CI_PROJECT_DIR/platform/ci-images/kaniko-plus/
+      --dockerfile Dockerfile
+      --destination registry.dmz.home/kinga/stream-forge/kaniko-plus:v0.0.2
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
       changes:
