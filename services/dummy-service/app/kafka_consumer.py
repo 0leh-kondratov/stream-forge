@@ -8,7 +8,6 @@ from loguru import logger
 from aiokafka import AIOKafkaConsumer
 from app.metrics import dummy_pings_total, dummy_pongs_total
 
-
 class KafkaCommandConsumer:
     def __init__(self, queue_id, telemetry_producer, exit_on_ping=False, shutdown_event: asyncio.Event = None):
         self.topic = os.getenv("QUEUE_CONTROL_TOPIC", "queue-control")

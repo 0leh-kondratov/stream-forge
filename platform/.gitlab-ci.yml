@@ -8,6 +8,7 @@ build-base-image:
   variables:
     SERVICE_NAME: base
     SERVICE_PATH: platform
+  when: manual
 
 #apply-rbac:
 #  stage: setup

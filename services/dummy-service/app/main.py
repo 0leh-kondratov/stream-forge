@@ -17,7 +17,6 @@ from app.metrics import metrics_router
 app = FastAPI(title="Dummy Service")
 app.include_router(metrics_router)
 
-
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true", help="Включить отладочный режим")
@@ -28,7 +27,6 @@ def parse_args():
     parser.add_argument("--fail-after", type=int, help="Завершить ошибкой через N секунд")
     return parser.parse_args()
 
-
 def configure_logging(debug: bool):
     logger.remove()
     logger.add(
@@ -38,12 +36,10 @@ def configure_logging(debug: bool):
         level="DEBUG" if debug else "INFO",
     )
 
-
 def setup_signal_handlers(shutdown_event: asyncio.Event):
     loop = asyncio.get_event_loop()
     for sig in (signal.SIGTERM, signal.SIGINT):
         loop.add_signal_handler(sig, lambda: shutdown_event.set())
-
 
 async def main():
     args = parse_args()
@@ -89,7 +85,5 @@ async def main():
     )
     await telemetry.stop()
 
-
 if __name__ == "__main__":
     asyncio.run(main())
-
