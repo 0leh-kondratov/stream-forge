@@ -8,6 +8,7 @@ stages:
 
 
 include:
+  - '/.gitlab/ci-templates/Python-Service.gitlab-ci.yml'
   - '/services/queue-manager/.gitlab-ci.yml'
   - '/services/loader-api-trades/.gitlab-ci.yml'
   - '/services/loader-api-candles/.gitlab-ci.yml'

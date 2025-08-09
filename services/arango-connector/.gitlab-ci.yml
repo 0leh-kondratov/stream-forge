@@ -11,6 +11,16 @@ build-arango-connector:
   variables:
     SERVICE_NAME: arango-connector
     SERVICE_PATH: services/arango-connector
+    CI_REGISTRY_IMAGE: $CI_REGISTRY/kinga/stream-forge/arango-connector
+
+update-badge-arango-connector:
+  extends: .update_badge_python_service
+  stage: badges
+  needs:
+    - build-arango-connector
+  variables:
+    SERVICE_NAME: arango-connector
+    SERVICE_PATH: services/arango-connector
 
 test-arango-connector:
   extends: .test_python_service
