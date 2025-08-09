@@ -9,12 +9,12 @@ build-base-image:
     SERVICE_NAME: base
     SERVICE_PATH: platform
 
-apply-rbac:
-  stage: setup
-  image: bitnami/kubectl:latest
-  script:
-    - kubectl apply -f $CI_PROJECT_DIR/input/cred-kafka-yaml/full-access-sa.yaml
-    - kubectl apply -f $CI_PROJECT_DIR/input/cred-kafka-yaml/full-access-sa-binding.yaml
-  rules:
-    - when: manual
-      allow_failure: false
+#apply-rbac:
+#  stage: setup
+#  image: bitnami/kubectl:latest
+#  script:
+#    - kubectl apply -f $CI_PROJECT_DIR/input/cred-kafka-yaml/full-access-sa.yaml
+#    - kubectl apply -f $CI_PROJECT_DIR/input/cred-kafka-yaml/full-access-sa-binding.yaml
+#  rules:
+#    - when: manual
+#      allow_failure: false
