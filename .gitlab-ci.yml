@@ -5,23 +5,7 @@ stages:
   - deploy
   - badges
 
-build-kaniko-plus-image:
-  stage: build
-  image: gcr.io/kaniko-project/executor:debug
-  script:
-    # Copy ca.crt to Kaniko's trusted certs store
-    - cp platform/ci-images/kaniko-plus/ca.crt /kaniko/ssl/certs/ca-certificates.crt
-    # Build the image using Kaniko
-    - /kaniko/executor
-      --context $CI_PROJECT_DIR/platform/ci-images/kaniko-plus/
-      --dockerfile Dockerfile
-      --destination registry.dmz.home/kinga/stream-forge/kaniko-plus:v0.0.2
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
-      changes:
-        - platform/ci-images/kaniko-plus/Dockerfile
-        - platform/ci-images/kaniko-plus/ca.crt
-    - when: manual
+
 
 include:
   - '/services/queue-manager/.gitlab-ci.yml'
