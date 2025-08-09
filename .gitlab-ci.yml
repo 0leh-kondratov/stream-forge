@@ -1,7 +1,29 @@
 stages:
+  - setup
   - build
   - test
   - deploy
+  - badges
+
+build-kaniko-plus-image:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    KANIKO_PLUS_IMAGE: registry.dmz.home/kinga/stream-forge/kaniko-plus:v0.0.1
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD registry.dmz.home
+    - docker build -t $KANIKO_PLUS_IMAGE platform/ci-images/kaniko-plus/
+    - docker push $KANIKO_PLUS_IMAGE
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      changes:
+        - platform/ci-images/kaniko-plus/Dockerfile
+        - platform/ci-images/kaniko-plus/ca.crt
+    - when: manual
 
 include:
   - '/services/queue-manager/.gitlab-ci.yml'
