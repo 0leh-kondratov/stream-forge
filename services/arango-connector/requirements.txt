@@ -5,3 +5,4 @@ uvloop==0.17.0
 aiohttp==3.9.5
 aiokafka==0.10.0
 python-arango==7.6.0
+pytest
