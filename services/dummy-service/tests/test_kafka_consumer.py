@@ -276,4 +276,4 @@ async def test_consume_general_exception_in_loop(consumer_instance, mock_aiokafk
         await asyncio.sleep(0.1) # Give consume loop a chance to run
         mock_logger_error.assert_called_once()
         assert "Kafka consume loop failed" in mock_logger_error.call_args[0][0]
-        assert "Test exception" in mock_logger_error.call_args[0][0]}
+        assert "Test exception" in mock_logger_error.call_args[0][0]

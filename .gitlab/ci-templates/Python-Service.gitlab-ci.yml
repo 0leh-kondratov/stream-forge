@@ -57,7 +57,7 @@
   allow_failure: true
   script:
     - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt
-    - pip install pytest # Install pytest
+    - pip install pytest pytest-asyncio # Install pytest and pytest-asyncio
     - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
