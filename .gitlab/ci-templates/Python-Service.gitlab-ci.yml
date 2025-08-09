@@ -17,9 +17,8 @@
 
 .update_badge_python_service:
   stage: badges
-  image: alpine:3.18
+  image: ${KANIKO_IMAGE}
   before_script:
-    - apk add --no-cache git curl
     - git config --global user.email "gitlab-ci@dmz.home"
     - git config --global user.name "GitLab CI"
   script:
