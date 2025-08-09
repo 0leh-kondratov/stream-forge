@@ -1,6 +1,0 @@
-loguru
-aiokafka
-python-dotenv
-prometheus_client
-fastapi
-uvicorn[standard]

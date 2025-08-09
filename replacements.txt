@@ -1,4 +1,3 @@
-# Удаляем приватные ключи целиком
 regex:-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----==>[REDACTED_PRIVATE_KEY]
 # key: <секрет>  ->  key: REDACTED
 regex:(?i)\b(token|access[_-]?token|secret|password)\b\s*[:=]\s*["']?([A-Za-z0-9._-]+)["']?==>\1: "REDACTED"
