@@ -6,15 +6,9 @@
     - SERVICE_VERSION=$(cat $CI_PROJECT_DIR/$SERVICE_PATH/VERSION)
     - mkdir -p /kaniko/.docker
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-    - echo "--- DEBUGGING SSL ---"
-    - apk add --no-cache openssl
-    - echo | openssl s_client -connect registry.dmz.home:443 -showcerts
-    - echo "--- CHECKING TRUST STORE ---"
-    - ls -l /etc/ssl/certs
-    - grep "My CA" /etc/ssl/certs/ca-certificates.crt || echo "Custom CA not found in trust store!"
-    - echo "--- END DEBUGGING ---"
     - /kaniko/executor --context $CI_PROJECT_DIR/$SERVICE_PATH --dockerfile $CI_PROJECT_DIR/$SERVICE_PATH/Dockerfile --destination $CI_REGISTRY_IMAGE:$SERVICE_VERSION --destination $CI_REGISTRY_IMAGE:latest
   after_script:
+    - apk add --no-cache git curl
     - |
       if [ "$CI_JOB_STATUS" == "success" ]; then
         BADGE_COLOR="brightgreen"
