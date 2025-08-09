@@ -9,17 +9,8 @@
       --dockerfile Dockerfile
       --destination $CI_REGISTRY_IMAGE/$SERVICE_NAME:$SERVICE_VERSION
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      changes:
-        - $SERVICE_PATH/**/*
-        - libs/**/* # Пересобирать сервис, если изменилась общая библиотека
-    - if: '$CI_COMMIT_BRANCH == "main"'
-      changes:
-        - $SERVICE_PATH/**/*
-        - libs/**/*
-    - when: manual # Добавляет кнопку "Play" в UI для этого job'а
+    - when: manual
       allow_failure: false
-
 
 .test_python_service:
   stage: test
@@ -29,13 +20,5 @@
     - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt
     - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      changes:
-        - $SERVICE_PATH/**/*
-        - libs/**/*
-    - if: '$CI_COMMIT_BRANCH == "main"'
-      changes:
-        - $SERVICE_PATH/**/*
-        - libs/**/*
     - when: manual
       allow_failure: false
