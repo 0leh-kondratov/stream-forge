@@ -50,6 +50,73 @@
     - if: $CI_COMMIT_BRANCH == "main"
       changes:
         - $SERVICE_PATH/**/*
+    - when: on_success
+
+.test_python_service:
+  stage: test
+  image: registry.dmz.home/kinga/stream-forge/base:latest # Using the unified base image
+  allow_failure: true
+  script:
+    - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt # Keep service-specific requirements
+    - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/test_*.py
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - $SERVICE_PATH/**/*
+    - when: manual
+
+.integration_test_python_service:
+  stage: integration-test
+  image: ${CI_REGISTRY_IMAGE}:latest # Use the built image
+  needs:
+    - job: build-${SERVICE_NAME}
+      when: on_success # Depends on the build job
+  variables:
+    # Pass Kafka/ArangoDB connection details to the test environment
+    KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+    KAFKA_USER: ${KAFKA_USER}
+    KAFKA_PASSWORD: ${KAFKA_PASSWORD}
+    KAFKA_CA_PATH: ${KAFKA_CA_PATH}
+    ARANGO_URL: ${ARANGO_URL}
+    ARANGO_DB: ${ARANGO_DB}
+    # ... other relevant environment variables for the service
+  before_script:
+    # Ensure curl is available for health checks
+    - apk add --no-cache curl
+    # Start the service in the background
+    - python -m app.main --noop & # Run with --noop to avoid starting Kafka consumer
+    # Wait for the service to be ready (e.g., check its /metrics endpoint)
+    - |
+      echo "Waiting for service to start..."
+      for i in $(seq 1 30); do
+        if curl -s http://localhost:8000/metrics > /dev/null; then
+          echo "Service is up!"
+          break
+        fi
+        echo "Service not ready yet. Waiting ${i}s..."
+        sleep ${i}
+      done
+      curl http://localhost:8000/metrics # Show metrics for debugging
+  script:
+    # Install service-specific dependencies if not already in image
+    - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt
+    # Debugging arango import issue
+    - echo "--- Debugging Python environment ---"
+    - python -c "import sys; print(sys.path)"
+    - pip freeze
+    - python -c "try: import arango; print('arango imported successfully from script'); except ImportError as e: print(f'Failed to import arango from script: {e}')"
+    - echo "--- End Debugging ---"
+    # Run integration tests
+    - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/integration/
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - $SERVICE_PATH/**/*
+    - when: manual
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - $SERVICE_PATH/**/*
       when: on_success
 
 .test_python_service:
