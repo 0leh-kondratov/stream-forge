@@ -10,8 +10,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 COPY ca.crt /usr/local/share/ca-certificates/dev-ca.crt
 RUN update-ca-certificates
 
-# Install common Python and test dependencies
-RUN pip install --no-cache-dir uvloop loguru aiokafka pytest pytest-asyncio httpx python-arango python-dotenv prometheus_client fastapi "uvicorn[standard]"
+# Copy and install common Python and test dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy and install our common library via wheel
 COPY libs /tmp/libs

@@ -1,0 +1,11 @@
+uvloop
+loguru
+aiokafka
+pytest
+pytest-asyncio
+httpx
+python-arango
+python-dotenv
+prometheus_client
+fastapi
+uvicorn[standard]
