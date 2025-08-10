@@ -1,8 +1,5 @@
-# Уникальные зависимости
-python-arango
-loguru==0.7.2
-uvloop==0.17.0
-aiohttp==3.9.5
-aiokafka==0.10.0
-python-arango==7.6.0
-pytest
+aioarango
+aiokafka
+loguru
+uvloop
+python-dotenv

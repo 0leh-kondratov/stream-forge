@@ -20,8 +20,8 @@ BINANCE_WS_URL: str = os.getenv("BINANCE_WS_URL", "wss://stream.binance.com:9443
 # Kafka
 KAFKA_BOOTSTRAP_SERVERS: str = os.getenv("KAFKA_BOOTSTRAP_SERVERS")
 KAFKA_TOPIC: str = os.getenv("KAFKA_TOPIC")
-KAFKA_USER: str = os.getenv("KAFKA_USER")
-KAFKA_PASSWORD: str = os.getenv("KAFKA_PASSWORD")
+KAFKA_USER_PRODUCER: str = os.getenv("KAFKA_USER_PRODUCER") # Standardized
+KAFKA_PASSWORD_PRODUCER: str = os.getenv("KAFKA_PASSWORD_PRODUCER") # Standardized
 CA_PATH: str = os.getenv("CA_PATH", "/usr/local/share/ca-certificates/ca.crt")
 
 # Метки телеметрии и Webhook

@@ -1,45 +1,46 @@
+import asyncio
 import json
+import ssl # Import ssl for SSLContext
 from aiokafka import AIOKafkaConsumer
 from loguru import logger
-from app.config import (
-    QUEUE_ID,
-    KAFKA_BOOTSTRAP_SERVERS,
-    KAFKA_USER,
-    KAFKA_PASSWORD,
-    CA_PATH,
-    QUEUE_CONTROL_TOPIC,
-)
+from app import config # Import config
 
-
-class KafkaControlConsumer:
+class KafkaControlListener: # Renamed from KafkaControlConsumer
     """
-    Kafka consumer для прослушивания команд управления (например: stop).
+    Kafka consumer for listening to control commands (e.g., stop).
     """
-
     def __init__(self, queue_id: str):
         self.queue_id = queue_id
-        self.consumer: AIOKafkaConsumer | None = None
-        self.records_written: int = 0
+        self.topic = config.QUEUE_CONTROL_TOPIC # Use config
+        self.bootstrap_servers = config.KAFKA_BOOTSTRAP_SERVERS # Use config
+        self.username = config.KAFKA_USER_CONSUMER # Use KAFKA_USER_CONSUMER
+        self.password = config.KAFKA_PASSWORD_CONSUMER # Use KAFKA_PASSWORD_CONSUMER
+        self.ca_path = config.CA_PATH # Use config
+        self.consumer = None
 
     async def start(self):
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT) # Use ssl.SSLContext
+        ssl_context.verify_mode = ssl.CERT_REQUIRED
+        ssl_context.load_verify_locations(cafile=self.ca_path)
+
         self.consumer = AIOKafkaConsumer(
-            QUEUE_CONTROL_TOPIC,
-            bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS,
-            group_id=f"{self.queue_id}-control-group",
+            self.topic,
+            bootstrap_servers=self.bootstrap_servers,
+            group_id=f"control-listener-{self.queue_id}", # Consistent group ID
             security_protocol="SASL_SSL",
             sasl_mechanism="SCRAM-SHA-512",
-            sasl_plain_username=KAFKA_USER,
-            sasl_plain_password=KAFKA_PASSWORD,
-            ssl_cafile=CA_PATH,
+            sasl_plain_username=self.username,
+            sasl_plain_password=self.password,
+            ssl_context=ssl_context, # Use ssl_context
             enable_auto_commit=True,
             value_deserializer=lambda m: json.loads(m.decode("utf-8")),
         )
         await self.consumer.start()
-        logger.info("📥 Kafka consumer запущен (управление очередью).")
+        logger.info(f"Kafka control listener started for queue_id: {self.queue_id}") # Consistent log message
 
     async def listen(self):
         if not self.consumer:
-            raise RuntimeError("Consumer не инициализирован.")
+            raise RuntimeError("Consumer not initialized.")
         async for msg in self.consumer:
             command = msg.value
             if command.get("queue_id") == self.queue_id:
@@ -48,4 +49,4 @@ class KafkaControlConsumer:
     async def stop(self):
         if self.consumer:
             await self.consumer.stop()
-            logger.info("🛑 Kafka consumer остановлен.")
+            logger.info("Kafka control listener stopped.") # Consistent log message

@@ -1,0 +1,31 @@
+# values.yaml for arango-graph-prep
+
+isJob: true
+
+image:
+  repository: registry.dmz.home/kinga/stream-forge/arango-graph-prep
+  tag: 1.0.0 # Initial version
+
+env:
+  # Common Kafka and ArangoDB variables will be inherited from the base chart
+  # Specific variables for arango-graph-prep
+  - name: COLLECTION_NAME
+    value: "prepared_graph_data_2024_08_01" # Example, will be set by queue-manager
+  - name: KAFKA_TOPIC
+    value: "raw-data-topic" # Example, will be set by queue-manager
+  - name: TELEMETRY_PRODUCER_ID
+    value: "arango-graph-prep-instance" # Example, will be set by queue-manager
+
+serviceAccount:
+  rbac:
+    rules:
+      # Minimal permissions for an arango-graph-prep
+      - apiGroups: [""]
+        resources: ["pods"]
+        verbs: ["get", "list"]
+      - apiGroups: [""]
+        resources: ["configmaps", "secrets"]
+        verbs: ["get"]
+      - apiGroups: ["kafka.strimzi.io"]
+        resources: ["kafkatopics", "kafkausers"]
+        verbs: ["get", "list"]

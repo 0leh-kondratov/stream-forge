@@ -1,0 +1,35 @@
+# values.yaml for loader-ws-candles
+
+isJob: true
+
+image:
+  repository: registry.dmz.home/kinga/stream-forge/loader-ws-candles
+  tag: 1.0.0 # Initial version
+
+env:
+  # Common Kafka and WS variables will be inherited from the base chart
+  # Specific variables for loader-ws-candles
+  - name: SYMBOL
+    value: "BTCUSDT" # Example, will be set by queue-manager
+  - name: TYPE
+    value: "ws_candles" # Example, will be set by queue-manager
+  - name: INTERVAL
+    value: "1m" # Example, will be set by queue-manager
+  - name: KAFKA_TOPIC
+    value: "loader-ws-candles-data" # Example, will be set by queue-manager
+  - name: TELEMETRY_PRODUCER_ID
+    value: "loader-ws-candles-instance" # Example, will be set by queue-manager
+
+serviceAccount:
+  rbac:
+    rules:
+      # Minimal permissions for a loader-ws-candles
+      - apiGroups: [""]
+        resources: ["pods"]
+        verbs: ["get", "list"]
+      - apiGroups: [""]
+        resources: ["configmaps", "secrets"]
+        verbs: ["get"]
+      - apiGroups: ["kafka.strimzi.io"]
+        resources: ["kafkatopics", "kafkausers"]
+        verbs: ["get", "list"]

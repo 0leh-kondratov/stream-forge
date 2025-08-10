@@ -1,0 +1,34 @@
+include:
+  - project: 'kinga/stream-forge'
+    ref: main
+    file: '/.gitlab/ci-templates/Python-Service.gitlab-ci.yml'
+  - project: 'kinga/stream-forge'
+    ref: main
+    file: '/.gitlab/ci-templates/Kubernetes-Deploy.gitlab-ci.yml'
+
+build-loader-producer:
+  extends: .build_python_service
+  variables:
+    SERVICE_NAME: loader-producer
+    SERVICE_PATH: services/loader-producer
+    CI_REGISTRY_IMAGE: $CI_REGISTRY/kinga/stream-forge/loader-producer
+
+update-badge-loader-producer:
+  extends: .update_badge_python_service
+  needs:
+    - build-loader-producer
+  variables:
+    SERVICE_NAME: loader-producer
+    SERVICE_PATH: services/loader-producer
+
+test-loader-producer:
+  extends: .test_python_service
+  variables:
+    SERVICE_PATH: services/loader-producer
+  when: manual
+
+deploy-loader-producer:
+  extends: .deploy_kubernetes_service
+  variables:
+    K8S_MANIFEST_PATH: services/loader-producer/k8s/deployment.yaml
+  when: manual

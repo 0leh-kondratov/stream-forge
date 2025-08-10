@@ -1,0 +1,34 @@
+include:
+  - project: 'kinga/stream-forge'
+    ref: main
+    file: '/.gitlab/ci-templates/Python-Service.gitlab-ci.yml'
+  - project: 'kinga/stream-forge'
+    ref: main
+    file: '/.gitlab/ci-templates/Kubernetes-Deploy.gitlab-ci.yml'
+
+build-loader-ws-orderbook:
+  extends: .build_python_service
+  variables:
+    SERVICE_NAME: loader-ws-orderbook
+    SERVICE_PATH: services/loader-ws-orderbook
+    CI_REGISTRY_IMAGE: $CI_REGISTRY/kinga/stream-forge/loader-ws-orderbook
+
+update-badge-loader-ws-orderbook:
+  extends: .update_badge_python_service
+  needs:
+    - build-loader-ws-orderbook
+  variables:
+    SERVICE_NAME: loader-ws-orderbook
+    SERVICE_PATH: services/loader-ws-orderbook
+
+test-loader-ws-orderbook:
+  extends: .test_python_service
+  variables:
+    SERVICE_PATH: services/loader-ws-orderbook
+  when: manual
+
+deploy-loader-ws-orderbook:
+  extends: .deploy_kubernetes_service
+  variables:
+    K8S_MANIFEST_PATH: services/loader-ws-orderbook/k8s/deployment.yaml
+  when: manual

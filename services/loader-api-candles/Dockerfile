@@ -1,8 +1,13 @@
-FROM registry.dmz.home/kinga/stream-forge/base:v0.1.0
+FROM registry.dmz.home/kinga/stream-forge/base:v0.1.3
 
-COPY app /app/app
-COPY requirements.txt /app/
+WORKDIR /app
 
-RUN pip install -r requirements.txt
+# Copy and install service-specific Python dependencies
+COPY services/loader-api-candles/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy application code
+COPY services/loader-api-candles/app ./app
+
+# Default command to run the application
 CMD ["python", "-m", "app.main"]
