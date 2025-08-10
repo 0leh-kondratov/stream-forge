@@ -60,7 +60,7 @@
   script:
     - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt
     - pip install pytest pytest-asyncio # Install pytest and pytest-asyncio
-    - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/ --ignore=$CI_PROJECT_DIR/$SERVICE_PATH/tests/integration/
+    - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/test_*.py
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       changes:
@@ -71,7 +71,8 @@
   stage: integration-test
   image: ${CI_REGISTRY_IMAGE}:latest # Use the built image
   needs:
-    - build-${SERVICE_NAME} # Depends on the build job
+    - job: build-${SERVICE_NAME}
+      when: on_success # Depends on the build job
   variables:
     # Pass Kafka/ArangoDB connection details to the test environment
     KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
