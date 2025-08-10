@@ -1,8 +1,10 @@
 FROM registry.dmz.home/kinga/stream-forge/base:v0.1.0
 
-COPY app /app/app
-COPY requirements.txt /app/
+WORKDIR /app
 
+COPY requirements.txt .
 RUN pip install -r requirements.txt
+
+COPY app ./app
 
 CMD ["python", "-m", "app.main"]
