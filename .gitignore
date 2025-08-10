@@ -1,5 +1,5 @@
 # .gitignore
-
+set_dummy_service_env.sh
 # Python
 __pycache__/
 .env
