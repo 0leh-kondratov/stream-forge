@@ -5,3 +5,6 @@ prometheus_client
 fastapi
 uvicorn[standard]
 pytest
+python-arango
+pytest-asyncio
+httpx

@@ -4,6 +4,8 @@ __pycache__/
 
 .gitlab-ci.yml
 
+.env
+
 # Git
 .git
 .gitignore
@@ -14,7 +16,7 @@ __pycache__/
 # Env files
 .env
 *.env
-
+.dockerignore
 # Test artifacts
 *.log
 coverage/

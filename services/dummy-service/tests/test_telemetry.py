@@ -121,13 +121,17 @@ def mock_logger():
         yield MagicMock(debug=mock_debug, info=mock_info, error=mock_error)
 
 @pytest.fixture
-def telemetry_producer_instance(): # Removed mock_aiokafka_producer from args
-    with patch('aiokafka.AIOKafkaProducer') as MockAIOKafkaProducer:
+def telemetry_producer_instance():
+    with patch('app.telemetry.AIOKafkaProducer') as MockAIOKafkaProducer:
         mock_producer_instance = MockAIOKafkaProducer.return_value
         mock_producer_instance.start = AsyncMock()
         mock_producer_instance.stop = AsyncMock()
         mock_producer_instance.send_and_wait = AsyncMock()
-        return TelemetryProducer()
+        
+        instance = TelemetryProducer()
+        instance.mock_producer_class = MockAIOKafkaProducer
+        instance.mock_producer_instance = mock_producer_instance
+        yield instance
 
 # Test TelemetryProducer.__init__
 def test_telemetry_producer_init(telemetry_producer_instance):
@@ -141,28 +145,22 @@ def test_telemetry_producer_init(telemetry_producer_instance):
 # Test TelemetryProducer.start method
 @pytest.mark.asyncio
 async def test_telemetry_producer_start(telemetry_producer_instance, mock_ssl_context, mock_logger):
-    with patch('aiokafka.AIOKafkaProducer') as MockAIOKafkaProducer:
-        mock_producer_instance = MockAIOKafkaProducer.return_value
-        mock_producer_instance.start = AsyncMock()
-        mock_producer_instance.stop = AsyncMock()
-        mock_producer_instance.send_and_wait = AsyncMock()
+    await telemetry_producer_instance.start()
 
-        await telemetry_producer_instance.start()
+    mock_ssl_context.assert_called_once_with(ssl.PROTOCOL_TLS_CLIENT)
+    mock_ssl_context.return_value.verify_mode = ssl.CERT_REQUIRED
+    mock_ssl_context.return_value.load_verify_locations.assert_called_once_with(cafile="/etc/ssl/certs/ca.crt")
 
-        mock_ssl_context.assert_called_once_with(ssl.PROTOCOL_TLS_CLIENT)
-        mock_ssl_context.return_value.verify_mode = ssl.CERT_REQUIRED
-        mock_ssl_context.return_value.load_verify_locations.assert_called_once_with(cafile="/etc/ssl/certs/ca.crt")
-
-        MockAIOKafkaProducer.assert_called_once_with(
-            bootstrap_servers=telemetry_producer_instance.bootstrap_servers,
-            security_protocol="SASL_SSL",
-            sasl_mechanism="SCRAM-SHA-512",
-            sasl_plain_username=telemetry_producer_instance.username,
-            sasl_plain_password=telemetry_producer_instance.password,
-            ssl_context=mock_ssl_context.return_value,
-        )
-        mock_producer_instance.start.assert_called_once()
-        mock_logger.debug.assert_called_once_with("Telemetry producer started.")
+    telemetry_producer_instance.mock_producer_class.assert_called_once_with(
+        bootstrap_servers=telemetry_producer_instance.bootstrap_servers,
+        security_protocol="SASL_SSL",
+        sasl_mechanism="SCRAM-SHA-512",
+        sasl_plain_username=telemetry_producer_instance.username,
+        sasl_plain_password=telemetry_producer_instance.password,
+        ssl_context=mock_ssl_context.return_value,
+    )
+    telemetry_producer_instance.mock_producer_instance.start.assert_called_once()
+    mock_logger.debug.assert_called_once_with("Telemetry producer started.")
 
 # Test TelemetryProducer.stop method
 @pytest.mark.asyncio
@@ -430,12 +428,13 @@ async def test_simulate_loading(telemetry_producer_instance):
 
 # Test simulate_failure function
 @pytest.mark.asyncio
-async def test_simulate_failure(telemetry_producer_instance, mock_logger):
+async def test_simulate_failure(telemetry_producer_instance):
     delay_sec = 1
     with patch('asyncio.sleep', new=AsyncMock()) as mock_sleep, \
          patch('sys.exit') as mock_sys_exit, \
-         patch.object(telemetry_producer_instance, 'send_status_update', new=AsyncMock()) as mock_send_status_update:
-        
+         patch.object(telemetry_producer_instance, 'send_status_update', new=AsyncMock()) as mock_send_status_update, \
+         patch('app.telemetry.logger') as mock_telemetry_logger:
+
         await simulate_failure(delay_sec, telemetry_producer_instance)
 
         mock_sleep.assert_called_once_with(delay_sec)
@@ -445,5 +444,5 @@ async def test_simulate_failure(telemetry_producer_instance, mock_logger):
             finished=True,
             error_message="Simulated failure triggered by --fail-after"
         )
-        mock_logger.error.assert_called_once_with("Simulated failure — exiting")
+        mock_telemetry_logger.error.assert_called_once_with("Simulated failure — exiting")
         mock_sys_exit.assert_called_once_with(1)
