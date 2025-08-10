@@ -46,7 +46,7 @@ def test_dummy_status_last_initialization():
 # Test /metrics endpoint
 def test_metrics_endpoint():
     mock_generate_latest_output = b"# HELP dummy_pings_total Ping commands received\n# TYPE dummy_pings_total counter\ndummy_pings_total 0.0\n"
-    with patch('app.metrics.generate_latest', return_value=mock_generate_latest_output):
+    with patch('app.metrics.generate_latest', return_value=mock_generate_latest_output) as mock_generate_latest_func: # Capture the mock
         response = metrics()
 
         assert isinstance(response, Response)
@@ -54,4 +54,5 @@ def test_metrics_endpoint():
         assert response.body == mock_generate_latest_output
 
         # Verify that generate_latest was called
-        generate_latest.assert_called_once()
+        mock_generate_latest_func.assert_called_once() # Assert on the captured mock
+

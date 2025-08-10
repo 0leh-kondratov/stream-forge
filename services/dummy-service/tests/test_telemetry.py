@@ -45,13 +45,73 @@ def mock_ssl_context():
     with patch('ssl.SSLContext') as mock:
         yield mock
 
+import pytest
+import os
+import json
+import time
+import ssl
+import asyncio
+from unittest.mock import AsyncMock, MagicMock, patch
+from app.telemetry import TelemetryProducer, log_startup_event, simulate_loading, simulate_failure
+from app.metrics import dummy_events_total, dummy_status_last
+
+# Mock environment variables
+@pytest.fixture(autouse=True)
+def mock_env_vars():
+    with patch.dict(os.environ, {
+        "QUEUE_EVENTS_TOPIC": "test-events",
+        "KAFKA_BOOTSTRAP_SERVERS": "localhost:9092",
+        "KAFKA_USER": "testuser",
+        "KAFKA_PASSWORD": "testpassword",
+        "KAFKA_CA_PATH": "/etc/ssl/certs/ca.crt",
+        "QUEUE_ID": "test_queue_id",
+        "SYMBOL": "TEST",
+        "TYPE": "dummy",
+        "TELEMETRY_PRODUCER_ID": "dummy_producer",
+        "TIME_RANGE": "1h",
+        "KAFKA_TOPIC": "test-kafka-topic",
+        "K8S_NAMESPACE": "test-namespace",
+        "ARANGO_URL": "http://localhost:8529",
+        "ARANGO_DB": "test_db",
+        "LOADER_IMAGE": "loader:latest",
+        "CONSUMER_IMAGE": "consumer:latest",
+    }):
+        yield
+
+# Mock external dependencies
+@pytest.fixture
+def mock_aiokafka_producer():
+    mock = AsyncMock()
+    mock.start = AsyncMock()
+    mock.stop = AsyncMock()
+    mock.send_and_wait = AsyncMock()
+    return mock
+
+@pytest.fixture
+def mock_ssl_context():
+    with patch('ssl.SSLContext') as mock:
+        yield mock
+
 @pytest.fixture(autouse=True)
 def mock_metrics():
-    with patch('app.metrics.dummy_events_total', MagicMock()) as mock_events, \
-         patch('app.metrics.dummy_status_last', MagicMock()) as mock_status:
+    mock_events = MagicMock()
+    mock_status = MagicMock()
+    mock_errors = MagicMock() # Added for consistency
+
+    with patch('app.metrics.dummy_events_total', mock_events), \
+         patch('app.metrics.dummy_status_last', mock_status), \
+         patch('app.metrics.dummy_errors_total', mock_errors): # Patch dummy_errors_total
+        
         mock_events.labels.return_value.inc = MagicMock()
         mock_status.labels.return_value.set = MagicMock()
-        yield
+        mock_errors.inc = MagicMock() # Mock inc for dummy_errors_total
+
+        metrics_mock_container = MagicMock()
+        metrics_mock_container.dummy_events_total = mock_events
+        metrics_mock_container.dummy_status_last = mock_status
+        metrics_mock_container.dummy_errors_total = mock_errors # Add to container
+
+        yield metrics_mock_container
 
 @pytest.fixture(autouse=True)
 def mock_logger():
@@ -61,8 +121,12 @@ def mock_logger():
         yield MagicMock(debug=mock_debug, info=mock_info, error=mock_error)
 
 @pytest.fixture
-def telemetry_producer_instance(mock_aiokafka_producer):
-    with patch('aiokafka.AIOKafkaProducer', return_value=mock_aiokafka_producer):
+def telemetry_producer_instance(): # Removed mock_aiokafka_producer from args
+    with patch('aiokafka.AIOKafkaProducer') as MockAIOKafkaProducer:
+        mock_producer_instance = MockAIOKafkaProducer.return_value
+        mock_producer_instance.start = AsyncMock()
+        mock_producer_instance.stop = AsyncMock()
+        mock_producer_instance.send_and_wait = AsyncMock()
         return TelemetryProducer()
 
 # Test TelemetryProducer.__init__
@@ -76,15 +140,160 @@ def test_telemetry_producer_init(telemetry_producer_instance):
 
 # Test TelemetryProducer.start method
 @pytest.mark.asyncio
-async def test_telemetry_producer_start(telemetry_producer_instance, mock_aiokafka_producer, mock_ssl_context, mock_logger):
-    await telemetry_producer_instance.start()
+async def test_telemetry_producer_start(telemetry_producer_instance, mock_ssl_context, mock_logger):
+    with patch('aiokafka.AIOKafkaProducer') as MockAIOKafkaProducer:
+        mock_producer_instance = MockAIOKafkaProducer.return_value
+        mock_producer_instance.start = AsyncMock()
+        mock_producer_instance.stop = AsyncMock()
+        mock_producer_instance.send_and_wait = AsyncMock()
 
-    mock_ssl_context.assert_called_once_with(ssl.PROTOCOL_TLS_CLIENT)
-    mock_ssl_context.return_value.verify_mode = ssl.CERT_REQUIRED
-    mock_ssl_context.return_value.load_verify_locations.assert_called_once_with(cafile="/etc/ssl/certs/ca.crt")
+        await telemetry_producer_instance.start()
 
-    mock_aiokafka_producer.start.assert_called_once()
-    mock_logger.debug.assert_called_once_with("Telemetry producer started.")
+        mock_ssl_context.assert_called_once_with(ssl.PROTOCOL_TLS_CLIENT)
+        mock_ssl_context.return_value.verify_mode = ssl.CERT_REQUIRED
+        mock_ssl_context.return_value.load_verify_locations.assert_called_once_with(cafile="/etc/ssl/certs/ca.crt")
+
+        MockAIOKafkaProducer.assert_called_once_with(
+            bootstrap_servers=telemetry_producer_instance.bootstrap_servers,
+            security_protocol="SASL_SSL",
+            sasl_mechanism="SCRAM-SHA-512",
+            sasl_plain_username=telemetry_producer_instance.username,
+            sasl_plain_password=telemetry_producer_instance.password,
+            ssl_context=mock_ssl_context.return_value,
+        )
+        mock_producer_instance.start.assert_called_once()
+        mock_logger.debug.assert_called_once_with("Telemetry producer started.")
+
+# Test TelemetryProducer.stop method
+@pytest.mark.asyncio
+async def test_telemetry_producer_stop(telemetry_producer_instance, mock_aiokafka_producer):
+    telemetry_producer_instance.producer = mock_aiokafka_producer
+    await telemetry_producer_instance.stop()
+    mock_aiokafka_producer.stop.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_telemetry_producer_stop_no_producer(telemetry_producer_instance):
+    telemetry_producer_instance.producer = None
+    await telemetry_producer_instance.stop() # Should not raise error
+
+# Test TelemetryProducer.send_event method
+@pytest.mark.asyncio
+async def test_telemetry_producer_send_event(telemetry_producer_instance, mock_aiokafka_producer, mock_metrics, mock_logger):
+    telemetry_producer_instance.producer = mock_aiokafka_producer
+    event_type = "test_event"
+    extra_data = {"key": "value"}
+
+    with patch('time.time', return_value=12345.67):
+        await telemetry_producer_instance.send_event(event_type, extra_data)
+
+    expected_payload = {
+        "event": event_type,
+        "queue_id": "test_queue_id",
+        "symbol": "TEST",
+        "type": "dummy",
+        "producer": "dummy_producer",
+        "sent_at": 12345.67,
+        "key": "value"
+    }
+    mock_metrics.dummy_events_total.labels.assert_called_once_with(event_type)
+    mock_metrics.dummy_events_total.labels.return_value.inc.assert_called_once()
+    mock_metrics.dummy_status_last.labels.assert_not_called() # Not a status event
+
+    mock_aiokafka_producer.send_and_wait.assert_called_once_with(
+        "test-events",
+        json.dumps(expected_payload).encode()
+    )
+    mock_logger.info.assert_called_once_with(f"Event sent: {event_type}")
+
+@pytest.mark.asyncio
+async def test_telemetry_producer_send_event_with_status_type(telemetry_producer_instance, mock_aiokafka_producer, mock_metrics):
+    telemetry_producer_instance.producer = mock_aiokafka_producer
+    event_type = "started"
+
+    with patch('time.time', return_value=12345.67):
+        await telemetry_producer_instance.send_event(event_type)
+
+    mock_metrics.dummy_status_last.labels.assert_called_once_with(event_type)
+    mock_metrics.dummy_status_last.labels.return_value.set.assert_called_once_with(1)
+
+# Test TelemetryProducer.send_status_update method
+@pytest.mark.asyncio
+async def test_telemetry_producer_send_status_update(telemetry_producer_instance, mock_logger):
+    telemetry_producer_instance.producer = AsyncMock() # Ensure producer is mocked
+    status = "finished"
+    message = "Test message"
+    finished = True
+    records_written = 100
+    error_message = "Test error"
+    extra_data = {"custom": "data"}
+
+    with patch.object(telemetry_producer_instance, 'send_event', new=AsyncMock()) as mock_send_event:
+        await telemetry_producer_instance.send_status_update(
+            status=status,
+            message=message,
+            finished=finished,
+            records_written=records_written,
+            error_message=error_message,
+            extra=extra_data
+        )
+
+        expected_payload = {
+            "status": status,
+            "message": message,
+            "finished": finished,
+            "records_written": records_written,
+            "time_range": "1h",
+            "kafka": "localhost:9092",
+            "kafka_user": "testuser",
+            "kafka_topic": "test-kafka-topic",
+            "k8s_namespace": "test-namespace",
+            "arango_url": "http://localhost:8529",
+            "arango_db": "test_db",
+            "loader_image": "loader:latest",
+            "consumer_image": "consumer:latest",
+        }
+        if error_message:
+            payload["error_message"] = error_message
+        if extra:
+            payload.update(extra)
+
+        logger.info(f"Telemetry status update:\n{json.dumps(payload, indent=2)}")
+        await self.send_event(status, payload)
+
+
+async def log_startup_event(telemetry: TelemetryProducer):
+    await telemetry.send_status_update(
+        status="started",
+        message="Микросервис запущен",
+        finished=False,
+        records_written=0,
+    )
+
+
+async def simulate_loading(telemetry: TelemetryProducer):
+    count = 0
+    while True:
+        await asyncio.sleep(10)
+        count += 1
+        await telemetry.send_status_update(
+            status="loading",
+            message=f"Загрузка продолжается, batch {count}",
+            records_written=count * 100
+        )
+
+
+async def simulate_failure(delay_sec: int, telemetry: TelemetryProducer):
+    await asyncio.sleep(delay_sec)
+    await telemetry.send_status_update(
+        status="error",
+        message="Ошибка тестовая: симулирован сбой",
+        finished=True,
+        error_message="Simulated failure triggered by --fail-after"
+    )
+    logger.error("Simulated failure — exiting")
+    import sys
+    sys.exit(1)
+
 
 # Test TelemetryProducer.stop method
 @pytest.mark.asyncio

@@ -40,13 +40,37 @@ def mock_ssl_context():
     with patch('ssl.SSLContext') as mock:
         yield mock
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True) # Consider removing autouse if not all tests need it
 def mock_metrics():
-    with patch('app.metrics.dummy_pings_total', MagicMock()) as mock_pings, \
-         patch('app.metrics.dummy_pongs_total', MagicMock()) as mock_pongs:
+    mock_pings = MagicMock()
+    mock_pongs = MagicMock()
+    mock_events = MagicMock() # Need to mock dummy_events_total as well
+    mock_status = MagicMock() # Need to mock dummy_status_last as well
+    mock_errors = MagicMock() # Need to mock dummy_errors_total as well
+
+    with patch('app.metrics.dummy_pings_total', mock_pings), \
+         patch('app.metrics.dummy_pongs_total', mock_pongs), \
+         patch('app.metrics.dummy_events_total', mock_events), \
+         patch('app.metrics.dummy_status_last', mock_status), \
+         patch('app.metrics.dummy_errors_total', mock_errors):
+        
+        # Mock the .inc() and .labels() methods
         mock_pings.inc = MagicMock()
         mock_pongs.inc = MagicMock()
-        yield
+        mock_events.labels.return_value.inc = MagicMock() # For dummy_events_total.labels(event_type).inc()
+        mock_status.labels.return_value.set = MagicMock() # For dummy_status_last.labels(event_type).set(1)
+        mock_errors.inc = MagicMock() # For dummy_errors_total.inc()
+
+        # Create a container mock to return to the test function
+        metrics_mock_container = MagicMock()
+        metrics_mock_container.dummy_pings_total = mock_pings
+        metrics_mock_container.dummy_pongs_total = mock_pongs
+        metrics_mock_container.dummy_events_total = mock_events
+        metrics_mock_container.dummy_status_last = mock_status
+        metrics_mock_container.dummy_errors_total = mock_errors
+
+        yield metrics_mock_container # Yield the container mock
+
 
 @pytest.fixture
 def mock_asyncio_event():
@@ -97,15 +121,32 @@ def test_consumer_init_without_shutdown_event(mock_telemetry_producer):
 
 # Test start method
 @pytest.mark.asyncio
-async def test_consumer_start(consumer_instance, mock_aiokafka_consumer, mock_ssl_context):
-    with patch('aiokafka.AIOKafkaConsumer', return_value=mock_aiokafka_consumer):
+async def test_consumer_start(consumer_instance, mock_ssl_context):
+    with patch('aiokafka.AIOKafkaConsumer') as MockAIOKafkaConsumer:
+        mock_consumer_instance = MockAIOKafkaConsumer.return_value
+        mock_consumer_instance.start = AsyncMock()
+        mock_consumer_instance.stop = AsyncMock()
+        mock_consumer_instance.__aiter__ = AsyncMock()
+
         await consumer_instance.start()
 
         mock_ssl_context.assert_called_once_with(ssl.PROTOCOL_TLS_CLIENT)
         mock_ssl_context.return_value.verify_mode = ssl.CERT_REQUIRED
         mock_ssl_context.return_value.load_verify_locations.assert_called_once_with(cafile="/etc/ssl/certs/ca.crt")
 
-        mock_aiokafka_consumer.start.assert_called_once()
+        MockAIOKafkaConsumer.assert_called_once_with(
+            consumer_instance.topic,
+            bootstrap_servers=consumer_instance.bootstrap_servers,
+            security_protocol="SASL_SSL",
+            sasl_mechanism="SCRAM-SHA-512",
+            sasl_plain_username=consumer_instance.username,
+            sasl_plain_password=consumer_instance.password,
+            ssl_context=mock_ssl_context.return_value,
+            group_id=consumer_instance.group_id,
+            auto_offset_reset="latest",
+            enable_auto_commit=True,
+        )
+        mock_consumer_instance.start.assert_called_once()
         assert consumer_instance._task is not None
         assert isinstance(consumer_instance._task, asyncio.Task)
 
@@ -113,13 +154,19 @@ async def test_consumer_start(consumer_instance, mock_aiokafka_consumer, mock_ss
 @pytest.mark.asyncio
 async def test_consumer_stop(consumer_instance, mock_aiokafka_consumer):
     consumer_instance.consumer = mock_aiokafka_consumer
-    consumer_instance._task = asyncio.create_task(asyncio.sleep(0.01)) # Create a dummy task
+    
+    with patch('asyncio.create_task') as mock_create_task:
+        mock_task = MagicMock()
+        mock_task.cancel = MagicMock()
+        mock_task.done = MagicMock(return_value=True)
+        mock_create_task.return_value = mock_task
+        consumer_instance._task = mock_task # Assign the mocked task
 
-    await consumer_instance.stop()
+        await consumer_instance.stop()
 
-    consumer_instance._task.cancel.assert_called_once()
-    mock_aiokafka_consumer.stop.assert_called_once()
-    assert consumer_instance._task.done() # Task should be cancelled and done
+        mock_task.cancel.assert_called_once()
+        mock_aiokafka_consumer.stop.assert_called_once()
+        assert mock_task.done() # Task should be cancelled and done
 
 @pytest.mark.asyncio
 async def test_consumer_stop_no_task_no_consumer(consumer_instance):
@@ -136,12 +183,15 @@ async def test_consume_ping_command_matching_id(consumer_instance, mock_aiokafka
         "sent_at": 12345.67
     }).encode('utf-8')
     mock_msg = MagicMock(value=message_value)
-    mock_aiokafka_consumer.__aiter__.return_value = [mock_msg]
+    # Correct way to mock async for iteration
+    async def async_gen():
+        yield mock_msg
+    mock_aiokafka_consumer.__aiter__.return_value = async_gen() # Return an async generator
 
     consumer_instance.consumer = mock_aiokafka_consumer
     consumer_instance._task = asyncio.create_task(consumer_instance.consume())
 
-    await asyncio.sleep(0.1) # Give consume loop a chance to run
+    await consumer_instance._task # Give consume loop a chance to run
 
     mock_metrics.dummy_pings_total.inc.assert_called_once()
     consumer_instance.telemetry.send_event.assert_called_once_with(
@@ -169,12 +219,15 @@ async def test_consume_ping_command_exit_on_ping(mock_telemetry_producer, mock_a
         "sent_at": 12345.67
     }).encode('utf-8')
     mock_msg = MagicMock(value=message_value)
-    mock_aiokafka_consumer.__aiter__.return_value = [mock_msg]
+    # Correct way to mock async for iteration
+    async def async_gen():
+        yield mock_msg
+    mock_aiokafka_consumer.__aiter__.return_value = async_gen() # Return an async generator
 
     consumer_instance.consumer = mock_aiokafka_consumer
     consumer_instance._task = asyncio.create_task(consumer_instance.consume())
 
-    await asyncio.sleep(0.1) # Give consume loop a chance to run
+    await consumer_instance._task # Give consume loop a chance to run
 
     mock_metrics.dummy_pings_total.inc.assert_called_once()
     mock_telemetry_producer.send_event.assert_called_once()
@@ -189,12 +242,15 @@ async def test_consume_ping_command_non_matching_id(consumer_instance, mock_aiok
         "sent_at": 12345.67
     }).encode('utf-8')
     mock_msg = MagicMock(value=message_value)
-    mock_aiokafka_consumer.__aiter__.return_value = [mock_msg]
+    # Correct way to mock async for iteration
+    async def async_gen():
+        yield mock_msg
+    mock_aiokafka_consumer.__aiter__.return_value = async_gen() # Return an async generator
 
     consumer_instance.consumer = mock_aiokafka_consumer
     consumer_instance._task = asyncio.create_task(consumer_instance.consume())
 
-    await asyncio.sleep(0.1) # Give consume loop a chance to run
+    await consumer_instance._task # Give consume loop a chance to run
 
     mock_metrics.dummy_pings_total.inc.assert_not_called()
     consumer_instance.telemetry.send_event.assert_not_called()
@@ -208,12 +264,15 @@ async def test_consume_stop_command(consumer_instance, mock_aiokafka_consumer, m
         "queue_id": "test_queue_id"
     }).encode('utf-8')
     mock_msg = MagicMock(value=message_value)
-    mock_aiokafka_consumer.__aiter__.return_value = [mock_msg]
+    # Correct way to mock async for iteration
+    async def async_gen():
+        yield mock_msg
+    mock_aiokafka_consumer.__aiter__.return_value = async_gen() # Return an async generator
 
     consumer_instance.consumer = mock_aiokafka_consumer
     consumer_instance._task = asyncio.create_task(consumer_instance.consume())
 
-    await asyncio.sleep(0.1) # Give consume loop a chance to run
+    await consumer_instance._task # Give consume loop a chance to run
 
     consumer_instance.telemetry.send_status_update.assert_called_once_with(
         status="interrupted",
@@ -242,7 +301,10 @@ async def test_consume_missing_command_or_target_id(consumer_instance, mock_aiok
         "some_other_key": "value"
     }).encode('utf-8')
     mock_msg = MagicMock(value=message_value)
-    mock_aiokafka_consumer.__aiter__.return_value = [mock_msg]
+    # Correct way to mock async for iteration
+    async def async_gen():
+        yield mock_msg
+    mock_aiokafka_consumer.__aiter__.return_value = async_gen() # Return an async generator
 
     consumer_instance.consumer = mock_aiokafka_consumer
     consumer_instance._task = asyncio.create_task(consumer_instance.consume())

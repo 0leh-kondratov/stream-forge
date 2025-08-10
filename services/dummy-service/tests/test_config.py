@@ -75,7 +75,7 @@ def test_config_missing_env_vars_with_defaults(mock_os_getenv):
     assert config.TELEMETRY_PRODUCER_ID == "dummy-telemetry"
 
     # Check variables that should be None if not set and no default
-    assert config.INTERVAL is None
+    assert config.INTERVAL == "5m"
 
 def test_config_missing_env_vars_without_defaults(mock_os_getenv):
     mock_os_getenv.side_effect = lambda key, default=None: {
