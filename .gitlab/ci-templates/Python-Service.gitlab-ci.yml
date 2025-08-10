@@ -31,25 +31,21 @@
     - git config --global user.name "GitLab CI"
     - git config --global --add safe.directory "$CI_PROJECT_DIR"
   script:
-    - |
-      BRANCH_NAME="ci/badges-${SERVICE_NAME}-${CI_COMMIT_SHORT_SHA}"
-      MR_TITLE="CI: Update ${SERVICE_NAME} badges"
-      git checkout -b "${BRANCH_NAME}"
-      echo "Updating badges for ${SERVICE_NAME}..."
-      BADGE_COLOR="brightgreen"
-      BADGE_TEXT="passing"
-      mkdir -p badges/main
-      curl -s "https://img.shields.io/badge/build-${SERVICE_NAME}-${BADGE_TEXT}-${BADGE_COLOR}" > "badges/main/build-${SERVICE_NAME}.svg"
-      git add "badges/main/build-${SERVICE_NAME}.svg"
-      SERVICE_VERSION=$(cat $SERVICE_PATH/VERSION)
-      curl -s "https://img.shields.io/badge/version-${SERVICE_VERSION}-blue" > "badges/main/version-${SERVICE_NAME}.svg"
-      git add "badges/main/version-${SERVICE_NAME}.svg"
-      if git diff --staged --quiet; then
-        echo "No changes to badge files. Nothing to do."
-        exit 0
-      fi
-      git commit -m "${MR_TITLE}"
-      git push -o merge_request.create -o merge_request.target=main -o merge_request.title="${MR_TITLE}" -o merge_request.merge_when_pipeline_succeeds -o merge_request.remove_source_branch "https://oauth2:${GIT_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" "${BRANCH_NAME}"
+    - BRANCH_NAME="ci/badges-${SERVICE_NAME}-${CI_COMMIT_SHORT_SHA}"
+    - MR_TITLE="CI: Update ${SERVICE_NAME} badges"
+    - git checkout -b "${BRANCH_NAME}"
+    - echo "Updating badges for ${SERVICE_NAME}..."
+    - BADGE_COLOR="brightgreen"
+    - BADGE_TEXT="passing"
+    - mkdir -p badges/main
+    - curl -s "https://img.shields.io/badge/build-${SERVICE_NAME}-${BADGE_TEXT}-${BADGE_COLOR}" > "badges/main/build-${SERVICE_NAME}.svg"
+    - git add "badges/main/build-${SERVICE_NAME}.svg"
+    - SERVICE_VERSION=$(cat $SERVICE_PATH/VERSION)
+    - curl -s "https://img.shields.io/badge/version-${SERVICE_VERSION}-blue" > "badges/main/version-${SERVICE_NAME}.svg"
+    - git add "badges/main/version-${SERVICE_NAME}.svg"
+    - if git diff --staged --quiet; then echo "No changes to badge files. Nothing to do."; exit 0; fi
+    - git commit -m "${MR_TITLE}"
+    - git push -o merge_request.create -o merge_request.target=main -o merge_request.title="${MR_TITLE}" -o merge_request.merge_when_pipeline_succeeds -o merge_request.remove_source_branch "https://oauth2:${GIT_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" "${BRANCH_NAME}"
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       changes:
