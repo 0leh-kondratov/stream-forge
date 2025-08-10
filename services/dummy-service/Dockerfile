@@ -1,4 +1,4 @@
-FROM registry.dmz.home/kinga/stream-forge/base:v0.1.0
+FROM registry.dmz.home/kinga/stream-forge/base:v0.1.2
 
 WORKDIR /app
 
