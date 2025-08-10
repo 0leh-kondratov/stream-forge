@@ -102,7 +102,7 @@ def test_consumer_init(consumer_instance, mock_telemetry_producer, mock_asyncio_
     assert consumer_instance.username == os.getenv("KAFKA_USER")
     assert consumer_instance.password == os.getenv("KAFKA_PASSWORD")
     assert os.path.exists(consumer_instance.ca_path)
-    assert consumer_instance.group_id == f"consumer-{os.getenv("QUEUE_ID")}"
+    assert consumer_instance.group_id == f"consumer-{os.getenv('QUEUE_ID')}"
     assert consumer_instance.queue_id == os.getenv("QUEUE_ID")
     assert consumer_instance.telemetry == mock_telemetry_producer
     assert consumer_instance.exit_on_ping is False
