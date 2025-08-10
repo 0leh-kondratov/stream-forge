@@ -85,7 +85,7 @@ async def test_telemetry_producer_start(telemetry_producer_instance, mock_ssl_co
 
     mock_ssl_context.assert_called_once_with(ssl.PROTOCOL_TLS_CLIENT)
     mock_ssl_context.return_value.verify_mode = ssl.CERT_REQUIRED
-    mock_ssl_context.return_value.load_verify_locations.assert_called_once_with(cafile="/data/projects/stream-forge/services/dummy-service/ca.crt")
+    mock_ssl_context.return_value.load_verify_locations.assert_called_once_with(cafile=os.getenv("KAFKA_CA_PATH"))
 
     telemetry_producer_instance.mock_producer_class.assert_called_once_with(
         bootstrap_servers=telemetry_producer_instance.bootstrap_servers,
