@@ -5,16 +5,15 @@
     - SERVICE_VERSION=$(cat $CI_PROJECT_DIR/$SERVICE_PATH/VERSION)
     - mkdir -p /kaniko/.docker
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-    - /kaniko/executor
-      --context $CI_PROJECT_DIR/$SERVICE_PATH
-      --dockerfile $CI_PROJECT_DIR/$SERVICE_PATH/Dockerfile
-      --destination $CI_REGISTRY_IMAGE:$SERVICE_VERSION
-      --destination $CI_REGISTRY_IMAGE:latest
+    - /kaniko/executor       --context $CI_PROJECT_DIR       --dockerfile $CI_PROJECT_DIR/$SERVICE_PATH/Dockerfile       --destination $CI_REGISTRY_IMAGE:$SERVICE_VERSION       --destination $CI_REGISTRY_IMAGE:latest       --cache=true       --cache-repo "$CI_REGISTRY_IMAGE/cache"
   artifacts:
     paths: 
       - $SERVICE_PATH/VERSION
     expire_in: 1 hour
   rules:
+    # NOTE: GitLab CI does not substitute variables in rules:changes. 
+    # If $SERVICE_PATH is a variable, this rule will not work as expected.
+    # Use literal paths or consider child pipelines for dynamic paths.
     - if: $CI_COMMIT_BRANCH == "main"
       changes:
         - $SERVICE_PATH/**/*
@@ -27,6 +26,7 @@
   before_script:
     - git config --global user.email "gitlab-ci@dmz.home"
     - git config --global user.name "GitLab CI"
+    - git config --global --add safe.directory "$CI_PROJECT_DIR"
   script:
     - |
       BRANCH_NAME="ci/badges-${SERVICE_NAME}-${CI_COMMIT_SHORT_SHA}"
@@ -55,11 +55,10 @@
 
 .test_python_service:
   stage: test
-  image: python:3.10-slim
+  image: registry.dmz.home/kinga/stream-forge/base:latest # Using the unified base image
   allow_failure: true
   script:
-    - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt
-    - pip install pytest pytest-asyncio # Install pytest and pytest-asyncio
+    - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt # Keep service-specific requirements
     - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
@@ -99,9 +98,8 @@
       done
       curl http://localhost:8000/metrics # Show metrics for debugging
   script:
-    # Install test dependencies
+    # Install service-specific dependencies if not already in image
     - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt
-    - pip install --no-cache-dir --verbose pytest httpx python-arango # Install pytest, httpx, and python-arango
     # Run integration tests
     - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/integration/
   rules:
