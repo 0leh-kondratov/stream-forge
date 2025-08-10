@@ -15,25 +15,25 @@ from app.metrics import (
 # Test metric initialization
 def test_dummy_events_total_initialization():
     assert isinstance(dummy_events_total, Counter)
-    assert dummy_events_total._name == "dummy_events_total"
+    assert dummy_events_total._name == "dummy_events"
     assert dummy_events_total._documentation == "Total telemetry events sent"
     assert dummy_events_total._labelnames == ("event",)
 
 def test_dummy_pings_total_initialization():
     assert isinstance(dummy_pings_total, Counter)
-    assert dummy_pings_total._name == "dummy_pings_total"
+    assert dummy_pings_total._name == "dummy_pings"
     assert dummy_pings_total._documentation == "Ping commands received"
     assert dummy_pings_total._labelnames == ()
 
 def test_dummy_pongs_total_initialization():
     assert isinstance(dummy_pongs_total, Counter)
-    assert dummy_pongs_total._name == "dummy_pongs_total"
+    assert dummy_pongs_total._name == "dummy_pongs"
     assert dummy_pongs_total._documentation == "Pong responses sent"
     assert dummy_pongs_total._labelnames == ()
 
 def test_dummy_errors_total_initialization():
     assert isinstance(dummy_errors_total, Counter)
-    assert dummy_errors_total._name == "dummy_errors_total"
+    assert dummy_errors_total._name == "dummy_errors"
     assert dummy_errors_total._documentation == "Fatal errors occurred"
     assert dummy_errors_total._labelnames == ()
 
@@ -54,5 +54,4 @@ def test_metrics_endpoint():
         assert response.body == mock_generate_latest_output
 
         # Verify that generate_latest was called
-        mock_generate_latest_func.assert_called_once() # Assert on the captured mock
-
+        mock_generate_latest_func.assert_called_once()

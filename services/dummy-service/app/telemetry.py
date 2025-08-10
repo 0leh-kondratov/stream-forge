@@ -7,7 +7,7 @@ import time
 import ssl
 from loguru import logger
 from aiokafka import AIOKafkaProducer
-from app.metrics import dummy_events_total, dummy_status_last
+from app.metrics import dummy_events_total, dummy_status_last, dummy_errors_total
 
 
 class TelemetryProducer:
@@ -51,8 +51,10 @@ class TelemetryProducer:
             payload.update(extra)
 
         dummy_events_total.labels(event_type).inc()
+        print(f"DEBUG: dummy_events_total.labels called with {event_type}")
         if event_type in {"started", "loading", "finished", "interrupted", "error"}:
             dummy_status_last.labels(event_type).set(1)
+            print(f"DEBUG: dummy_status_last.labels called with {event_type}")
 
         await self.producer.send_and_wait(self.topic, json.dumps(payload).encode())
         logger.info(f"Event sent: {event_type}")
