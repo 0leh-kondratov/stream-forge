@@ -60,7 +60,7 @@
   script:
     - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt
     - pip install pytest pytest-asyncio # Install pytest and pytest-asyncio
-    - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/
+    - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/ --ignore=$CI_PROJECT_DIR/$SERVICE_PATH/tests/integration/
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       changes:
@@ -102,6 +102,12 @@
     # Install test dependencies
     - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt
     - pip install --no-cache-dir --verbose pytest httpx python-arango # Install pytest, httpx, and python-arango
+    # Debugging arango import issue
+    - echo "--- Debugging Python environment ---"
+    - python -c "import sys; print(sys.path)"
+    - pip freeze
+    - python -c "try: import arango; print('arango imported successfully from script'); except ImportError as e: print(f'Failed to import arango from script: {e}')"
+    - echo "--- End Debugging ---"
     # Run integration tests
     - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/integration/
   rules:
