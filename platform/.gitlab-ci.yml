@@ -3,12 +3,12 @@ include:
     ref: main
     file: '/.gitlab/ci-templates/Python-Service.gitlab-ci.yml'
 
-#build-base-image:
-#  extends: .build_python_service
-#  variables:
-#    SERVICE_NAME: base
-#    SERVICE_PATH: platform
-#  when: manual
+build-base-image:
+  extends: .build_python_service
+  variables:
+    SERVICE_NAME: base
+    SERVICE_PATH: platform
+  when: manual
 
 #apply-rbac:
 #  stage: setup
