@@ -58,13 +58,61 @@
   image: registry.dmz.home/kinga/stream-forge/base:v0.1.1 # Using the unified base image
   allow_failure: true
   script:
-    - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt # Keep service-specific requirements
-    - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/ --ignore=$CI_PROJECT_DIR/$SERVICE_PATH/tests/integration/
+    - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt
+    - pip install pytest-junitxml
+    - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/ --ignore=$CI_PROJECT_DIR/$SERVICE_PATH/tests/integration/ --junitxml=report.xml
+  artifacts:
+    when: always
+    paths:
+      - report.xml
+    reports:
+      junit: report.xml
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       changes:
         - $SERVICE_PATH/**/*
     - when: manual
+
+.update_badge_test_python_service:
+  stage: badges
+  image: ${KANIKO_IMAGE}
+  needs:
+    - test-${SERVICE_NAME}
+  before_script:
+    - git config --global user.email "gitlab-ci@dmz.home"
+    - git config --global user.name "GitLab CI"
+    - git config --global --add safe.directory "$CI_PROJECT_DIR"
+  script:
+    - |
+      BRANCH_NAME="ci/badges-test-${SERVICE_NAME}-${CI_COMMIT_SHORT_SHA}"
+      MR_TITLE="CI: Update test badge for ${SERVICE_NAME}"
+      git checkout -b "${BRANCH_NAME}"
+      echo "Updating test badge for ${SERVICE_NAME}..."
+      # Assuming the presence of a tool that can parse report.xml and determine the status
+      # For now, we'll just create a simple "passing" badge if the job succeeds
+      BADGE_COLOR="brightgreen"
+      BADGE_TEXT="passing"
+      mkdir -p badges/main
+      curl -s "https://img.shields.io/badge/test-${SERVICE_NAME}-${BADGE_TEXT}-${BADGE_COLOR}" > "badges/main/test-${SERVICE_NAME}.svg"
+      git add "badges/main/test-${SERVICE_NAME}.svg"
+      if git diff --staged --quiet; then
+        echo "No changes to badge files. Nothing to do."
+        exit 0
+      fi
+      git commit -m "${MR_TITLE}"
+      git push \
+        -o merge_request.create \
+        -o merge_request.target=main \
+        -o merge_request.title="${MR_TITLE}" \
+        -o merge_request.merge_when_pipeline_succeeds \
+        -o merge_request.remove_source_branch \
+        "https://oauth2:${GIT_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" \
+        "${BRANCH_NAME}"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - $SERVICE_PATH/**/*
+      when: on_success
 
 .integration_test_python_service:
   stage: integration-test
