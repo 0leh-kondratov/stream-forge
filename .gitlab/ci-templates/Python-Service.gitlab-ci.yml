@@ -6,12 +6,10 @@
     - mkdir -p /kaniko/.docker
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
     - /kaniko/executor
-      --context $CI_PROJECT_DIR
+      --context $CI_PROJECT_DIR/$SERVICE_PATH
       --dockerfile $CI_PROJECT_DIR/$SERVICE_PATH/Dockerfile
       --destination $CI_REGISTRY_IMAGE:$SERVICE_VERSION
       --destination $CI_REGISTRY_IMAGE:latest
-      --cache=true
-      --cache-repo "$CI_REGISTRY_IMAGE/cache"
   artifacts:
     paths: 
       - $SERVICE_PATH/VERSION
@@ -29,90 +27,26 @@
   before_script:
     - git config --global user.email "gitlab-ci@dmz.home"
     - git config --global user.name "GitLab CI"
-    - git config --global --add safe.directory "$CI_PROJECT_DIR"
   script:
-    - BRANCH_NAME="ci/badges-${SERVICE_NAME}-${CI_COMMIT_SHORT_SHA}"
-    - MR_TITLE="CI: Update ${SERVICE_NAME} badges"
-    - git checkout -b "${BRANCH_NAME}"
-    - echo "Updating badges for ${SERVICE_NAME}..."
-    - BADGE_COLOR="brightgreen"
-    - BADGE_TEXT="passing"
-    - mkdir -p badges/main
-    - curl -s "https://img.shields.io/badge/build-${SERVICE_NAME}-${BADGE_TEXT}-${BADGE_COLOR}" > "badges/main/build-${SERVICE_NAME}.svg"
-    - git add "badges/main/build-${SERVICE_NAME}.svg"
-    - SERVICE_VERSION=$(cat $SERVICE_PATH/VERSION)
-    - curl -s "https://img.shields.io/badge/version-${SERVICE_VERSION}-blue" > "badges/main/version-${SERVICE_NAME}.svg"
-    - git add "badges/main/version-${SERVICE_NAME}.svg"
-    - if git diff --staged --quiet; then echo "No changes to badge files. Nothing to do."; exit 0; fi
-    - git commit -m "${MR_TITLE}"
-    - git push -o merge_request.create -o merge_request.target=main -o merge_request.title="${MR_TITLE}" -o merge_request.merge_when_pipeline_succeeds -o merge_request.remove_source_branch "https://oauth2:${GIT_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" "${BRANCH_NAME}"
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      changes:
-        - $SERVICE_PATH/**/*
-    - when: on_success
-
-.test_python_service:
-  stage: test
-  image: registry.dmz.home/kinga/stream-forge/base:latest # Using the unified base image
-  allow_failure: true
-  script:
-    - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt # Keep service-specific requirements
-    - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/test_*.py
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      changes:
-        - $SERVICE_PATH/**/*
-    - when: manual
-
-.integration_test_python_service:
-  stage: integration-test
-  image: ${CI_REGISTRY_IMAGE}:latest # Use the built image
-  needs:
-    - job: build-${SERVICE_NAME}
-      when: on_success # Depends on the build job
-  variables:
-    # Pass Kafka/ArangoDB connection details to the test environment
-    KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
-    KAFKA_USER: ${KAFKA_USER}
-    KAFKA_PASSWORD: ${KAFKA_PASSWORD}
-    KAFKA_CA_PATH: ${KAFKA_CA_PATH}
-    ARANGO_URL: ${ARANGO_URL}
-    ARANGO_DB: ${ARANGO_DB}
-    # ... other relevant environment variables for the service
-  before_script:
-    # Ensure curl is available for health checks
-    - apk add --no-cache curl
-    # Start the service in the background
-    - python -m app.main --noop & # Run with --noop to avoid starting Kafka consumer
-    # Wait for the service to be ready (e.g., check its /metrics endpoint)
     - |
-      echo "Waiting for service to start..."
-      for i in $(seq 1 30); do
-        if curl -s http://localhost:8000/metrics > /dev/null; then
-          echo "Service is up!"
-          break
-        fi
-        echo "Service not ready yet. Waiting ${i}s..."
-        sleep ${i}
-      done
-      curl http://localhost:8000/metrics # Show metrics for debugging
-  script:
-    # Install service-specific dependencies if not already in image
-    - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt
-    # Debugging arango import issue
-    - echo "--- Debugging Python environment ---"
-    - python -c "import sys; print(sys.path)"
-    - pip freeze
-    - python -c "try: import arango; print('arango imported successfully from script'); except ImportError as e: print(f'Failed to import arango from script: {e}')"
-    - echo "--- End Debugging ---"
-    # Run integration tests
-    - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/integration/
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
-      changes:
-        - $SERVICE_PATH/**/*
-    - when: manual
+      BRANCH_NAME="ci/badges-${SERVICE_NAME}-${CI_COMMIT_SHORT_SHA}"
+      MR_TITLE="CI: Update ${SERVICE_NAME} badges"
+      git checkout -b "${BRANCH_NAME}"
+      echo "Updating badges for ${SERVICE_NAME}..."
+      BADGE_COLOR="brightgreen"
+      BADGE_TEXT="passing"
+      mkdir -p badges/main
+      curl -s "https://img.shields.io/badge/build-${SERVICE_NAME}-${BADGE_TEXT}-${BADGE_COLOR}" > "badges/main/build-${SERVICE_NAME}.svg"
+      git add "badges/main/build-${SERVICE_NAME}.svg"
+      SERVICE_VERSION=$(cat $SERVICE_PATH/VERSION)
+      curl -s "https://img.shields.io/badge/version-${SERVICE_VERSION}-blue" > "badges/main/version-${SERVICE_NAME}.svg"
+      git add "badges/main/version-${SERVICE_NAME}.svg"
+      if git diff --staged --quiet; then
+        echo "No changes to badge files. Nothing to do."
+        exit 0
+      fi
+      git commit -m "${MR_TITLE}"
+      git push         -o merge_request.create         -o merge_request.target=main         -o merge_request.title="${MR_TITLE}"         -o merge_request.merge_when_pipeline_succeeds         -o merge_request.remove_source_branch         "https://oauth2:${GIT_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git"         "${BRANCH_NAME}"
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       changes:
@@ -121,11 +55,12 @@
 
 .test_python_service:
   stage: test
-  image: registry.dmz.home/kinga/stream-forge/base:latest # Using the unified base image
+  image: python:3.10-slim
   allow_failure: true
   script:
-    - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt # Keep service-specific requirements
-    - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/test_*.py
+    - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt
+    - pip install pytest pytest-asyncio # Install pytest and pytest-asyncio
+    - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       changes:
@@ -136,8 +71,7 @@
   stage: integration-test
   image: ${CI_REGISTRY_IMAGE}:latest # Use the built image
   needs:
-    - job: build-${SERVICE_NAME}
-      when: on_success # Depends on the build job
+    - build-${SERVICE_NAME} # Depends on the build job
   variables:
     # Pass Kafka/ArangoDB connection details to the test environment
     KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
@@ -165,14 +99,9 @@
       done
       curl http://localhost:8000/metrics # Show metrics for debugging
   script:
-    # Install service-specific dependencies if not already in image
+    # Install test dependencies
     - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt
-    # Debugging arango import issue
-    - echo "--- Debugging Python environment ---"
-    - python -c "import sys; print(sys.path)"
-    - pip freeze
-    - python -c "try: import arango; print('arango imported successfully from script'); except ImportError as e: print(f'Failed to import arango from script: {e}')"
-    - echo "--- End Debugging ---"
+    - pip install --no-cache-dir --verbose pytest httpx python-arango # Install pytest, httpx, and python-arango
     # Run integration tests
     - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/integration/
   rules:
