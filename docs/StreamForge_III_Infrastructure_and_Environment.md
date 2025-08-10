@@ -136,10 +136,10 @@ StreamForge is managed through a strict GitOps methodology, which automates and 
 
 #### 9.1. GitLab Runner
 
-CI/CD pipelines are powered by GitLab CI, utilizing `kaniko` for secure, daemonless container image builds directly within the Kubernetes cluster.
+CI/CD pipelines are powered by GitLab CI, utilizing `kaniko` for secure, daemonless container image builds directly within the Kubernetes cluster. To optimize build times and ensure consistency across development, testing, and production environments, a **unified base image** is employed. This image, built from `platform/Dockerfile`, pre-installs common Python dependencies, including all necessary test frameworks and libraries, and integrates the `streamforge_utils` library via a robust wheel installation.
 
 - The Runner operates in a `kubernetes` executor with a `nodeSelector` on node `k2w-9` for optimal resource distribution.
-- Minio-based caching is supported to speed up the build process.
+- **Kaniko build processes are optimized** by using the project root as the build context and leveraging explicit image layer caching (`--cache=true`) to significantly speed up subsequent builds.
 - CI/CD configuration is divided into common templates (`.build_python_service`) and specific pipelines for each service, ensuring modularity and reusability.
 
 ##### 9.1.1. Runner: Configuration Features
@@ -148,6 +148,56 @@ CI/CD pipelines are powered by GitLab CI, utilizing `kaniko` for secure, daemonl
 - ServiceAccount: `full-access-sa`
 - Pools: `runner-home`, `docker-config`, `home-certificates`
 - Repository: `https://gitlab.dmz.home/`
+
+##### 9.1.2. Pipeline Structure
+
+- `setup` → `build` → `test` → `deploy`
+- Include files with paths to services are used
+- Reusable templates `.gitlab/ci-templates/`
+
+##### 9.1.3. Integration and Modularity
+
+Each service (e.g., `dummy-service`) uses `SERVICE_NAME`, `SERVICE_PATH` variables and extends a common template.
+
+#### 9.2. ArgoCD
+
+**ArgoCD** is the declarative GitOps engine responsible for the automated management of the Kubernetes cluster state based on a Git repository. It provides:
+
+- **Single Source of Truth:** The `iac_kubeadm` repository (`gitlab.dmz.home`) serves as the single source of truth for cluster configuration.
+- **TLS Support:** Secure communication with GitLab is ensured via TLS.
+- **Web Access:** Access to the ArgoCD user interface is available at `argocd.dmz.home`.
+
+- **Version Control:** All infrastructure components are under version control, simplifying change tracking and rollback to previous states.
+
+#### 9.3. Reloader
+
+**Reloader** is a lightweight controller that automates the rolling update of pods when their associated `Secret` or `ConfigMap` objects are modified. This guarantees that applications always use the latest configuration without manual intervention.
+
+---
+
+### Chapter 10: Security and Additional Capabilities
+
+#### 10.1. HashiCorp Vault
+
+**HashiCorp Vault** is integrated with the `Vault CSI Driver` to facilitate the secure and dynamic injection of temporary secrets into Kubernetes pods, preventing their persistent storage within the cluster.
+
+#### 10.2. Keycloak
+
+**Keycloak** serves as the central Identity and Access Management (IAM) solution for all platform services. It supports SSO (Single Sign-On) and OpenID Connect standards, integrating with Grafana, Kibana, and ArgoCD for centralized user and permission management.
+
+#### 10.3. NVIDIA GPU Operator
+
+The **NVIDIA GPU Operator** automates the management of NVIDIA GPU resources within the Kubernetes cluster, including driver installation and configuration, thereby abstracting hardware complexities.
+
+- Version: `v24.9.2`
+- GNN Training Support: Provides the necessary infrastructure for efficient Graph Neural Network training.
+- Easy Updates via Helm: Simplifies the process of updating and managing the operator.
+
+#### 10.4. Other Utilities
+
+- `kubed` — a controller for synchronizing Kubernetes resources (e.g., Secrets, ConfigMaps) between namespaces, ensuring configuration consistency.
+- `Mailrelay` — a centralized SMTP relay for dispatching notifications from various system components, including Alertmanager, CronJobs, and CI/CD pipelines.
+
 
 ##### 9.1.2. Pipeline Structure
 

@@ -46,9 +46,22 @@ spec:
   ttlSecondsAfterFinished: 3600
 ```
 
-### Appendix C: CI/CD Pipeline Examples
+### Appendix C: CI/CD Pipeline Details and Best Practices
 
-This appendix includes complete `.gitlab-ci.yml` file examples for each microservice, demonstrating the standardized testing, building, and deployment (CI/CD) processes implemented within the StreamForge platform.
+This appendix details the standardized CI/CD processes implemented within the StreamForge platform, emphasizing the best practices applied for efficient and consistent microservice development, building, and deployment.
+
+**Key Principles and Implementations:**
+
+*   **Unified Base Image for Services and Tests:** A single, comprehensive base Docker image (`registry.dmz.home/kinga/stream-forge/base:latest`, built from `platform/Dockerfile`) is utilized across all Python services for both application runtime and testing. This image pre-installs common Python dependencies, including all necessary test frameworks (e.g., `pytest`, `httpx`, `python-arango`), and integrates the `streamforge_utils` library via a robust wheel installation. This approach ensures environmental consistency, reduces build times, and simplifies dependency management.
+
+*   **Optimized Kaniko Builds:** Container image builds leverage `kaniko` for secure, daemonless operations directly within the Kubernetes cluster. Build processes are optimized by:
+    *   Using the project root (`$CI_PROJECT_DIR`) as the build context, allowing Dockerfiles to efficiently access shared libraries and resources across the repository.
+    *   Implementing explicit image layer caching (`--cache=true --cache-repo "$CI_REGISTRY_IMAGE/cache"`) to significantly accelerate subsequent builds by reusing unchanged layers.
+
+*   **Streamlined Testing:** Unit and integration tests are executed within the unified base image, benefiting from pre-installed test dependencies. This eliminates redundant dependency installations during pipeline execution, leading to faster and more reliable test cycles.
+
+*   **Modular CI/CD Configuration:** The CI/CD configuration is structured with common templates (e.g., `.build_python_service` in `.gitlab/ci-templates/Python-Service.gitlab-ci.yml`) that are extended by specific pipelines for each microservice. This modularity promotes reusability, simplifies maintenance, and ensures consistent application of CI/CD best practices across the platform.
+
 
 ### Appendix D: Glossary of Terms
 
