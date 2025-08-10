@@ -10,11 +10,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 COPY ca.crt /usr/local/share/ca-certificates/dev-ca.crt
 RUN update-ca-certificates
 
-# Устанавливаем общие Python-зависимости
-RUN pip install --no-cache-dir uvloop loguru aiokafka
+# Устанавливаем общие Python-зависимости и тестовые зависимости
+RUN pip install --no-cache-dir uvloop loguru aiokafka pytest pytest-asyncio httpx python-arango
 
-# Копируем и устанавливаем нашу общую библиотеку
-COPY libs/streamforge_utils /tmp/streamforge_utils
-RUN pip install --no-cache-dir /tmp/streamforge_utils && rm -rf /tmp/streamforge_utils
+# Копируем и устанавливаем нашу общую библиотеку через wheel
+COPY libs /tmp/libs
+RUN pip install --no-cache-dir /tmp/libs/streamforge_utils && rm -rf /tmp/libs
 
 WORKDIR /app
