@@ -1,0 +1,35 @@
+include:
+  - project: 'kinga/stream-forge'
+    ref: main
+    file: '/.gitlab/ci-templates/Python-Service.gitlab-ci.yml'
+  - project: 'kinga/stream-forge'
+    ref: main
+    file: '/.gitlab/ci-templates/Kubernetes-Deploy.gitlab-ci.yml'
+
+build-graph-build:
+  extends: .build_python_service
+  variables:
+    SERVICE_NAME: graph-build
+    SERVICE_PATH: services/graph_build
+    CI_REGISTRY_IMAGE: $CI_REGISTRY/kinga/stream-forge/graph-build
+
+update-badge-graph-build:
+  extends: .update_badge_python_service
+  stage: badges
+  needs:
+    - build-graph-build
+  variables:
+    SERVICE_NAME: graph-build
+    SERVICE_PATH: services/graph_build
+
+test-graph-build:
+  extends: .test_python_service
+  variables:
+    SERVICE_PATH: services/graph_build
+  when: manual
+
+deploy-graph-build:
+  extends: .deploy_kubernetes_service
+  variables:
+    K8S_MANIFEST_PATH: services/graph_build/k8s/deployment.yaml
+  when: manual

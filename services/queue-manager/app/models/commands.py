@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Literal, Optional
+from typing import Literal, Optional, List
 
 
 class QueueCommand(BaseModel):
@@ -66,6 +66,47 @@ class QueueCommand(BaseModel):
                 "time_range": "2024-06-01:2024-06-02",
                 "interval": "5m",
                 "collection_name": "btc_candles_5m_2024_06_01"
+            }
+        }
+        extra = "forbid"
+
+
+class ServiceConfig(BaseModel):
+    name: str = Field(..., description="Название микросервиса (например, loader-producer)")
+    image: Optional[str] = Field(None, description="Docker-образ микросервиса")
+    type: Optional[str] = Field(None, description="Тип данных, который обрабатывает сервис")
+    kafka_topic: Optional[str] = Field(None, description="Kafka topic для сервиса")
+    collection_name: Optional[str] = Field(None, description="Название коллекции в ArangoDB для сервиса")
+    # Add other service-specific parameters as needed
+    # For example, for loader-api-candles, you might have 'interval'
+    interval: Optional[str] = Field(None, description="Интервал свечей или агрегации (для loader-api-candles)")
+
+
+class StartQueueCommand(BaseModel):
+    symbol: str = Field(..., example="BTCUSDT", description="Название торгового инструмента")
+    time_range: str = Field(..., example="2024-06-01:2024-06-02", description="Диапазон дат (для исторических данных)")
+    services: List[ServiceConfig] = Field(..., description="Список конфигураций микросервисов для запуска")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "symbol": "BTCUSDT",
+                "time_range": "2024-07-01:2024-07-02",
+                "services": [
+                    {
+                        "name": "loader-producer",
+                        "image": "registry.dmz.home/streamforge/loader-producer:v0.1.7",
+                        "type": "api_candles_5m",
+                        "kafka_topic": "loader-btcusdt-api-candles-5m-2024-06-01-abc123"
+                    },
+                    {
+                        "name": "arango-connector",
+                        "image": "registry.dmz.home/streamforge/arango-connector:v0.1.0",
+                        "type": "api_candles_5m",
+                        "kafka_topic": "loader-btcusdt-api-candles-5m-2024-06-01-abc123",
+                        "collection_name": "btc_candles_5m_2024_06_01"
+                    }
+                ]
             }
         }
         extra = "forbid"

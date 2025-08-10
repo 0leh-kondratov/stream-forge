@@ -1,0 +1,11 @@
+aioarango
+aiokafka
+loguru
+uvloop
+python-dotenv
+torch
+torch_geometric
+minio
+pandas
+numpy
+python-binance

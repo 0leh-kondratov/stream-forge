@@ -1,0 +1,35 @@
+include:
+  - project: 'kinga/stream-forge'
+    ref: main
+    file: '/.gitlab/ci-templates/Python-Service.gitlab-ci.yml'
+  - project: 'kinga/stream-forge'
+    ref: main
+    file: '/.gitlab/ci-templates/Kubernetes-Deploy.gitlab-ci.yml'
+
+build-arango-orderbook:
+  extends: .build_python_service
+  variables:
+    SERVICE_NAME: arango-orderbook
+    SERVICE_PATH: services/arango-orderbook
+    CI_REGISTRY_IMAGE: $CI_REGISTRY/kinga/stream-forge/arango-orderbook
+
+update-badge-arango-orderbook:
+  extends: .update_badge_python_service
+  stage: badges
+  needs:
+    - build-arango-orderbook
+  variables:
+    SERVICE_NAME: arango-orderbook
+    SERVICE_PATH: services/arango-orderbook
+
+test-arango-orderbook:
+  extends: .test_python_service
+  variables:
+    SERVICE_PATH: services/arango-orderbook
+  when: manual
+
+deploy-arango-orderbook:
+  extends: .deploy_kubernetes_service
+  variables:
+    K8S_MANIFEST_PATH: services/arango-orderbook/k8s/deployment.yaml
+  when: manual

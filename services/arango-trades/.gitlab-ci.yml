@@ -1,0 +1,35 @@
+include:
+  - project: 'kinga/stream-forge'
+    ref: main
+    file: '/.gitlab/ci-templates/Python-Service.gitlab-ci.yml'
+  - project: 'kinga/stream-forge'
+    ref: main
+    file: '/.gitlab/ci-templates/Kubernetes-Deploy.gitlab-ci.yml'
+
+build-arango-trades:
+  extends: .build_python_service
+  variables:
+    SERVICE_NAME: arango-trades
+    SERVICE_PATH: services/arango-trades
+    CI_REGISTRY_IMAGE: $CI_REGISTRY/kinga/stream-forge/arango-trades
+
+update-badge-arango-trades:
+  extends: .update_badge_python_service
+  stage: badges
+  needs:
+    - build-arango-trades
+  variables:
+    SERVICE_NAME: arango-trades
+    SERVICE_PATH: services/arango-trades
+
+test-arango-trades:
+  extends: .test_python_service
+  variables:
+    SERVICE_PATH: services/arango-trades
+  when: manual
+
+deploy-arango-trades:
+  extends: .deploy_kubernetes_service
+  variables:
+    K8S_MANIFEST_PATH: services/arango-trades/k8s/deployment.yaml
+  when: manual

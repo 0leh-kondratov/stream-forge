@@ -1,3 +1,5 @@
-# Уникальные зависимости
 aiohttp
-pytest
+aiokafka
+loguru
+uvloop
+python-dotenv
