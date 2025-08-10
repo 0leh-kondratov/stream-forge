@@ -13,7 +13,7 @@ class KafkaCommandConsumer:
         self.topic = os.getenv("QUEUE_CONTROL_TOPIC", "queue-control")
         self.bootstrap_servers = os.getenv("KAFKA_BOOTSTRAP_SERVERS")
         self.username = os.getenv("KAFKA_USER")
-        self.password: "REDACTED"("KAFKA_PASSWORD")
+        self.password = os.getenv("KAFKA_PASSWORD")
         self.ca_path = os.getenv("KAFKA_CA_PATH")
         self.group_id = f"consumer-{queue_id}"
         self.queue_id = queue_id

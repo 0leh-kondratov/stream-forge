@@ -15,7 +15,7 @@ class TelemetryProducer:
         self.topic = os.getenv("QUEUE_EVENTS_TOPIC", "queue-events")
         self.bootstrap_servers = os.getenv("KAFKA_BOOTSTRAP_SERVERS")
         self.username = os.getenv("KAFKA_USER")
-        self.password: "REDACTED"("KAFKA_PASSWORD")
+        self.password = os.getenv("KAFKA_PASSWORD")
         self.ca_path = os.getenv("KAFKA_CA_PATH")
         self.producer = None
 
