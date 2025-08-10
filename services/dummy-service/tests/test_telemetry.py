@@ -11,25 +11,8 @@ from app.metrics import dummy_events_total, dummy_status_last
 # Mock environment variables
 @pytest.fixture(autouse=True)
 def mock_env_vars():
-    with patch.dict(os.environ, {
-        "QUEUE_EVENTS_TOPIC": "test-events",
-        "KAFKA_BOOTSTRAP_SERVERS": "k3-kafka-bootstrap.kafka:9093",
-        "KAFKA_USER": "user-streamforge",
-        "KAFKA_PASSWORD": "qqIJ511mX1c2FOpNZDGaw5WqblS1pxeD",
-        "KAFKA_CA_PATH": "/data/projects/stream-forge/services/dummy-service/ca.crt",
-        "QUEUE_ID": "test_queue_id",
-        "SYMBOL": "TEST",
-        "TYPE": "dummy",
-        "TELEMETRY_PRODUCER_ID": "dummy_producer",
-        "TIME_RANGE": "1h",
-        "KAFKA_TOPIC": "test-kafka-topic",
-        "K8S_NAMESPACE": "test-namespace",
-        "ARANGO_URL": "http://abase-3.dmz.home:8529",
-        "ARANGO_DB": "test_db",
-        "LOADER_IMAGE": "loader:latest",
-        "CONSUMER_IMAGE": "consumer:latest",
-    }):
-        yield
+    # Environment variables are now expected to be set externally
+    yield
 
 # Mock external dependencies
 @pytest.fixture
@@ -88,11 +71,11 @@ def telemetry_producer_instance():
 
 # Test TelemetryProducer.__init__
 def test_telemetry_producer_init(telemetry_producer_instance):
-    assert telemetry_producer_instance.topic == "test-events"
-    assert telemetry_producer_instance.bootstrap_servers == "k3-kafka-bootstrap.kafka:9093"
-    assert telemetry_producer_instance.username == "user-streamforge"
-    assert telemetry_producer_instance.password == "qqIJ511mX1c2FOpNZDGaw5WqblS1pxeD"
-    assert telemetry_producer_instance.ca_path == "/data/projects/stream-forge/services/dummy-service/ca.crt"
+    assert telemetry_producer_instance.topic == os.getenv("QUEUE_EVENTS_TOPIC")
+    assert telemetry_producer_instance.bootstrap_servers == os.getenv("KAFKA_BOOTSTRAP_SERVERS")
+    assert telemetry_producer_instance.username == os.getenv("KAFKA_USER")
+    assert telemetry_producer_instance.password == os.getenv("KAFKA_PASSWORD")
+    assert telemetry_producer_instance.ca_path == os.getenv("KAFKA_CA_PATH")
     assert telemetry_producer_instance.producer is None
 
 # Test TelemetryProducer.start method
@@ -139,19 +122,20 @@ async def test_telemetry_producer_send_event(telemetry_producer_instance, mock_a
 
     expected_payload = {
         "event": event_type,
-        "queue_id": "test_queue_id",
-        "symbol": "TEST",
-        "type": "dummy",
-        "producer": "dummy_producer",
+        "queue_id": os.getenv("QUEUE_ID"),
+        "symbol": os.getenv("SYMBOL"),
+        "type": os.getenv("TYPE", "dummy"),
+        "producer": os.getenv("TELEMETRY_PRODUCER_ID", "dummy"),
         "sent_at": 12345.67,
-        "key": "value"
     }
+    if extra_data:
+        expected_payload.update(extra_data)
     mock_metrics.dummy_events_total.labels.assert_called_once_with(event_type)
     mock_metrics.dummy_events_total.labels.return_value.inc.assert_called_once()
     mock_metrics.dummy_status_last.labels.assert_not_called() # Not a status event
 
     mock_aiokafka_producer.send_and_wait.assert_called_once_with(
-        "test-events",
+        os.getenv("QUEUE_EVENTS_TOPIC"),
         json.dumps(expected_payload).encode()
     )
     mock_logger.info.assert_called_once_with(f"Event sent: {event_type}")
@@ -193,18 +177,20 @@ async def test_telemetry_producer_send_status_update(telemetry_producer_instance
             "message": message,
             "finished": finished,
             "records_written": records_written,
-            "time_range": "1h",
-            "kafka": "k3-kafka-bootstrap.kafka:9093",
-            "kafka_user": "user-streamforge",
-            "kafka_topic": "test-kafka-topic",
-            "k8s_namespace": "test-namespace",
-            "arango_url": "http://abase-3.dmz.home:8529",
-            "arango_db": "test_db",
-            "loader_image": "loader:latest",
-            "consumer_image": "consumer:latest",
-            "error_message": error_message,
-            "custom": "data"
+            "time_range": os.getenv("TIME_RANGE"),
+            "kafka": os.getenv("KAFKA_BOOTSTRAP_SERVERS"),
+            "kafka_user": os.getenv("KAFKA_USER"),
+            "kafka_topic": os.getenv("KAFKA_TOPIC"),
+            "k8s_namespace": os.getenv("K8S_NAMESPACE"),
+            "arango_url": os.getenv("ARANGO_URL"),
+            "arango_db": os.getenv("ARANGO_DB"),
+            "loader_image": os.getenv("LOADER_IMAGE"),
+            "consumer_image": os.getenv("CONSUMER_IMAGE"),
         }
+        if error_message:
+            expected_payload["error_message"] = error_message
+        if extra_data:
+            expected_payload.update(extra_data)
         mock_send_event.assert_called_once_with(status, expected_payload)
         mock_logger.info.assert_called_once()
         assert "Telemetry status update" in mock_logger.info.call_args[0][0]
