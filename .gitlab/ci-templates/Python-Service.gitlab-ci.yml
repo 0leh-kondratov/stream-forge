@@ -55,7 +55,7 @@
 
 .test_python_service:
   stage: test
-  image: registry.dmz.home/kinga/stream-forge/base:v0.1.2 # Using the unified base image
+  image: registry.dmz.home/kinga/stream-forge/base:v0.1.3 # Using the unified base image
   allow_failure: true
   script:
     - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt
