@@ -6,8 +6,6 @@ stages:
   - deploy
   - badges
 
-
-
 include:
   - '/.gitlab/ci-templates/Python-Service.gitlab-ci.yml'
   - '/services/queue-manager/.gitlab-ci.yml'
