@@ -1,91 +1,55 @@
-import json
-import time
 import ssl
-from aiokafka import AIOKafkaProducer
 from loguru import logger
+from aiokafka import AIOKafkaProducer
+import asyncio
+import json
 from app import config
-from app.metrics import events_total, status_last, errors_total # Import new metrics
 
 class TelemetryProducer:
     def __init__(self):
-        self.topic = config.QUEUE_EVENTS_TOPIC
-        self.bootstrap_servers = config.KAFKA_BOOTSTRAP_SERVERS
-        self.username = config.KAFKA_USER
-        self.password = config.KAFKA_PASSWORD
-        self.ca_path = config.CA_PATH
         self.producer = None
 
     async def start(self):
-        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-        ssl_context.verify_mode = ssl.CERT_REQUIRED
-        ssl_context.load_verify_locations(cafile=self.ca_path)
-        self.producer = AIOKafkaProducer(
-            bootstrap_servers=self.bootstrap_servers,
-            security_protocol="SASL_SSL",
-            sasl_mechanism="SCRAM-SHA-512",
-            sasl_plain_username=self.username,
-            sasl_plain_password=self.password,
-            ssl_context=ssl_context,
-            value_serializer=lambda m: json.dumps(m).encode("utf-8"), # Keep serializer
-        )
-        await self.producer.start()
-        logger.debug("Telemetry producer started.")
+        try:
+            ssl_context = ssl.create_default_context(cafile=config.CA_PATH)
+            self.producer = AIOKafkaProducer(
+                bootstrap_servers=config.KAFKA_BOOTSTRAP_SERVERS,
+                security_protocol="SASL_SSL",
+                sasl_mechanism="SCRAM-SHA-512",
+                sasl_plain_username=config.KAFKA_USER,
+                sasl_plain_password=config.KAFKA_PASSWORD,
+                ssl_context=ssl_context
+            )
+            await self.producer.start()
+            logger.info("TelemetryProducer connected to Kafka.")
+        except Exception as e:
+            logger.error(f"Failed to connect TelemetryProducer to Kafka: {e}")
+            raise
+
+    async def send_status_update(self, status: str, message: str, finished: bool = False, records_written: int = 0, error_message: str = None):
+        event = {
+            "producer_id": config.TELEMETRY_PRODUCER_ID,
+            "timestamp": asyncio.get_event_loop().time(),
+            "status": status,
+            "message": message,
+            "finished": finished,
+            "records_written": records_written,
+        }
+        if error_message:
+            event["error_message"] = error_message
+
+        try:
+            await self.producer.send_and_wait(config.QUEUE_EVENTS_TOPIC, json.dumps(event).encode('utf-8'))
+            logger.debug(f"Sent telemetry: {event}")
+        except Exception as e:
+            logger.error(f"Failed to send telemetry update: {e}")
 
     async def stop(self):
         if self.producer:
             await self.producer.stop()
-            self.producer = None # Clear producer after stopping
+            logger.info("TelemetryProducer disconnected from Kafka.")
 
-    async def send_event(self, event_type: str, extra: dict = None):
-        payload = {
-            "event": event_type,
-            "queue_id": config.QUEUE_ID,
-            "symbol": config.SYMBOL,
-            "type": config.TYPE,
-            "producer": config.TELEMETRY_PRODUCER_ID,
-            "sent_at": time.time(),
-        }
-        if extra:
-            payload.update(extra)
+telemetry_producer_instance = None
 
-        # Prometheus metrics integration
-        events_total.labels(event_type).inc()
-        if event_type in {"started", "loading", "finished", "interrupted", "error"}:
-            status_last.labels(event_type).set(1)
-        if event_type == "error": # Assuming "error" event means an error occurred
-            errors_total.inc()
-
-        try:
-            await self.producer.send_and_wait(self.topic, value=payload)
-            logger.info(f"Event sent: {event_type}")
-        except Exception as e:
-            logger.error(f"⚠️ Error sending telemetry: {e}")
-            errors_total.inc() # Increment error metric on send failure
-
-    async def send_status_update(self, status: str, message: str = None,
-                                 finished: bool = False, records_written: int = 0,
-                                 error_message: str = None, extra: dict = None):
-        payload = {
-            "status": status,
-            "message": message or "",
-            "finished": finished,
-            "records_written": records_written,
-            # Add other relevant config values from arango-candles config.py
-            "kafka": self.bootstrap_servers,
-            "kafka_user": self.username,
-            "kafka_topic": config.KAFKA_TOPIC,
-            "arango_url": config.ARANGO_URL,
-            "arango_db": config.ARANGO_DB,
-            "collection_name": config.COLLECTION_NAME,
-        }
-        if error_message:
-            payload["error_message"] = error_message
-        if extra:
-            payload.update(extra)
-
-        logger.info(f"Telemetry status update:\n{json.dumps(payload, indent=2)}")
-        await self.send_event(status, payload)
-
-# Update close_telemetry to use the new class structure
 async def close_telemetry(telemetry_producer: TelemetryProducer):
     await telemetry_producer.stop()

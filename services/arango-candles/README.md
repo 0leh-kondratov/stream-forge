@@ -1,45 +1,45 @@
 # 🔥 arango-candles
 
-Микросервис-консьюмер в экосистеме **StreamForge**.
+A consumer microservice in the **StreamForge** ecosystem.
 
-## 🎯 Назначение
+## 🎯 Purpose
 
-`arango-candles` выполняет одну задачу:
+`arango-candles` performs one primary task:
 
-1.  **Слушает** определенный топик в Kafka, в который поступают данные по свечам (`candles`).
-2.  **Обрабатывает** эти сообщения пачками (батчами).
-3.  **Сохраняет** их в соответствующую коллекцию в базе данных ArangoDB.
+1.  **Listens** to a specific Kafka topic that receives candle data.
+2.  **Processes** these messages.
+3.  **Saves** them to the corresponding collection in the ArangoDB database.
 
-Этот сервис является stateless-воркером и предназначен для запуска в виде **Kubernetes Job**. Всю необходимую конфигурацию он получает через переменные окружения.
+This service is a stateless worker designed to run as a **Kubernetes Job**. It receives all necessary configuration through environment variables.
 
-## ⚙️ Переменные окружения
+## ⚙️ Environment Variables
 
-Сервис полностью настраивается через переменные окружения.
+The service is fully configured through environment variables.
 
-| Переменная                 | Описание                                                              | Пример                                           |
-| -------------------------- | --------------------------------------------------------------------- | ------------------------------------------------ |
-| **`QUEUE_ID`**             | Уникальный идентификатор всего workflow.                              | `wf-btcusdt-20240801-a1b2c3`                      |
-| **`SYMBOL`**               | Торговая пара.                                                        | `BTCUSDT`                                        |
-| **`TYPE`**                 | Тип данных, который обрабатывается.                                   | `api_candles_1m`                                 |
-| **`KAFKA_TOPIC`**          | Имя Kafka-топика, из которого читать данные.                           | `wf-btcusdt-20240801-a1b2c3-api-candles-1m`       |
-| **`COLLECTION_NAME`**      | Имя коллекции в ArangoDB для сохранения данных.                       | `btcusdt_api_candles_1m_2024_08_01`                |
-| **`TELEMETRY_PRODUCER_ID`**| Уникальный ID этого экземпляра для телеметрии.                        | `arango-candles__a1b2c3`                         |
-| `KAFKA_BOOTSTRAP_SERVERS`  | Адреса брокеров Kafka.                                                | `kafka-bootstrap.kafka:9093`                     |
-| `KAFKA_USER_CONSUMER`      | Имя пользователя для аутентификации в Kafka (consumer).               | `user-consumer-tls`                              |
-| `KAFKA_PASSWORD_CONSUMER`  | Пароль для пользователя Kafka (передается через Secret).              | `your_kafka_password`                            |
-| `CA_PATH`                  | Путь к CA-сертификату для TLS-соединения с Kafka.                     | `/certs/ca.crt`                                  |
-| `QUEUE_CONTROL_TOPIC`      | Топик для получения управляющих команд (например, `stop`).            | `queue-control`                                  |
-| `QUEUE_EVENTS_TOPIC`       | Топик для отправки событий телеметрии.                                | `queue-events`                                   |
-| `ARANGO_URL`               | URL для подключения к ArangoDB.                                       | `http://arango-cluster.db:8529`                  |
-| `ARANGO_DB`                | Имя базы данных в ArangoDB.                                           | `streamforge`                                    |
-| `ARANGO_USER`              | Пользователь для подключения к ArangoDB.                              | `root`                                           |
-| `ARANGO_PASSWORD`          | Пароль для ArangoDB (передается через Secret).                        | `your_arango_password`                           |
+| Variable                  | Description                                                     | Example                                          |
+| ------------------------- | --------------------------------------------------------------- | ------------------------------------------------ |
+| **`QUEUE_ID`**            | A unique identifier for the entire workflow.                    | `wf-btcusdt-20240801-a1b2c3`                     |
+| **`SYMBOL`**              | The trading pair.                                               | `BTCUSDT`                                        |
+| **`TYPE`**                | The type of data being processed.                               | `api_candles_1m`                                 |
+| **`KAFKA_TOPIC`**         | The name of the Kafka topic to read data from.                  | `wf-btcusdt-20240801-a1b2c3-api-candles-1m`      |
+| **`COLLECTION_NAME`**     | The name of the collection in ArangoDB to save data to.         | `btcusdt_api_candles_1m_2024_08_01`              |
+| **`TELEMETRY_PRODUCER_ID`**| A unique ID for this instance for telemetry.                   | `arango-candles__a1b2c3`                         |
+| `KAFKA_BOOTSTRAP_SERVERS` | The addresses of the Kafka brokers.                             | `kafka-bootstrap.kafka:9093`                     |
+| `KAFKA_USER_CONSUMER`     | The username for Kafka authentication (consumer).               | `user-consumer-tls`                              |
+| `KAFKA_PASSWORD_CONSUMER` | The password for the Kafka user (passed via Secret).            | `your_kafka_password`                            |
+| `CA_PATH`                 | The path to the CA certificate for the TLS connection to Kafka. | `/certs/ca.crt`                                  |
+| `QUEUE_CONTROL_TOPIC`     | The topic for receiving control commands (e.g., `stop`).        | `queue-control`                                  |
+| `QUEUE_EVENTS_TOPIC`      | The topic for sending telemetry events.                         | `queue-events`                                   |
+| `ARANGO_URL`              | The URL for connecting to ArangoDB.                             | `http://arango-cluster.db:8529`                  |
+| `ARANGO_DB`               | The name of the database in ArangoDB.                           | `streamforge`                                    |
+| `ARANGO_USER`             | The user for connecting to ArangoDB.                            | `root`                                           |
+| `ARANGO_PASSWORD`         | The password for ArangoDB (passed via Secret).                  | `your_arango_password`                           |
 
 ---
 
-## 📥 Входные данные (Kafka)
+## 📥 Input Data (Kafka)
 
-Сервис ожидает получать из топика `KAFKA_TOPIC` JSON-сообщения следующего формата:
+The service expects to receive JSON messages in the following format from the `KAFKA_TOPIC` topic:
 
 ```json
 {
@@ -58,15 +58,15 @@
 }
 ```
 
-Поле `_key` используется для идемпотентной вставки/обновления данных в ArangoDB (`UPSERT`).
+The `_key` field is used for idempotent insertion/updating of data in ArangoDB (`UPSERT`).
 
 ---
 
-## 📡 Телеметрия (Topic: `queue-events`)
+## 📡 Telemetry (Topic: `queue-events`)
 
-Сервис отправляет события о своем состоянии в топик `queue-events`. Это позволяет `queue-manager` отслеживать прогресс выполнения задачи.
+The service sends events about its status to the `queue-events` topic. This allows the `queue-manager` to track the progress of the task.
 
-**Пример события `loading`:**
+**Example of a `loading` event:**
 
 ```json
 {
@@ -74,7 +74,7 @@
   "symbol": "BTCUSDT",
   "type": "api_candles_1m",
   "status": "loading",
-  "message": "Сохранено 15000 записей",
+  "message": "Saved 15000 records",
   "records_written": 15000,
   "finished": false,
   "producer": "arango-candles__a1b2c3",
@@ -82,15 +82,15 @@
 }
 ```
 
-**Возможные статусы:** `started`, `loading`, `interrupted`, `error`, `finished`.
+**Possible statuses:** `started`, `loading`, `interrupted`, `error`, `finished`.
 
 ---
 
-## 🔄 Управление (Topic: `queue-control`)
+## 🔄 Management (Topic: `queue-control`)
 
-Сервис слушает топик `queue-control` и реагирует на команды, адресованные его `queue_id`.
+The service listens to the `queue-control` topic and reacts to commands addressed to its `queue_id`.
 
-**Команда `stop`:**
+**`stop` command:**
 
 ```json
 {
@@ -99,5 +99,38 @@
 }
 ```
 
-При получении этой команды сервис корректно завершает свою работу: останавливает консьюмер, закрывает соединение с БД и отправляет финальное событие телеметрии со статусом `interrupted`.
+Upon receiving this command, the service gracefully terminates: it stops the consumer, closes the database connection, and sends a final telemetry event with the status `interrupted`.
 
+---
+
+## Unit Tests
+
+The unit tests for this service are located in `tests/test_consumer.py`. They cover the core logic of the `calculate_and_update_indicators` function.
+
+### 1. `test_calculate_and_update_indicators_success` (Happy Path)
+
+This test checks the main success scenario.
+
+-   **It simulates:** A situation where historical candle data exists in the database.
+-   **It asserts that:**
+    -   The function correctly queries the database for historical data.
+    -   After calculating the indicators, it attempts to update the latest candle document.
+    -   The data payload for the update contains the expected indicator keys (e.g., `EMA_50`, `RSI_14`).
+
+### 2. `test_no_historical_data` (No Data Scenario)
+
+This test checks how the function behaves when no historical data is available for a symbol.
+
+-   **It simulates:** An empty response from the database.
+-   **It asserts that:**
+    -   The database `update` method is **not** called.
+    -   The function handles this case gracefully without raising an error.
+
+### 3. `test_indicator_calculation_error` (Error Scenario)
+
+This test ensures the service is resilient to potential errors during the indicator calculation process.
+
+-   **It simulates:** A situation where the historical data is malformed (e.g., missing required columns like `open`, `high`, `low`, `close`), which will cause an exception in the `pandas-ta` library.
+-   **It asserts that:**
+    -   The function catches the internal exception and does **not** crash.
+    -   The database `update` method is **not** called if the calculation fails.

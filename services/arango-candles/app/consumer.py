@@ -1,20 +1,90 @@
 import asyncio
 import json
 import ssl
+import pandas as pd
+import pandas_ta as ta
 from aiokafka import AIOKafkaConsumer
 from arango import ArangoClient
 from loguru import logger
 from app import config
 from app.telemetry import TelemetryProducer
 
+async def calculate_and_update_indicators(collection, symbol: str, latest_timestamp: int):
+    """
+    Fetches recent candles, calculates technical indicators, and updates the latest candle document.
+    """
+    try:
+        # 1. Fetch recent candles from ArangoDB to get enough data for calculations.
+        aql_query = """
+        FOR doc IN @@collection
+            FILTER doc.symbol == @symbol AND doc.timestamp <= @latest_timestamp
+            SORT doc.timestamp DESC
+            LIMIT 300
+            RETURN doc
+        """
+        cursor = collection.db.aql.execute(
+            aql_query,
+            bind_vars={
+                "@collection": collection.name,
+                "symbol": symbol,
+                "latest_timestamp": latest_timestamp
+            }
+        )
+        
+        docs = [doc for doc in cursor][::-1]
+
+        if not docs:
+            logger.warning(f"No historical data found for symbol {symbol} to calculate indicators.")
+            return
+
+        # 2. Convert to Pandas DataFrame and prepare it
+        df = pd.DataFrame(docs)
+        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms') # Assuming timestamp is in milliseconds
+        df = df.set_index('timestamp')
+        
+        df['open'] = df['open'].astype(float)
+        df['high'] = df['high'].astype(float)
+        df['low'] = df['low'].astype(float)
+        df['close'] = df['close'].astype(float)
+        df['volume'] = df['volume'].astype(float)
+
+        # 3. Calculate indicators using pandas-ta
+        df.ta.ema(length=50, append=True)
+        df.ta.ema(length=200, append=True)
+        df.ta.rsi(length=14, append=True)
+        df.ta.vwap(append=True)
+        df.ta.atr(length=30, append=True) # ATR
+
+        # 4. Get the latest calculated indicators
+        latest_indicators = df.iloc[-1]
+        update_data = {
+            "EMA_50": latest_indicators.get('EMA_50'),
+            "EMA_200": latest_indicators.get('EMA_200'),
+            "RSI_14": latest_indicators.get('RSI_14'),
+            "VWAP_D": latest_indicators.get('VWAP_D'),
+            "ATR_30": latest_indicators.get('ATR_30')
+        }
+        
+        update_data = {k: v for k, v in update_data.items() if v is not None and pd.notna(v)}
+
+        if not update_data:
+            logger.warning(f"Indicator calculation resulted in no data for {symbol} at {latest_timestamp}")
+            return
+
+        # 5. Update the latest candle document in ArangoDB
+        latest_doc_key = docs[-1]['_key']
+        collection.update(latest_doc_key, update_data)
+        logger.debug(f"Updated indicators for {symbol} at {latest_timestamp}: {update_data}")
+
+    except Exception as e:
+        logger.error(f"Failed to calculate or update indicators for {symbol}: {e}", exc_info=True)
+
+
 async def run_consumer(stop_event: asyncio.Event, telemetry: TelemetryProducer):
     logger.info("Starting Kafka consumer for candle data...")
 
     # Kafka Consumer Setup
-    ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-    ssl_context.verify_mode = ssl.CERT_REQUIRED
-    ssl_context.load_verify_locations(cafile=config.CA_PATH)
-
+    ssl_context = ssl.create_default_context(cafile=config.CA_PATH)
     consumer = AIOKafkaConsumer(
         config.KAFKA_TOPIC,
         bootstrap_servers=config.KAFKA_BOOTSTRAP_SERVERS,
@@ -23,7 +93,7 @@ async def run_consumer(stop_event: asyncio.Event, telemetry: TelemetryProducer):
         sasl_plain_username=config.KAFKA_USER,
         sasl_plain_password=config.KAFKA_PASSWORD,
         ssl_context=ssl_context,
-        group_id=f"arango-candles-consumer-{config.QUEUE_ID}", # Unique group ID
+        group_id=f"arango-candles-consumer-{config.QUEUE_ID}",
         auto_offset_reset="latest",
         enable_auto_commit=True,
     )
@@ -50,26 +120,26 @@ async def run_consumer(stop_event: asyncio.Event, telemetry: TelemetryProducer):
 
             try:
                 candle_data = json.loads(msg.value.decode("utf-8"))
-                # Assuming candle_data has a unique identifier, e.g., "_key" or "timestamp" + "symbol"
-                # For idempotent writes, we need a unique key. Let's assume 'timestamp' and 'symbol' form a unique key.
-                # Or if the data already contains a '_key' field, use that.
                 
-                # Example: Create a _key from timestamp and symbol if not present
                 if "_key" not in candle_data and "timestamp" in candle_data and "symbol" in candle_data:
                     candle_data["_key"] = f"{candle_data['symbol']}-{candle_data['timestamp']}"
                 
-                # Perform UPSERT operation
-                # The replace() method with overwrite=True acts as an UPSERT if _key is present
-                result = collection.insert(candle_data, overwrite=True)
-                
+                collection.insert(candle_data, overwrite=True)
                 records_processed += 1
-                if records_processed % 100 == 0: # Send telemetry update every 100 records
+                logger.debug(f"Inserted record: {candle_data.get('_key', 'N/A')}")
+
+                await calculate_and_update_indicators(
+                    collection,
+                    candle_data['symbol'],
+                    candle_data['timestamp']
+                )
+
+                if records_processed % 100 == 0:
                     await telemetry.send_status_update(
                         status="loading",
                         message=f"Processed {records_processed} records.",
                         records_written=records_processed
                     )
-                logger.debug(f"Processed record: {candle_data.get('_key', 'N/A')}")
 
             except json.JSONDecodeError:
                 logger.error(f"Failed to decode JSON from Kafka message: {msg.value}")
