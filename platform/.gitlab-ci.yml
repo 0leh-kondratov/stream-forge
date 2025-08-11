@@ -5,6 +5,7 @@ include:
 
 build-base-image:
   extends: .build_python_service
+  stage: setup
   variables:
     SERVICE_NAME: base
     SERVICE_PATH: platform
