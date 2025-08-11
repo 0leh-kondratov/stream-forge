@@ -6,6 +6,7 @@ stages:
   - deploy
   - badges
 
+
 include:
   - local: '.gitlab/ci-templates/Python-Service.gitlab-ci.yml'
   - local: '.gitlab/ci-templates/Kubernetes-Deploy.gitlab-ci.yml'
