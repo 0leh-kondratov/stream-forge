@@ -1,3 +1,6 @@
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+
 stages:
   - setup
   - test
@@ -5,7 +8,6 @@ stages:
   - integration-test
   - deploy
   - badges
-
 
 include:
   - local: '.gitlab/ci-templates/Python-Service.gitlab-ci.yml'
