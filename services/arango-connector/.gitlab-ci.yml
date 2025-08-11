@@ -6,6 +6,12 @@ include:
     ref: main
     file: '/.gitlab/ci-templates/Kubernetes-Deploy.gitlab-ci.yml'
 
+test-arango-connector:
+  extends: .test_python_service
+  variables:
+    SERVICE_PATH: services/arango-connector
+  when: manual
+
 build-arango-connector:
   extends: .build_python_service
   needs:
@@ -14,14 +20,6 @@ build-arango-connector:
     SERVICE_NAME: arango-connector
     SERVICE_PATH: services/arango-connector
     CI_REGISTRY_IMAGE: $CI_REGISTRY/kinga/stream-forge/arango-connector
-
-update-badge-arango-connector:
-  extends: .update_badge_python_service
-  needs:
-    - deploy-arango-connector
-  variables:
-    SERVICE_NAME: arango-connector
-    SERVICE_PATH: services/arango-connector
 
 integration-test-arango-connector:
   extends: .integration_test_python_service
@@ -32,15 +30,17 @@ integration-test-arango-connector:
     SERVICE_PATH: services/arango-connector
   when: manual # Make it manual for now, user can change later
 
-test-arango-connector:
-  extends: .test_python_service
-  variables:
-    SERVICE_PATH: services/arango-connector
-  when: manual
-
 deploy-arango-connector:
   extends: .deploy_kubernetes_service
   needs:
     - integration-test-arango-connector
   variables:
     K8S_MANIFEST_PATH: services/arango-connector/k8s/arango-connector-deployment.yaml
+
+update-badge-arango-connector:
+  extends: .update_badge_python_service
+  needs:
+    - deploy-arango-connector
+  variables:
+    SERVICE_NAME: arango-connector
+    SERVICE_PATH: services/arango-connector

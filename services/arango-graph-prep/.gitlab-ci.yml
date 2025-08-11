@@ -6,6 +6,12 @@ include:
     ref: main
     file: '/.gitlab/ci-templates/Kubernetes-Deploy.gitlab-ci.yml'
 
+test-arango-graph-prep:
+  extends: .test_python_service
+  variables:
+    SERVICE_PATH: services/arango-graph-prep
+  when: manual
+
 build-arango-graph-prep:
   extends: .build_python_service
   needs:
@@ -14,14 +20,6 @@ build-arango-graph-prep:
     SERVICE_NAME: arango-graph-prep
     SERVICE_PATH: services/arango-graph-prep
     CI_REGISTRY_IMAGE: $CI_REGISTRY/kinga/stream-forge/arango-graph-prep
-
-update-badge-arango-graph-prep:
-  extends: .update_badge_python_service
-  needs:
-    - deploy-arango-graph-prep
-  variables:
-    SERVICE_NAME: arango-graph-prep
-    SERVICE_PATH: services/arango-graph-prep
 
 integration-test-arango-graph-prep:
   extends: .integration_test_python_service
@@ -32,15 +30,17 @@ integration-test-arango-graph-prep:
     SERVICE_PATH: services/arango-graph-prep
   when: manual # Make it manual for now, user can change later
 
-test-arango-graph-prep:
-  extends: .test_python_service
-  variables:
-    SERVICE_PATH: services/arango-graph-prep
-  when: manual
-
 deploy-arango-graph-prep:
   extends: .deploy_kubernetes_service
   needs:
     - integration-test-arango-graph-prep
   variables:
     K8S_MANIFEST_PATH: services/arango-graph-prep/k8s/arango-graph-prep-deployment.yaml
+
+update-badge-arango-graph-prep:
+  extends: .update_badge_python_service
+  needs:
+    - deploy-arango-graph-prep
+  variables:
+    SERVICE_NAME: arango-graph-prep
+    SERVICE_PATH: services/arango-graph-prep

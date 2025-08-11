@@ -6,6 +6,12 @@ include:
     ref: main
     file: '/.gitlab/ci-templates/Kubernetes-Deploy.gitlab-ci.yml'
 
+test-arango-orderbook:
+  extends: .test_python_service
+  variables:
+    SERVICE_PATH: services/arango-orderbook
+  when: manual
+
 build-arango-orderbook:
   extends: .build_python_service
   needs:
@@ -14,14 +20,6 @@ build-arango-orderbook:
     SERVICE_NAME: arango-orderbook
     SERVICE_PATH: services/arango-orderbook
     CI_REGISTRY_IMAGE: $CI_REGISTRY/kinga/stream-forge/arango-orderbook
-
-update-badge-arango-orderbook:
-  extends: .update_badge_python_service
-  needs:
-    - deploy-arango-orderbook
-  variables:
-    SERVICE_NAME: arango-orderbook
-    SERVICE_PATH: services/arango-orderbook
 
 integration-test-arango-orderbook:
   extends: .integration_test_python_service
@@ -32,15 +30,17 @@ integration-test-arango-orderbook:
     SERVICE_PATH: services/arango-orderbook
   when: manual # Make it manual for now, user can change later
 
-test-arango-orderbook:
-  extends: .test_python_service
-  variables:
-    SERVICE_PATH: services/arango-orderbook
-  when: manual
-
 deploy-arango-orderbook:
   extends: .deploy_kubernetes_service
   needs:
     - integration-test-arango-orderbook
   variables:
     K8S_MANIFEST_PATH: services/arango-orderbook/k8s/arango-orderbook-deployment.yaml
+
+update-badge-arango-orderbook:
+  extends: .update_badge_python_service
+  needs:
+    - deploy-arango-orderbook
+  variables:
+    SERVICE_NAME: arango-orderbook
+    SERVICE_PATH: services/arango-orderbook

@@ -6,6 +6,12 @@ include:
     ref: main
     file: '/.gitlab/ci-templates/Kubernetes-Deploy.gitlab-ci.yml'
 
+test-dummy-service:
+  extends: .test_python_service
+  variables:
+    SERVICE_PATH: services/dummy-service
+  when: manual
+
 build-dummy-service:
   extends: .build_python_service
   needs:
@@ -14,14 +20,6 @@ build-dummy-service:
     SERVICE_NAME: dummy-service
     SERVICE_PATH: services/dummy-service
     CI_REGISTRY_IMAGE: $CI_REGISTRY/kinga/stream-forge/dummy-service
-
-update-badge-dummy-service:
-  extends: .update_badge_python_service
-  needs:
-    - deploy-dummy-service
-  variables:
-    SERVICE_NAME: dummy-service
-    SERVICE_PATH: services/dummy-service
 
 integration-test-dummy-service:
   extends: .integration_test_python_service
@@ -32,15 +30,17 @@ integration-test-dummy-service:
     SERVICE_PATH: services/dummy-service
   when: manual # Make it manual for now, user can change later
 
-test-dummy-service:
-  extends: .test_python_service
-  variables:
-    SERVICE_PATH: services/dummy-service
-  when: manual
-
 deploy-dummy-service:
   extends: .deploy_kubernetes_service
   needs:
     - integration-test-dummy-service
   variables:
     K8S_MANIFEST_PATH: services/dummy-service/k8s/dummy-service-deployment.yaml
+
+update-badge-dummy-service:
+  extends: .update_badge_python_service
+  needs:
+    - deploy-dummy-service
+  variables:
+    SERVICE_NAME: dummy-service
+    SERVICE_PATH: services/dummy-service

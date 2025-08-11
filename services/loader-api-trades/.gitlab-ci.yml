@@ -6,6 +6,12 @@ include:
     ref: main
     file: '/.gitlab/ci-templates/Kubernetes-Deploy.gitlab-ci.yml'
 
+test-loader-api-trades:
+  extends: .test_python_service
+  variables:
+    SERVICE_PATH: services/loader-api-trades
+  when: manual
+
 build-loader-api-trades:
   extends: .build_python_service
   needs:
@@ -14,14 +20,6 @@ build-loader-api-trades:
     SERVICE_NAME: loader-api-trades
     SERVICE_PATH: services/loader-api-trades
     CI_REGISTRY_IMAGE: $CI_REGISTRY/kinga/stream-forge/loader-api-trades
-
-update-badge-loader-api-trades:
-  extends: .update_badge_python_service
-  needs:
-    - deploy-loader-api-trades
-  variables:
-    SERVICE_NAME: loader-api-trades
-    SERVICE_PATH: services/loader-api-trades
 
 integration-test-loader-api-trades:
   extends: .integration_test_python_service
@@ -32,15 +30,17 @@ integration-test-loader-api-trades:
     SERVICE_PATH: services/loader-api-trades
   when: manual # Make it manual for now, user can change later
 
-test-loader-api-trades:
-  extends: .test_python_service
-  variables:
-    SERVICE_PATH: services/loader-api-trades
-  when: manual
-
 deploy-loader-api-trades:
   extends: .deploy_kubernetes_service
   needs:
     - integration-test-loader-api-trades
   variables:
     K8S_MANIFEST_PATH: services/loader-api-trades/k8s/loader-api-trades-deployment.yaml
+
+update-badge-loader-api-trades:
+  extends: .update_badge_python_service
+  needs:
+    - deploy-loader-api-trades
+  variables:
+    SERVICE_NAME: loader-api-trades
+    SERVICE_PATH: services/loader-api-trades

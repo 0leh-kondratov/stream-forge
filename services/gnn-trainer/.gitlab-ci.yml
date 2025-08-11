@@ -6,6 +6,12 @@ include:
     ref: main
     file: '/.gitlab/ci-templates/Kubernetes-Deploy.gitlab-ci.yml'
 
+test-gnn-trainer:
+  extends: .test_python_service
+  variables:
+    SERVICE_PATH: services/gnn-trainer
+  when: manual
+
 build-gnn-trainer:
   extends: .build_python_service
   needs:
@@ -14,14 +20,6 @@ build-gnn-trainer:
     SERVICE_NAME: gnn-trainer
     SERVICE_PATH: services/gnn-trainer
     CI_REGISTRY_IMAGE: $CI_REGISTRY/kinga/stream-forge/gnn-trainer
-
-update-badge-gnn-trainer:
-  extends: .update_badge_python_service
-  needs:
-    - deploy-gnn-trainer
-  variables:
-    SERVICE_NAME: gnn-trainer
-    SERVICE_PATH: services/gnn-trainer
 
 integration-test-gnn-trainer:
   extends: .integration_test_python_service
@@ -32,15 +30,17 @@ integration-test-gnn-trainer:
     SERVICE_PATH: services/gnn-trainer
   when: manual # Make it manual for now, user can change later
 
-test-gnn-trainer:
-  extends: .test_python_service
-  variables:
-    SERVICE_PATH: services/gnn-trainer
-  when: manual
-
 deploy-gnn-trainer:
   extends: .deploy_kubernetes_service
   needs:
     - integration-test-gnn-trainer
   variables:
     K8S_MANIFEST_PATH: services/gnn-trainer/k8s/gnn-trainer-deployment.yaml
+
+update-badge-gnn-trainer:
+  extends: .update_badge_python_service
+  needs:
+    - deploy-gnn-trainer
+  variables:
+    SERVICE_NAME: gnn-trainer
+    SERVICE_PATH: services/gnn-trainer
