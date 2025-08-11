@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="8" time="2.644" timestamp="2025-08-11T09:26:41.578108+00:00" hostname="dev-kinga-0"><testcase classname="services.loader-api-candles.tests.test_loader" name="test_parse_time_range" time="0.005" /><testcase classname="services.loader-api-candles.tests.test_loader" name="test_process_kline" time="0.001" /><testcase classname="services.loader-api-candles.tests.test_loader" name="test_get_next_start_time_with_klines" time="0.001" /><testcase classname="services.loader-api-candles.tests.test_loader" name="test_get_next_start_time_no_klines_1h" time="0.001" /><testcase classname="services.loader-api-candles.tests.test_loader" name="test_get_next_start_time_no_klines_1m" time="0.001" /><testcase classname="services.loader-api-candles.tests.test_loader" name="test_run_loader_success" time="0.111" /><testcase classname="services.loader-api-candles.tests.test_loader" name="test_run_loader_stop_event" time="0.009" /><testcase classname="services.loader-api-candles.tests.test_loader" name="test_run_loader_api_error" time="0.010"><failure message="AssertionError: expected call not found.&#10;Expected: send_status_update(status='error', message='Fatal loader error', error_message='API Error', finished=False, records_written=0)&#10;  Actual: send_status_update(status='interrupted', message='Loader task cancelled.', finished=False, records_written=0)">mock_config = &lt;MagicMock name='config' id='140294013319936'&gt;
+mock_telemetry_producer = &lt;AsyncMock id='140294013478256'&gt;
+mock_kafka_producer = &lt;AsyncMock id='140294013482048'&gt;
+mock_binance_api_client = &lt;AsyncMock id='140294013485952'&gt;
+mock_stop_event = &lt;AsyncMock spec='Event' id='140294013490032'&gt;
+
+    @pytest.mark.asyncio
+    async def test_run_loader_api_error(
+        mock_config,
+        mock_telemetry_producer,
+        mock_kafka_producer,
+        mock_binance_api_client,
+        mock_stop_event
+    ):
+        mock_binance_api_client.get_klines.side_effect = RuntimeError("API Error")
+    
+        with (
+            patch('app.loader.BinanceAPIClient', return_value=mock_binance_api_client),
+            patch('app.loader.KafkaDataProducer', return_value=mock_kafka_producer)
+        ):
+            await run_loader(mock_stop_event, mock_telemetry_producer)
+    
+&gt;       mock_telemetry_producer.send_status_update.assert_called_with(status="error", message="Fatal loader error", error_message="API Error", finished=False, records_written=0)
+
+services/loader-api-candles/tests/test_loader.py:149: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;AsyncMock name='mock.send_status_update' id='140294013560272'&gt;
+args = ()
+kwargs = {'error_message': 'API Error', 'finished': False, 'message': 'Fatal loader error', 'records_written': 0, ...}
+expected = call(status='error', message='Fatal loader error', error_message='API Error', finished=False, records_written=0)
+actual = call(status='interrupted', message='Loader task cancelled.', finished=False, records_written=0)
+_error_message = &lt;function NonCallableMock.assert_called_with.&lt;locals&gt;._error_message at 0x7f98becbf740&gt;
+cause = None
+
+    def assert_called_with(self, /, *args, **kwargs):
+        """assert that the last call was made with the specified arguments.
+    
+        Raises an AssertionError if the args and keyword args passed in are
+        different to the last call to the mock."""
+        if self.call_args is None:
+            expected = self._format_mock_call_signature(args, kwargs)
+            actual = 'not called.'
+            error_message = ('expected call not found.\nExpected: %s\n  Actual: %s'
+                    % (expected, actual))
+            raise AssertionError(error_message)
+    
+        def _error_message():
+            msg = self._format_mock_failure_message(args, kwargs)
+            return msg
+        expected = self._call_matcher(_Call((args, kwargs), two=True))
+        actual = self._call_matcher(self.call_args)
+        if actual != expected:
+            cause = expected if isinstance(expected, Exception) else None
+&gt;           raise AssertionError(_error_message()) from cause
+E           AssertionError: expected call not found.
+E           Expected: send_status_update(status='error', message='Fatal loader error', error_message='API Error', finished=False, records_written=0)
+E             Actual: send_status_update(status='interrupted', message='Loader task cancelled.', finished=False, records_written=0)
+
+/usr/lib/python3.12/unittest/mock.py:944: AssertionError</failure></testcase></testsuite></testsuites>

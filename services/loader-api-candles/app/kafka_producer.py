@@ -1,42 +1,39 @@
-import json
 import ssl
-from aiokafka import AIOKafkaProducer
 from loguru import logger
+from aiokafka import AIOKafkaProducer
+import asyncio
+import json
 from app import config
 
 class KafkaDataProducer:
     def __init__(self):
-        self.topic = config.KAFKA_TOPIC
-        self.bootstrap_servers = config.KAFKA_BOOTSTRAP_SERVERS
-        self.username = config.KAFKA_USER
-        self.password = config.KAFKA_PASSWORD
-        self.ca_path = config.CA_PATH
         self.producer = None
 
     async def start(self):
-        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-        ssl_context.verify_mode = ssl.CERT_REQUIRED
-        ssl_context.load_verify_locations(cafile=self.ca_path)
-        self.producer = AIOKafkaProducer(
-            bootstrap_servers=self.bootstrap_servers,
-            security_protocol="SASL_SSL",
-            sasl_mechanism="SCRAM-SHA-512",
-            sasl_plain_username=self.username,
-            sasl_plain_password=self.password,
-            ssl_context=ssl_context,
-            value_serializer=lambda m: json.dumps(m).encode("utf-8"),
-        )
-        await self.producer.start()
-        logger.debug(f"Kafka data producer started for topic: {self.topic}")
+        try:
+            ssl_context = ssl.create_default_context(cafile=config.CA_PATH)
+            self.producer = AIOKafkaProducer(
+                bootstrap_servers=config.KAFKA_BOOTSTRAP_SERVERS,
+                security_protocol="SASL_SSL",
+                sasl_mechanism="SCRAM-SHA-512",
+                sasl_plain_username=config.KAFKA_USER,
+                sasl_plain_password=config.KAFKA_PASSWORD,
+                ssl_context=ssl_context
+            )
+            await self.producer.start()
+            logger.info("KafkaDataProducer connected to Kafka.")
+        except Exception as e:
+            logger.error(f"Failed to connect KafkaDataProducer to Kafka: {e}")
+            raise
+
+    async def send(self, data: dict):
+        try:
+            await self.producer.send_and_wait(config.KAFKA_TOPIC, json.dumps(data).encode('utf-8'))
+            logger.debug(f"Sent data to Kafka topic {config.KAFKA_TOPIC}: {data}")
+        except Exception as e:
+            logger.error(f"Failed to send data to Kafka: {e}")
 
     async def stop(self):
         if self.producer:
             await self.producer.stop()
-            logger.info("Kafka data producer stopped.")
-
-    async def send(self, data: dict):
-        try:
-            await self.producer.send_and_wait(self.topic, value=data)
-            logger.debug(f"Data sent to Kafka topic {self.topic}")
-        except Exception as e:
-            logger.error(f"Error sending data to Kafka: {e}")
+            logger.info("KafkaDataProducer disconnected from Kafka.")

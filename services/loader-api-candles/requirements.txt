@@ -1,2 +1,6 @@
 aiohttp
 uvloop
+loguru
+fastapi
+python-dotenv
+aiokafka
