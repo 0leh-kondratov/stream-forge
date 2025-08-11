@@ -8,6 +8,8 @@ include:
 
 build-loader-producer:
   extends: .build_python_service
+  needs:
+    - test-loader-producer
   variables:
     SERVICE_NAME: loader-producer
     SERVICE_PATH: services/loader-producer
@@ -16,10 +18,19 @@ build-loader-producer:
 update-badge-loader-producer:
   extends: .update_badge_python_service
   needs:
+    - integration-test-loader-producer
+  variables:
+    SERVICE_NAME: loader-producer
+    SERVICE_PATH: services/loader-producer
+
+integration-test-loader-producer:
+  extends: .integration_test_python_service
+  needs:
     - build-loader-producer
   variables:
     SERVICE_NAME: loader-producer
     SERVICE_PATH: services/loader-producer
+  when: manual # Make it manual for now, user can change later
 
 test-loader-producer:
   extends: .test_python_service
@@ -30,5 +41,4 @@ test-loader-producer:
 deploy-loader-producer:
   extends: .deploy_kubernetes_service
   variables:
-    K8S_MANIFEST_PATH: services/loader-producer/k8s/deployment.yaml
-  when: manual
+    K8S_MANIFEST_PATH: services/loader-producer/k8s/loader-producer-deployment.yaml

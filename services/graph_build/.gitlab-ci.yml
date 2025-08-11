@@ -8,6 +8,8 @@ include:
 
 build-graph-build:
   extends: .build_python_service
+  needs:
+    - test-graph-build
   variables:
     SERVICE_NAME: graph-build
     SERVICE_PATH: services/graph_build
@@ -15,12 +17,20 @@ build-graph-build:
 
 update-badge-graph-build:
   extends: .update_badge_python_service
-  stage: badges
+  needs:
+    - integration-test-graph-build
+  variables:
+    SERVICE_NAME: graph-build
+    SERVICE_PATH: services/graph_build
+
+integration-test-graph-build:
+  extends: .integration_test_python_service
   needs:
     - build-graph-build
   variables:
     SERVICE_NAME: graph-build
     SERVICE_PATH: services/graph_build
+  when: manual # Make it manual for now, user can change later
 
 test-graph-build:
   extends: .test_python_service
@@ -31,5 +41,4 @@ test-graph-build:
 deploy-graph-build:
   extends: .deploy_kubernetes_service
   variables:
-    K8S_MANIFEST_PATH: services/graph_build/k8s/deployment.yaml
-  when: manual
+    K8S_MANIFEST_PATH: services/graph_build/k8s/graph-build-deployment.yaml

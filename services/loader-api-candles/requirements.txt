@@ -1,5 +1,2 @@
 aiohttp
-aiokafka
-loguru
 uvloop
-python-dotenv

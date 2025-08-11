@@ -5,7 +5,7 @@
     - SERVICE_VERSION=$(cat $CI_PROJECT_DIR/$SERVICE_PATH/VERSION)
     - mkdir -p /kaniko/.docker
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
-    - /kaniko/executor       --context $CI_PROJECT_DIR       --dockerfile $CI_PROJECT_DIR/$SERVICE_PATH/Dockerfile       --destination $CI_REGISTRY_IMAGE:$SERVICE_VERSION       --destination $CI_REGISTRY_IMAGE:latest       --cache=true       --cache-repo "$CI_REGISTRY_IMAGE/cache"
+    - /kaniko/executor       --context $CI_PROJECT_DIR/$SERVICE_PATH       --dockerfile Dockerfile       --destination $CI_REGISTRY_IMAGE:$SERVICE_VERSION       --destination $CI_REGISTRY_IMAGE:latest       --cache=true       --cache-repo "$CI_REGISTRY_IMAGE/cache"
   artifacts:
     paths: 
       - $SERVICE_PATH/VERSION
@@ -154,3 +154,81 @@
       changes:
         - $SERVICE_PATH/**/*
     - when: manual
+
+.update_badge_integration_test_python_service:
+  stage: badges
+  image: ${KANIKO_IMAGE}
+  needs:
+    - integration-test-${SERVICE_NAME}
+  before_script:
+    - git config --global user.email "gitlab-ci@dmz.home"
+    - git config --global user.name "GitLab CI"
+    - git config --global --add safe.directory "$CI_PROJECT_DIR"
+  script:
+    - |
+      BRANCH_NAME="ci/badges-integration-test-${SERVICE_NAME}-${CI_COMMIT_SHORT_SHA}"
+      MR_TITLE="CI: Update integration test badge for ${SERVICE_NAME}"
+      git checkout -b "${BRANCH_NAME}"
+      echo "Updating integration test badge for ${SERVICE_NAME}..."
+      BADGE_COLOR="brightgreen"
+      BADGE_TEXT="passing"
+      mkdir -p badges/main
+      curl -s "https://img.shields.io/badge/integration--test-${SERVICE_NAME}-${BADGE_TEXT}-${BADGE_COLOR}" > "badges/main/integration-test-${SERVICE_NAME}.svg"
+      git add "badges/main/integration-test-${SERVICE_NAME}.svg"
+      if git diff --staged --quiet; then
+        echo "No changes to badge files. Nothing to do."
+        exit 0
+      fi
+      git commit -m "${MR_TITLE}"
+      git push \
+        -o merge_request.create \
+        -o merge_request.target=main \
+        -o merge_request.title="${MR_TITLE}" \
+        -o merge_request.merge_when_pipeline_succeeds \
+        -o merge_request.remove_source_branch \
+        "https://oauth2:${GIT_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" \
+        "${BRANCH_NAME}"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - $SERVICE_PATH/**/*
+      when: on_success
+
+.update_badge_deploy_python_service:
+  stage: badges
+  image: ${KANIKO_IMAGE}
+  needs:
+    - deploy-${SERVICE_NAME}
+  before_script:
+    - git config --global user.email "gitlab-ci@dmz.home"
+    - git config --global user.name "GitLab CI"
+    - git config --global --add safe.directory "$CI_PROJECT_DIR"
+  script:
+    - |
+      BRANCH_NAME="ci/badges-deploy-${SERVICE_NAME}-${CI_COMMIT_SHORT_SHA}"
+      MR_TITLE="CI: Update deploy badge for ${SERVICE_NAME}"
+      git checkout -b "${BRANCH_NAME}"
+      echo "Updating deploy badge for ${SERVICE_NAME}..."
+      BADGE_COLOR="brightgreen"
+      BADGE_TEXT="deployed"
+      mkdir -p badges/main
+      curl -s "https://img.shields.io/badge/deploy-${SERVICE_NAME}-${BADGE_TEXT}-${BADGE_COLOR}" > "badges/main/deploy-${SERVICE_NAME}.svg"
+      git add "badges/main/deploy-${SERVICE_NAME}.svg"
+      if git diff --staged --quiet; then
+        echo "No changes to badge files. Nothing to do."
+        exit 0
+      fi
+      git commit -m "${MR_TITLE}"
+      git push \
+        -o merge_request.create \
+        -o merge_request.target=main \
+        -o merge_request.title="${MR_TITLE}" \
+        -o merge_request.merge_when_pipeline_succeeds \
+        -o merge_request.remove_source_branch \
+        "https://oauth2:${GIT_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git" \
+        "${BRANCH_NAME}"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - $SERVICE_PATH/**/*
+      when: on_success

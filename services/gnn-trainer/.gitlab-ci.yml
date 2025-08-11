@@ -8,6 +8,8 @@ include:
 
 build-gnn-trainer:
   extends: .build_python_service
+  needs:
+    - test-gnn-trainer
   variables:
     SERVICE_NAME: gnn-trainer
     SERVICE_PATH: services/gnn-trainer
@@ -15,12 +17,20 @@ build-gnn-trainer:
 
 update-badge-gnn-trainer:
   extends: .update_badge_python_service
-  stage: badges
+  needs:
+    - integration-test-gnn-trainer
+  variables:
+    SERVICE_NAME: gnn-trainer
+    SERVICE_PATH: services/gnn-trainer
+
+integration-test-gnn-trainer:
+  extends: .integration_test_python_service
   needs:
     - build-gnn-trainer
   variables:
     SERVICE_NAME: gnn-trainer
     SERVICE_PATH: services/gnn-trainer
+  when: manual # Make it manual for now, user can change later
 
 test-gnn-trainer:
   extends: .test_python_service
@@ -31,5 +41,4 @@ test-gnn-trainer:
 deploy-gnn-trainer:
   extends: .deploy_kubernetes_service
   variables:
-    K8S_MANIFEST_PATH: services/gnn-trainer/k8s/deployment.yaml
-  when: manual
+    K8S_MANIFEST_PATH: services/gnn-trainer/k8s/gnn-trainer-deployment.yaml

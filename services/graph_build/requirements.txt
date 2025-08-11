@@ -1,5 +1,1 @@
-aioarango
-aiokafka
-loguru
 uvloop
-python-dotenv

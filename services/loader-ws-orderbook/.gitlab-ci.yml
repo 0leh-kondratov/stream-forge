@@ -8,6 +8,8 @@ include:
 
 build-loader-ws-orderbook:
   extends: .build_python_service
+  needs:
+    - test-loader-ws-orderbook
   variables:
     SERVICE_NAME: loader-ws-orderbook
     SERVICE_PATH: services/loader-ws-orderbook
@@ -16,10 +18,19 @@ build-loader-ws-orderbook:
 update-badge-loader-ws-orderbook:
   extends: .update_badge_python_service
   needs:
+    - integration-test-loader-ws-orderbook
+  variables:
+    SERVICE_NAME: loader-ws-orderbook
+    SERVICE_PATH: services/loader-ws-orderbook
+
+integration-test-loader-ws-orderbook:
+  extends: .integration_test_python_service
+  needs:
     - build-loader-ws-orderbook
   variables:
     SERVICE_NAME: loader-ws-orderbook
     SERVICE_PATH: services/loader-ws-orderbook
+  when: manual # Make it manual for now, user can change later
 
 test-loader-ws-orderbook:
   extends: .test_python_service
@@ -30,5 +41,4 @@ test-loader-ws-orderbook:
 deploy-loader-ws-orderbook:
   extends: .deploy_kubernetes_service
   variables:
-    K8S_MANIFEST_PATH: services/loader-ws-orderbook/k8s/deployment.yaml
-  when: manual
+    K8S_MANIFEST_PATH: services/loader-ws-orderbook/k8s/loader-ws-orderbook-deployment.yaml

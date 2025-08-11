@@ -8,6 +8,8 @@ include:
 
 build-queue-manager:
   extends: .build_python_service
+  needs:
+    - test-queue-manager
   variables:
     SERVICE_NAME: queue-manager
     SERVICE_PATH: services/queue-manager
@@ -16,13 +18,27 @@ build-queue-manager:
 update-badge-queue-manager:
   extends: .update_badge_python_service
   needs:
+    - integration-test-queue-manager
+  variables:
+    SERVICE_NAME: queue-manager
+    SERVICE_PATH: services/queue-manager
+
+integration-test-queue-manager:
+  extends: .integration_test_python_service
+  needs:
     - build-queue-manager
   variables:
     SERVICE_NAME: queue-manager
     SERVICE_PATH: services/queue-manager
+  when: manual # Make it manual for now, user can change later
 
 test-queue-manager:
   extends: .test_python_service
   variables:
     SERVICE_PATH: services/queue-manager
   when: manual
+
+deploy-queue-manager:
+  extends: .deploy_kubernetes_service
+  variables:
+    K8S_MANIFEST_PATH: services/queue-manager/k8s/queue-manager-deployment.yaml

@@ -8,6 +8,8 @@ include:
 
 build-loader-ws-trades:
   extends: .build_python_service
+  needs:
+    - test-loader-ws-trades
   variables:
     SERVICE_NAME: loader-ws-trades
     SERVICE_PATH: services/loader-ws-trades
@@ -16,10 +18,19 @@ build-loader-ws-trades:
 update-badge-loader-ws-trades:
   extends: .update_badge_python_service
   needs:
+    - integration-test-loader-ws-trades
+  variables:
+    SERVICE_NAME: loader-ws-trades
+    SERVICE_PATH: services/loader-ws-trades
+
+integration-test-loader-ws-trades:
+  extends: .integration_test_python_service
+  needs:
     - build-loader-ws-trades
   variables:
     SERVICE_NAME: loader-ws-trades
     SERVICE_PATH: services/loader-ws-trades
+  when: manual # Make it manual for now, user can change later
 
 test-loader-ws-trades:
   extends: .test_python_service
@@ -30,5 +41,4 @@ test-loader-ws-trades:
 deploy-loader-ws-trades:
   extends: .deploy_kubernetes_service
   variables:
-    K8S_MANIFEST_PATH: services/loader-ws-trades/k8s/deployment.yaml
-  when: manual
+    K8S_MANIFEST_PATH: services/loader-ws-trades/k8s/loader-ws-trades-deployment.yaml

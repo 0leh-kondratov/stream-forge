@@ -1,6 +1,3 @@
 aiohttp
-python-dotenv
-aiokafka
 uvloop
 orjson
-loguru
