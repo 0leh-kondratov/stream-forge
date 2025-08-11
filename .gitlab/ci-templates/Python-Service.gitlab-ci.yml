@@ -4,11 +4,15 @@
   script:
     - SERVICE_VERSION=$(cat $CI_PROJECT_DIR/$SERVICE_PATH/VERSION)
     - mkdir -p /kaniko/.docker
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - echo "{"auths":{"$CI_REGISTRY":{"username":"$CI_REGISTRY_USER","password":"$CI_REGISTRY_PASSWORD"}}}}" > /kaniko/.docker/config.json
     - /kaniko/executor       --context $CI_PROJECT_DIR/$SERVICE_PATH       --dockerfile Dockerfile       --destination $CI_REGISTRY_IMAGE:$SERVICE_VERSION       --destination $CI_REGISTRY_IMAGE:latest       --cache=true       --cache-repo "$CI_REGISTRY_IMAGE/cache"
+    - echo "success" > build_status.txt # Write success status
+  after_script: # Add after_script to handle failure
+    - if [ "$CI_JOB_STATUS" == "failed" ]; then echo "failure" > build_status.txt; fi
   artifacts:
     paths: 
       - $SERVICE_PATH/VERSION
+      - build_status.txt # New artifact
     expire_in: 1 hour
   rules:
     # NOTE: GitLab CI does not substitute variables in rules:changes. 
@@ -18,6 +22,7 @@
       changes:
         - $SERVICE_PATH/**/*
     - when: manual
+
 
 
 .update_badge_python_service:
@@ -33,8 +38,18 @@
       MR_TITLE="CI: Update ${SERVICE_NAME} badges"
       git checkout -b "${BRANCH_NAME}"
       echo "Updating badges for ${SERVICE_NAME}..."
-      BADGE_COLOR="brightgreen"
-      BADGE_TEXT="passing"
+
+      # Parse build_status.txt to determine build status
+      BUILD_STATUS=$(cat build_status.txt)
+
+      if [ "$BUILD_STATUS" == "success" ]; then
+        BADGE_COLOR="brightgreen"
+        BADGE_TEXT="passing"
+      else
+        BADGE_COLOR="red"
+        BADGE_TEXT="failing"
+      fi
+
       mkdir -p badges/main
       curl -s "https://img.shields.io/badge/build-${SERVICE_NAME}-${BADGE_TEXT}-${BADGE_COLOR}" > "badges/main/build-${SERVICE_NAME}.svg"
       git add "badges/main/build-${SERVICE_NAME}.svg"
@@ -86,11 +101,39 @@
       BRANCH_NAME="ci/badges-test-${SERVICE_NAME}-${CI_COMMIT_SHORT_SHA}"
       MR_TITLE="CI: Update test badge for ${SERVICE_NAME}"
       git checkout -b "${BRANCH_NAME}"
-      echo "Updating test badge for ${SERVICE_NAME}..."
-      # Assuming the presence of a tool that can parse report.xml and determine the status
-      # For now, we'll just create a simple "passing" badge if the job succeeds
-      BADGE_COLOR="brightgreen"
-      BADGE_TEXT="passing"
+      echo "Updating test badge for ${SERVICE_NAME}"
+
+      # Parse report.xml to determine test status
+      python3 -c "
+import xml.etree.ElementTree as ET
+try:
+    tree = ET.etree.ElementTree.parse('report.xml')
+    root = tree.getroot()
+    failures = int(root.attrib.get('failures', 0))
+    errors = int(root.attrib.get('errors', 0))
+    skipped = int(root.attrib.get('skipped', 0))
+    total = int(root.attrib.get('tests', 0))
+
+    if failures > 0 or errors > 0:
+        print('BADGE_COLOR=\"red\"')
+        print('BADGE_TEXT=\"failing\"')
+    elif total == 0:
+        print('BADGE_COLOR=\"lightgrey\"')
+        print('BADGE_TEXT=\"no tests\"')
+    else:
+        print('BADGE_COLOR=\"brightgreen\"')
+        print('BADGE_TEXT=\"passing\"')
+except FileNotFoundError:
+    print('BADGE_COLOR=\"lightgrey\"')
+    print('BADGE_TEXT=\"no report\"')
+except Exception as e:
+    print(f'Error parsing XML: {e}')
+    print('BADGE_COLOR=\"lightgrey\"')
+    print('BADGE_TEXT=\"error\"')
+" > badge_status.env
+
+      source badge_status.env
+
       mkdir -p badges/main
       curl -s "https://img.shields.io/badge/test-${SERVICE_NAME}-${BADGE_TEXT}-${BADGE_COLOR}" > "badges/main/test-${SERVICE_NAME}.svg"
       git add "badges/main/test-${SERVICE_NAME}.svg"
@@ -148,7 +191,13 @@
     # Install service-specific dependencies if not already in image
     - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt
     # Run integration tests
-    - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/integration/
+    - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/integration/ --junitxml=integration_report.xml
+  artifacts:
+    when: always
+    paths:
+      - integration_report.xml
+    reports:
+      junit: integration_report.xml
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       changes:
@@ -170,8 +219,38 @@
       MR_TITLE="CI: Update integration test badge for ${SERVICE_NAME}"
       git checkout -b "${BRANCH_NAME}"
       echo "Updating integration test badge for ${SERVICE_NAME}..."
-      BADGE_COLOR="brightgreen"
-      BADGE_TEXT="passing"
+
+      # Parse integration_report.xml to determine test status
+      python3 -c "
+import xml.etree.ElementTree as ET
+try:
+    tree = ET.parse('integration_report.xml')
+    root = tree.getroot()
+    failures = int(root.attrib.get('failures', 0))
+    errors = int(root.attrib.get('errors', 0))
+    skipped = int(root.attrib.get('skipped', 0))
+    total = int(root.attrib.get('tests', 0))
+
+    if failures > 0 or errors > 0:
+        print('BADGE_COLOR=\"red\"')
+        print('BADGE_TEXT=\"failing\"')
+    elif total == 0:
+        print('BADGE_COLOR=\"lightgrey\"')
+        print('BADGE_TEXT=\"no tests\"')
+    else:
+        print('BADGE_COLOR=\"brightgreen\"')
+        print('BADGE_TEXT=\"passing\"')
+except FileNotFoundError:
+    print('BADGE_COLOR=\"lightgrey\"')
+    print('BADGE_TEXT=\"no report\"')
+except Exception as e:
+    print(f'Error parsing XML: {e}')
+    print('BADGE_COLOR=\"lightgrey\"')
+    print('BADGE_TEXT=\"error\"')
+" > badge_status.env
+
+      source badge_status.env
+
       mkdir -p badges/main
       curl -s "https://img.shields.io/badge/integration--test-${SERVICE_NAME}-${BADGE_TEXT}-${BADGE_COLOR}" > "badges/main/integration-test-${SERVICE_NAME}.svg"
       git add "badges/main/integration-test-${SERVICE_NAME}.svg"
@@ -209,8 +288,18 @@
       MR_TITLE="CI: Update deploy badge for ${SERVICE_NAME}"
       git checkout -b "${BRANCH_NAME}"
       echo "Updating deploy badge for ${SERVICE_NAME}..."
-      BADGE_COLOR="brightgreen"
-      BADGE_TEXT="deployed"
+
+      # Parse deploy_status.txt to determine deploy status
+      DEPLOY_STATUS=$(cat deploy_status.txt)
+
+      if [ "$DEPLOY_STATUS" == "success" ]; then
+        BADGE_COLOR="brightgreen"
+        BADGE_TEXT="deployed"
+      else
+        BADGE_COLOR="red"
+        BADGE_TEXT="failed"
+      fi
+
       mkdir -p badges/main
       curl -s "https://img.shields.io/badge/deploy-${SERVICE_NAME}-${BADGE_TEXT}-${BADGE_COLOR}" > "badges/main/deploy-${SERVICE_NAME}.svg"
       git add "badges/main/deploy-${SERVICE_NAME}.svg"

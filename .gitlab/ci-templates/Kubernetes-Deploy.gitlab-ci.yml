@@ -6,6 +6,12 @@
   after_script:
     - |
       if [ "$CI_JOB_STATUS" == "success" ]; then
+        echo "success" > deploy_status.txt
+      else
+        echo "failure" > deploy_status.txt
+      fi
+      # Original badge update logic (will be removed from here later)
+      if [ "$CI_JOB_STATUS" == "success" ]; then
         BADGE_COLOR="brightgreen"
         BADGE_TEXT="passing"
       else
@@ -24,6 +30,10 @@
         git commit -m "ci: update ${CI_JOB_NAME} badge to ${BADGE_TEXT} [skip ci]"
         git push https://oauth2:${GIT_PUSH_TOKEN}@gitlab.dmz.home/kinga/stream-forge.git HEAD:main
       fi
+  artifacts:
+    when: always
+    paths:
+      - deploy_status.txt
   rules:
     - when: manual
       allow_failure: false
