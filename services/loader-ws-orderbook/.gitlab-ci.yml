@@ -40,5 +40,7 @@ test-loader-ws-orderbook:
 
 deploy-loader-ws-orderbook:
   extends: .deploy_kubernetes_service
+  needs:
+    - integration-test-loader-ws-orderbook
   variables:
     K8S_MANIFEST_PATH: services/loader-ws-orderbook/k8s/loader-ws-orderbook-deployment.yaml

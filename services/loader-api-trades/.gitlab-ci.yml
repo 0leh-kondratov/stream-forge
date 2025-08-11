@@ -40,5 +40,7 @@ test-loader-api-trades:
 
 deploy-loader-api-trades:
   extends: .deploy_kubernetes_service
+  needs:
+    - integration-test-loader-api-trades
   variables:
     K8S_MANIFEST_PATH: services/loader-api-trades/k8s/loader-api-trades-deployment.yaml

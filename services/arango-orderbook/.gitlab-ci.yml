@@ -40,5 +40,7 @@ test-arango-orderbook:
 
 deploy-arango-orderbook:
   extends: .deploy_kubernetes_service
+  needs:
+    - integration-test-arango-orderbook
   variables:
     K8S_MANIFEST_PATH: services/arango-orderbook/k8s/arango-orderbook-deployment.yaml

@@ -40,5 +40,7 @@ test-arango-connector:
 
 deploy-arango-connector:
   extends: .deploy_kubernetes_service
+  needs:
+    - integration-test-arango-connector
   variables:
     K8S_MANIFEST_PATH: services/arango-connector/k8s/arango-connector-deployment.yaml

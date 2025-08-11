@@ -40,5 +40,7 @@ test-loader-ws-trades:
 
 deploy-loader-ws-trades:
   extends: .deploy_kubernetes_service
+  needs:
+    - integration-test-loader-ws-trades
   variables:
     K8S_MANIFEST_PATH: services/loader-ws-trades/k8s/loader-ws-trades-deployment.yaml

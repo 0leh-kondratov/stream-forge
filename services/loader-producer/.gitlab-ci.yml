@@ -40,5 +40,7 @@ test-loader-producer:
 
 deploy-loader-producer:
   extends: .deploy_kubernetes_service
+  needs:
+    - integration-test-loader-producer
   variables:
     K8S_MANIFEST_PATH: services/loader-producer/k8s/loader-producer-deployment.yaml
