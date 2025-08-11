@@ -1,2 +1,13 @@
+fastapi
 jinja2
+aiokafka
+aioarango
+uvicorn
+uvloop
+orjson
+loguru
+prometheus_client
 websockets
+pydantic-settings
+pytest
+httpx
