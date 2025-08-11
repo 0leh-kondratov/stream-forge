@@ -29,6 +29,20 @@ integration-test-dummy-service:
     SERVICE_NAME: dummy-service
     SERVICE_PATH: services/dummy-service
   when: manual # Make it manual for now, user can change later
+  before_script:
+    - apt-get update && apt-get install -y curl
+    - cd /app && python -m app.main --noop & # Start the service from /app
+    - |-
+      echo "Waiting for service to start..."
+      for i in $(seq 1 30); do
+        if curl -s http://localhost:8000/metrics > /dev/null; then
+          echo "Service is up!"
+          break
+        fi
+        echo "Service not ready yet. Waiting ${i}s..."
+        sleep ${i}
+      done
+      curl http://localhost:8000/metrics # Show metrics for debugging
 
 deploy-dummy-service:
   extends: .deploy_kubernetes_service
