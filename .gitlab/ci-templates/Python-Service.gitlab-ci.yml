@@ -105,33 +105,7 @@
       echo "Updating test badge for ${SERVICE_NAME}"
 
       # Parse report.xml to determine test status
-      python3 -c "
-import xml.etree.ElementTree as ET
-try:
-    tree = ET.etree.ElementTree(file='report.xml')
-    root = tree.getroot()
-    failures = int(root.attrib.get('failures', 0))
-    errors = int(root.attrib.get('errors', 0))
-    skipped = int(root.attrib.get('skipped', 0))
-    total = int(root.attrib.get('tests', 0))
-
-    if failures > 0 or errors > 0:
-        print('BADGE_COLOR=\"red\"')
-        print('BADGE_TEXT=\"failing\"')
-    elif total == 0:
-        print('BADGE_COLOR=\"lightgrey\"')
-        print('BADGE_TEXT=\"no tests\"')
-    else:
-        print('BADGE_COLOR=\"brightgreen\"')
-        print('BADGE_TEXT=\"passing\"')
-except FileNotFoundError:
-    print('BADGE_COLOR=\"lightgrey\"')
-    print('BADGE_TEXT=\"no report\"')
-except Exception as e:
-    print(f'Error parsing XML: {e}')
-    print('BADGE_COLOR=\"lightgrey\"')
-    print('BADGE_TEXT=\"error\"')
-" > badge_status.env
+      python3 scripts/parse_junit.py report.xml > badge_status.env
 
       source badge_status.env
 
@@ -222,33 +196,7 @@ except Exception as e:
       echo "Updating integration test badge for ${SERVICE_NAME}..."
 
       # Parse integration_report.xml to determine test status
-            python3 -c "
-import xml.etree.ElementTree as ET
-try:
-    tree = ET.etree.ElementTree(file='integration_report.xml')
-    root = tree.getroot()
-    failures = int(root.attrib.get('failures', 0))
-    errors = int(root.attrib.get('errors', 0))
-    skipped = int(root.attrib.get('skipped', 0))
-    total = int(root.attrib.get('tests', 0))
-
-    if failures > 0 or errors > 0:
-        print('BADGE_COLOR=\"red\"')
-        print('BADGE_TEXT=\"failing\"')
-    elif total == 0:
-        print('BADGE_COLOR=\"lightgrey\"')
-        print('BADGE_TEXT=\"no tests\"')
-    else:
-        print('BADGE_COLOR=\"brightgreen\"')
-        print('BADGE_TEXT=\"passing\"')
-except FileNotFoundError:
-    print('BADGE_COLOR=\"lightgrey\"')
-    print('BADGE_TEXT=\"no report\"')
-except Exception as e:
-    print(f'Error parsing XML: {e}')
-    print('BADGE_COLOR=\"lightgrey\"')
-    print('BADGE_TEXT=\"error\"')
-" > badge_status.env
+      python3 scripts/parse_junit.py integration_report.xml > badge_status.env
 
       source badge_status.env
 
