@@ -18,7 +18,7 @@ build-dummy-service:
 update-badge-dummy-service:
   extends: .update_badge_python_service
   needs:
-    - integration-test-dummy-service
+    - deploy-dummy-service
   variables:
     SERVICE_NAME: dummy-service
     SERVICE_PATH: services/dummy-service

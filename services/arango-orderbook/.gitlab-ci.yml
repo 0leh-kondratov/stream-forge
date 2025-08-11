@@ -18,7 +18,7 @@ build-arango-orderbook:
 update-badge-arango-orderbook:
   extends: .update_badge_python_service
   needs:
-    - integration-test-arango-orderbook
+    - deploy-arango-orderbook
   variables:
     SERVICE_NAME: arango-orderbook
     SERVICE_PATH: services/arango-orderbook

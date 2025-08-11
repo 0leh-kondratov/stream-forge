@@ -18,7 +18,7 @@ build-loader-ws-candles:
 update-badge-loader-ws-candles:
   extends: .update_badge_python_service
   needs:
-    - integration-test-loader-ws-candles
+    - deploy-loader-ws-candles
   variables:
     SERVICE_NAME: loader-ws-candles
     SERVICE_PATH: services/loader-ws-candles

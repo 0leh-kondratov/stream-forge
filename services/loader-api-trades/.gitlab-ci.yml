@@ -18,7 +18,7 @@ build-loader-api-trades:
 update-badge-loader-api-trades:
   extends: .update_badge_python_service
   needs:
-    - integration-test-loader-api-trades
+    - deploy-loader-api-trades
   variables:
     SERVICE_NAME: loader-api-trades
     SERVICE_PATH: services/loader-api-trades
