@@ -15,13 +15,6 @@ build-loader-ws-trades:
     SERVICE_PATH: services/loader-ws-trades
     CI_REGISTRY_IMAGE: $CI_REGISTRY/kinga/stream-forge/loader-ws-trades
 
-update-badge-loader-ws-trades:
-  extends: .update_badge_python_service
-  needs:
-    - integration-test-loader-ws-trades
-  variables:
-    SERVICE_NAME: loader-ws-trades
-    SERVICE_PATH: services/loader-ws-trades
 
 integration-test-loader-ws-trades:
   extends: .integration_test_python_service
@@ -44,3 +37,11 @@ deploy-loader-ws-trades:
     - integration-test-loader-ws-trades
   variables:
     K8S_MANIFEST_PATH: services/loader-ws-trades/k8s/loader-ws-trades-deployment.yaml
+
+update-badge-loader-ws-trades:
+  extends: .update_badge_python_service
+  needs:
+    - deploy-loader-ws-trades
+  variables:
+    SERVICE_NAME: loader-ws-trades
+    SERVICE_PATH: services/loader-ws-trades
