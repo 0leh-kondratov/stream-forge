@@ -4,7 +4,7 @@
   script:
     - SERVICE_VERSION=$(cat $CI_PROJECT_DIR/$SERVICE_PATH/VERSION)
     - mkdir -p /kaniko/.docker
-    - echo "{"auths":{"$CI_REGISTRY":{"username":"$CI_REGISTRY_USER","password":"$CI_REGISTRY_PASSWORD"}}}}" > /kaniko/.docker/config.json
+    - echo '{"auths":{"$CI_REGISTRY":{"username":"$CI_REGISTRY_USER","password":"$CI_REGISTRY_PASSWORD"}}}' > /kaniko/.docker/config.json
     - /kaniko/executor       --context $CI_PROJECT_DIR/$SERVICE_PATH       --dockerfile Dockerfile       --destination $CI_REGISTRY_IMAGE:$SERVICE_VERSION       --destination $CI_REGISTRY_IMAGE:latest       --cache=true       --cache-repo "$CI_REGISTRY_IMAGE/cache"
     - echo "success" > build_status.txt # Write success status
   after_script: # Add after_script to handle failure
@@ -108,7 +108,7 @@
       python3 -c "
 import xml.etree.ElementTree as ET
 try:
-    tree = ET.etree.ElementTree.parse('report.xml')
+    tree = ET.etree.ElementTree(file='report.xml')
     root = tree.getroot()
     failures = int(root.attrib.get('failures', 0))
     errors = int(root.attrib.get('errors', 0))
@@ -222,10 +222,10 @@ except Exception as e:
       echo "Updating integration test badge for ${SERVICE_NAME}..."
 
       # Parse integration_report.xml to determine test status
-      python3 -c "
+            python3 -c "
 import xml.etree.ElementTree as ET
 try:
-    tree = ET.parse('integration_report.xml')
+    tree = ET.etree.ElementTree(file='integration_report.xml')
     root = tree.getroot()
     failures = int(root.attrib.get('failures', 0))
     errors = int(root.attrib.get('errors', 0))
