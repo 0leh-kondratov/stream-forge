@@ -6,6 +6,12 @@ include:
     ref: main
     file: '/.gitlab/ci-templates/Kubernetes-Deploy.gitlab-ci.yml'
 
+test-graph-build:
+  extends: .test_python_service
+  variables:
+    SERVICE_PATH: services/graph_build
+  when: manual
+
 build-graph-build:
   extends: .build_python_service
   needs:
@@ -15,13 +21,6 @@ build-graph-build:
     SERVICE_PATH: services/graph_build
     CI_REGISTRY_IMAGE: $CI_REGISTRY/kinga/stream-forge/graph-build
 
-update-badge-graph-build:
-  extends: .update_badge_python_service
-  needs:
-    - deploy-graph-build
-  variables:
-    SERVICE_NAME: graph-build
-    SERVICE_PATH: services/graph_build
 
 integration-test-graph-build:
   extends: .integration_test_python_service
@@ -32,15 +31,17 @@ integration-test-graph-build:
     SERVICE_PATH: services/graph_build
   when: manual # Make it manual for now, user can change later
 
-test-graph-build:
-  extends: .test_python_service
-  variables:
-    SERVICE_PATH: services/graph_build
-  when: manual
-
 deploy-graph-build:
   extends: .deploy_kubernetes_service
   needs:
     - integration-test-graph-build
   variables:
     K8S_MANIFEST_PATH: services/graph_build/k8s/graph-build-deployment.yaml
+
+update-badge-graph-build:
+  extends: .update_badge_python_service
+  needs:
+    - deploy-graph-build
+  variables:
+    SERVICE_NAME: graph-build
+    SERVICE_PATH: services/graph_build

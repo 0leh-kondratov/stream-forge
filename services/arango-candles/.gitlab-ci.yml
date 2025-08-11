@@ -7,6 +7,12 @@ include:
     ref: main
     file: '/.gitlab/ci-templates/Kubernetes-Deploy.gitlab-ci.yml'
 
+test-arango-candles:
+  extends: .test_python_service
+  variables:
+    SERVICE_PATH: services/arango-candles
+  when: manual
+
 build-arango-candles:
   extends: .build_python_service
   needs:
@@ -15,14 +21,6 @@ build-arango-candles:
     SERVICE_NAME: arango-candles
     SERVICE_PATH: services/arango-candles
     CI_REGISTRY_IMAGE: $CI_REGISTRY/kinga/stream-forge/arango-candles
-
-update-badge-arango-candles:
-  extends: .update_badge_python_service
-  needs:
-    - deploy-arango-candles
-  variables:
-    SERVICE_NAME: arango-candles
-    SERVICE_PATH: services/arango-candles
 
 integration-test-arango-candles:
   extends: .integration_test_python_service
@@ -33,15 +31,17 @@ integration-test-arango-candles:
     SERVICE_PATH: services/arango-candles
   when: manual 
 
-test-arango-candles:
-  extends: .test_python_service
-  variables:
-    SERVICE_PATH: services/arango-candles
-  when: manual
-
 deploy-arango-candles:
   extends: .deploy_kubernetes_service
   needs:
     - integration-test-arango-candles
   variables:
     K8S_MANIFEST_PATH: services/arango-candles/k8s/arango-candles-deployment.yaml
+
+update-badge-arango-candles:
+  extends: .update_badge_python_service
+  needs:
+    - deploy-arango-candles
+  variables:
+    SERVICE_NAME: arango-candles
+    SERVICE_PATH: services/arango-candles
