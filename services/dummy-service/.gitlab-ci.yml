@@ -31,6 +31,10 @@ integration-test-dummy-service:
   when: manual # Make it manual for now, user can change later
   before_script:
     - apt-get update && apt-get install -y curl
+    - pwd # Print current working directory
+    - ls -F # List contents of current directory
+    - ls -F /app # List contents of /app
+    - python -c "import sys; print(sys.path)" # Print Python's sys.path
     - cd /app && python -m app.main --noop & # Start the service from /app
     - |-
       echo "Waiting for service to start..."
