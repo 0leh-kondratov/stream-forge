@@ -106,7 +106,7 @@ def test_config_missing_env_vars_with_defaults(mock_os_getenv):
     assert config.CONSUMER_IMAGE is None
 
 def test_config_missing_all_env_vars(mock_os_getenv):
-    mock_os_getenv.side_effect = lambda key, default=None: None # Simulate no env vars set
+    mock_os_getenv.side_effect = lambda key, default=None: default # Simulate missing env vars, allowing os.getenv defaults
 
     import app.config as config
     reload(config)

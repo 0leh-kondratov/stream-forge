@@ -1,43 +1,98 @@
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
 import pytest
 import asyncio
 from unittest.mock import AsyncMock, patch
+from datetime import datetime
 
-# This file is for integration tests.
-# True integration tests would typically involve:
-# 1. Running actual (or highly realistic mock) external services like Kafka and a Binance API server.
-# 2. Deploying the loader-api-candles service (e.g., as a Docker container or a local process).
-# 3. Sending control commands to the service via Kafka (e.g., start, stop).
-# 4. Verifying that the service fetches data from the mock API.
-# 5. Verifying that the service publishes data to the mock Kafka topic.
-# 6. Verifying telemetry events are sent correctly.
-# 7. Checking Prometheus metrics exposed by the service.
+from app.loader import run_loader
+from app import config
 
-# Due to the limitations of this environment (cannot spin up external services),
-# these tests will remain as conceptual examples or require external setup.
+# Mock the config module for integration tests
+@pytest.fixture
+def mock_integration_config():
+    with patch('app.config') as mock_cfg:
+        mock_cfg.SYMBOL = "TESTSYM"
+        mock_cfg.INTERVAL = "1m"
+        mock_cfg.TIME_RANGE = "2023-01-01:2023-01-01" # A single day for simplicity
+        mock_cfg.BINANCE_API_KEY = "test_key"
+        mock_cfg.BINANCE_API_SECRET = "test_secret"
+        mock_cfg.KAFKA_TOPIC = "test_topic"
+        yield mock_cfg
 
-# Example of what an integration test might look like (conceptual):
-# @pytest.mark.asyncio
-# async def test_full_loader_flow_integration():
-#     # Setup:
-#     # - Start mock Kafka broker (e.g., using testcontainers-python)
-#     # - Start mock Binance API server (e.g., using aiohttp_server or httpx.MockTransport)
-#     # - Set environment variables for the loader service to point to mocks
-#     # - Run the loader-api-candles service in a separate process/thread
+# Mock the TelemetryProducer for integration tests
+@pytest.fixture
+def mock_integration_telemetry_producer():
+    return AsyncMock()
 
-#     # Action:
-#     # - Send a "start" command to the loader via mock Kafka control topic
-#     # - Wait for data to be produced to the mock Kafka data topic
-#     # - Send a "stop" command to the loader
+# Mock the KafkaDataProducer for integration tests
+@pytest.fixture
+def mock_integration_kafka_producer():
+    mock = AsyncMock()
+    mock.sent_messages = [] # To store messages sent
+    async def mock_send(message):
+        mock.sent_messages.append(message)
+    mock.send.side_effect = mock_send
+    return mock
 
-#     # Assertions:
-#     # - Verify data received in mock Kafka data topic matches expected API responses
-#     # - Verify telemetry events (started, loading, finished) are received
-#     # - Verify service shuts down gracefully
+# Mock the BinanceAPIClient for integration tests
+@pytest.fixture
+def mock_integration_binance_api_client():
+    mock = AsyncMock()
+    # Simulate a single kline for a simple test
+    mock.get_klines.return_value = [
+        [1672531200000, "100", "101", "99", "100", "10", 1672531259999, "20", 1, "5", "10"],
+    ]
+    return mock
 
-#     # Teardown:
-#     # - Stop all mock services and the loader service
+@pytest.fixture
+def mock_integration_stop_event():
+    mock = AsyncMock(spec=asyncio.Event)
+    mock.is_set.return_value = False # Ensure it doesn't stop prematurely
+    return mock
 
-def test_loader_api_candles_integration_placeholder():
-    # This is a placeholder. Real integration tests would go here.
-    # For now, we rely on comprehensive unit tests and manual end-to-end testing.
-    assert True
+@pytest.mark.asyncio
+async def test_loader_full_data_flow(
+    mock_integration_config,
+    mock_integration_telemetry_producer,
+    mock_integration_kafka_producer,
+    mock_integration_binance_api_client,
+    mock_integration_stop_event
+):
+    """
+    Tests the full data flow from fetching klines to publishing to Kafka.
+    This is an integration-like test using mocks for external services.
+    """
+    with (
+        patch('app.loader.BinanceAPIClient', return_value=mock_integration_binance_api_client),
+        patch('app.loader.KafkaDataProducer', return_value=mock_integration_kafka_producer)
+    ):
+        await run_loader(mock_integration_stop_event, mock_integration_telemetry_producer)
+
+    # Assertions
+    mock_integration_binance_api_client.get_klines.assert_called_once()
+    mock_integration_kafka_producer.start.assert_called_once()
+    mock_integration_kafka_producer.stop.assert_called_once()
+    mock_integration_binance_api_client.close.assert_called_once()
+
+    # Verify messages sent to Kafka
+    assert len(mock_integration_kafka_producer.sent_messages) == 1
+    sent_message = mock_integration_kafka_producer.sent_messages[0]
+
+    assert sent_message["open_time"] == 1672531200000
+    assert sent_message["open"] == 100.0
+    assert sent_message["symbol"] == "TESTSYM"
+    assert sent_message["interval"] == "1m"
+
+    # Verify telemetry updates
+    mock_integration_telemetry_producer.send_status_update.assert_any_call(
+        status="started", message="Loader started, fetching historical data."
+    )
+    mock_integration_telemetry_producer.send_status_update.assert_any_call(
+        status="loading", message="Fetched 1 and published 1 records.", records_written=1
+    )
+    mock_integration_telemetry_producer.send_status_update.assert_any_call(
+        status="finished", message="Loader finished. Total records published: 1", finished=True, records_written=1
+    )
