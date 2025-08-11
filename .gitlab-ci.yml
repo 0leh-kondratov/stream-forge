@@ -6,6 +6,15 @@ stages:
   - deploy
   - badges
 
+# This job ensures that the pipeline is never empty.
+# It runs on every pipeline, regardless of the changes.
+always-run:
+  stage: setup
+  script:
+    - echo "This job ensures the pipeline is not empty."
+  rules:
+    - when: always
+
 include:
   - local: '/.gitlab/ci-templates/Python-Service.gitlab-ci.yml'
   - local: '/.gitlab/ci-templates/Kubernetes-Deploy.gitlab-ci.yml'
