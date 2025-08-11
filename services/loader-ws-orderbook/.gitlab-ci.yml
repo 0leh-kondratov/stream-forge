@@ -15,14 +15,6 @@ build-loader-ws-orderbook:
     SERVICE_PATH: services/loader-ws-orderbook
     CI_REGISTRY_IMAGE: $CI_REGISTRY/kinga/stream-forge/loader-ws-orderbook
 
-update-badge-loader-ws-orderbook:
-  extends: .update_badge_python_service
-  needs:
-    - integration-test-loader-ws-orderbook
-  variables:
-    SERVICE_NAME: loader-ws-orderbook
-    SERVICE_PATH: services/loader-ws-orderbook
-
 integration-test-loader-ws-orderbook:
   extends: .integration_test_python_service
   needs:
@@ -44,3 +36,11 @@ deploy-loader-ws-orderbook:
     - integration-test-loader-ws-orderbook
   variables:
     K8S_MANIFEST_PATH: services/loader-ws-orderbook/k8s/loader-ws-orderbook-deployment.yaml
+
+update-badge-loader-ws-orderbook:
+  extends: .update_badge_python_service
+  needs:
+    - deploy-loader-ws-orderbook
+  variables:
+    SERVICE_NAME: loader-ws-orderbook
+    SERVICE_PATH: services/loader-ws-orderbook

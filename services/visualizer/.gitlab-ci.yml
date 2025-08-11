@@ -15,14 +15,6 @@ build-visualizer:
     SERVICE_PATH: services/visualizer
     CI_REGISTRY_IMAGE: $CI_REGISTRY/kinga/stream-forge/visualizer
 
-update-badge-visualizer:
-  extends: .update_badge_python_service
-  needs:
-    - integration-test-visualizer
-  variables:
-    SERVICE_NAME: visualizer
-    SERVICE_PATH: services/visualizer
-
 integration-test-visualizer:
   extends: .integration_test_python_service
   needs:
@@ -44,3 +36,11 @@ deploy-visualizer:
     - integration-test-visualizer
   variables:
     K8S_MANIFEST_PATH: services/visualizer/k8s/visualizer-deployment.yaml
+
+update-badge-visualizer:
+  extends: .update_badge_python_service
+  needs:
+    - deploy-visualizer
+  variables:
+    SERVICE_NAME: visualizer
+    SERVICE_PATH: services/visualizer
