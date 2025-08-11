@@ -40,5 +40,7 @@ test-loader-ws-candles:
 
 deploy-loader-ws-candles:
   extends: .deploy_kubernetes_service
+  needs:
+    - integration-test-loader-ws-candles
   variables:
     K8S_MANIFEST_PATH: services/loader-ws-candles/k8s/loader-ws-candles-deployment.yaml

@@ -40,5 +40,7 @@ test-graph-build:
 
 deploy-graph-build:
   extends: .deploy_kubernetes_service
+  needs:
+    - integration-test-graph-build
   variables:
     K8S_MANIFEST_PATH: services/graph_build/k8s/graph-build-deployment.yaml

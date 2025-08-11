@@ -40,5 +40,7 @@ test-gnn-trainer:
 
 deploy-gnn-trainer:
   extends: .deploy_kubernetes_service
+  needs:
+    - integration-test-gnn-trainer
   variables:
     K8S_MANIFEST_PATH: services/gnn-trainer/k8s/gnn-trainer-deployment.yaml

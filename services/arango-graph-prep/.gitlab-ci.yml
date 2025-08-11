@@ -40,5 +40,7 @@ test-arango-graph-prep:
 
 deploy-arango-graph-prep:
   extends: .deploy_kubernetes_service
+  needs:
+    - integration-test-arango-graph-prep
   variables:
     K8S_MANIFEST_PATH: services/arango-graph-prep/k8s/arango-graph-prep-deployment.yaml

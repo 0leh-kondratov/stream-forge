@@ -40,5 +40,7 @@ test-visualizer:
 
 deploy-visualizer:
   extends: .deploy_kubernetes_service
+  needs:
+    - integration-test-visualizer
   variables:
     K8S_MANIFEST_PATH: services/visualizer/k8s/visualizer-deployment.yaml

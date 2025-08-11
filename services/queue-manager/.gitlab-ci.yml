@@ -40,5 +40,7 @@ test-queue-manager:
 
 deploy-queue-manager:
   extends: .deploy_kubernetes_service
+  needs:
+    - integration-test-queue-manager
   variables:
     K8S_MANIFEST_PATH: services/queue-manager/k8s/queue-manager-deployment.yaml

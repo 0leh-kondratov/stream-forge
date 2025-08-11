@@ -40,5 +40,7 @@ test-arango-trades:
 
 deploy-arango-trades:
   extends: .deploy_kubernetes_service
+  needs:
+    - integration-test-arango-trades
   variables:
     K8S_MANIFEST_PATH: services/arango-trades/k8s/arango-trades-deployment.yaml
