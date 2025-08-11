@@ -23,8 +23,6 @@
 .update_badge_python_service:
   stage: badges
   image: ${KANIKO_IMAGE}
-  needs:
-    - deploy-${SERVICE_NAME}
   before_script:
     - git config --global user.email "gitlab-ci@dmz.home"
     - git config --global user.name "GitLab CI"
