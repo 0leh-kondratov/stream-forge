@@ -9,7 +9,7 @@ stages:
 include:
   - '/.gitlab/ci-templates/Python-Service.gitlab-ci.yml'
   - '/.gitlab/ci-templates/Kubernetes-Deploy.gitlab-ci.yml'
-#  - '/services/arango-candles/.gitlab-ci.yml'
+  - '/services/arango-candles/.gitlab-ci.yml'
   - '/services/arango-connector/.gitlab-ci.yml'
   - '/services/arango-graph-prep/.gitlab-ci.yml'
   - '/services/arango-orderbook/.gitlab-ci.yml'
