@@ -6,6 +6,12 @@ include:
     ref: main
     file: '/.gitlab/ci-templates/Kubernetes-Deploy.gitlab-ci.yml'
 
+test-visualizer:
+  extends: .test_python_service
+  variables:
+    SERVICE_PATH: services/visualizer
+  when: manual
+
 build-visualizer:
   extends: .build_python_service
   needs:
@@ -23,12 +29,6 @@ integration-test-visualizer:
     SERVICE_NAME: visualizer
     SERVICE_PATH: services/visualizer
   when: manual # Make it manual for now, user can change later
-
-test-visualizer:
-  extends: .test_python_service
-  variables:
-    SERVICE_PATH: services/visualizer
-  when: manual
 
 deploy-visualizer:
   extends: .deploy_kubernetes_service
