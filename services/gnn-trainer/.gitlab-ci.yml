@@ -18,7 +18,7 @@ build-gnn-trainer:
 update-badge-gnn-trainer:
   extends: .update_badge_python_service
   needs:
-    - integration-test-gnn-trainer
+    - deploy-gnn-trainer
   variables:
     SERVICE_NAME: gnn-trainer
     SERVICE_PATH: services/gnn-trainer

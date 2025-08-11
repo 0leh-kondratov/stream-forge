@@ -18,7 +18,7 @@ build-arango-trades:
 update-badge-arango-trades:
   extends: .update_badge_python_service
   needs:
-    - integration-test-arango-trades
+    - deploy-arango-trades
   variables:
     SERVICE_NAME: arango-trades
     SERVICE_PATH: services/arango-trades

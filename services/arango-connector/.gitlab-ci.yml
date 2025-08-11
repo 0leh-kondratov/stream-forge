@@ -18,7 +18,7 @@ build-arango-connector:
 update-badge-arango-connector:
   extends: .update_badge_python_service
   needs:
-    - integration-test-arango-connector
+    - deploy-arango-connector
   variables:
     SERVICE_NAME: arango-connector
     SERVICE_PATH: services/arango-connector

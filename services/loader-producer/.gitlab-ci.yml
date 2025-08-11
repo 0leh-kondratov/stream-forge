@@ -18,7 +18,7 @@ build-loader-producer:
 update-badge-loader-producer:
   extends: .update_badge_python_service
   needs:
-    - integration-test-loader-producer
+    - deploy-loader-producer
   variables:
     SERVICE_NAME: loader-producer
     SERVICE_PATH: services/loader-producer

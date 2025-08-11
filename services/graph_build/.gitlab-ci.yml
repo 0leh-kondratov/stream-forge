@@ -18,7 +18,7 @@ build-graph-build:
 update-badge-graph-build:
   extends: .update_badge_python_service
   needs:
-    - integration-test-graph-build
+    - deploy-graph-build
   variables:
     SERVICE_NAME: graph-build
     SERVICE_PATH: services/graph_build
