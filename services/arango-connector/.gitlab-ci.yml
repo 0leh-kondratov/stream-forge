@@ -8,6 +8,8 @@ include:
 
 build-arango-connector:
   extends: .build_python_service
+  needs:
+    - test-arango-connector
   variables:
     SERVICE_NAME: arango-connector
     SERVICE_PATH: services/arango-connector
@@ -15,12 +17,20 @@ build-arango-connector:
 
 update-badge-arango-connector:
   extends: .update_badge_python_service
-  stage: badges
+  needs:
+    - integration-test-arango-connector
+  variables:
+    SERVICE_NAME: arango-connector
+    SERVICE_PATH: services/arango-connector
+
+integration-test-arango-connector:
+  extends: .integration_test_python_service
   needs:
     - build-arango-connector
   variables:
     SERVICE_NAME: arango-connector
     SERVICE_PATH: services/arango-connector
+  when: manual # Make it manual for now, user can change later
 
 test-arango-connector:
   extends: .test_python_service
@@ -31,5 +41,4 @@ test-arango-connector:
 deploy-arango-connector:
   extends: .deploy_kubernetes_service
   variables:
-    K8S_MANIFEST_PATH: services/arango-connector/k8s/deployment.yaml
-  when: manual
+    K8S_MANIFEST_PATH: services/arango-connector/k8s/arango-connector-deployment.yaml

@@ -8,6 +8,8 @@ include:
 
 build-arango-orderbook:
   extends: .build_python_service
+  needs:
+    - test-arango-orderbook
   variables:
     SERVICE_NAME: arango-orderbook
     SERVICE_PATH: services/arango-orderbook
@@ -15,12 +17,20 @@ build-arango-orderbook:
 
 update-badge-arango-orderbook:
   extends: .update_badge_python_service
-  stage: badges
+  needs:
+    - integration-test-arango-orderbook
+  variables:
+    SERVICE_NAME: arango-orderbook
+    SERVICE_PATH: services/arango-orderbook
+
+integration-test-arango-orderbook:
+  extends: .integration_test_python_service
   needs:
     - build-arango-orderbook
   variables:
     SERVICE_NAME: arango-orderbook
     SERVICE_PATH: services/arango-orderbook
+  when: manual # Make it manual for now, user can change later
 
 test-arango-orderbook:
   extends: .test_python_service
@@ -31,5 +41,4 @@ test-arango-orderbook:
 deploy-arango-orderbook:
   extends: .deploy_kubernetes_service
   variables:
-    K8S_MANIFEST_PATH: services/arango-orderbook/k8s/deployment.yaml
-  when: manual
+    K8S_MANIFEST_PATH: services/arango-orderbook/k8s/arango-orderbook-deployment.yaml

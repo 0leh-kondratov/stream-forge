@@ -8,6 +8,8 @@ include:
 
 build-arango-trades:
   extends: .build_python_service
+  needs:
+    - test-arango-trades
   variables:
     SERVICE_NAME: arango-trades
     SERVICE_PATH: services/arango-trades
@@ -15,12 +17,20 @@ build-arango-trades:
 
 update-badge-arango-trades:
   extends: .update_badge_python_service
-  stage: badges
+  needs:
+    - integration-test-arango-trades
+  variables:
+    SERVICE_NAME: arango-trades
+    SERVICE_PATH: services/arango-trades
+
+integration-test-arango-trades:
+  extends: .integration_test_python_service
   needs:
     - build-arango-trades
   variables:
     SERVICE_NAME: arango-trades
     SERVICE_PATH: services/arango-trades
+  when: manual # Make it manual for now, user can change later
 
 test-arango-trades:
   extends: .test_python_service
@@ -31,5 +41,4 @@ test-arango-trades:
 deploy-arango-trades:
   extends: .deploy_kubernetes_service
   variables:
-    K8S_MANIFEST_PATH: services/arango-trades/k8s/deployment.yaml
-  when: manual
+    K8S_MANIFEST_PATH: services/arango-trades/k8s/arango-trades-deployment.yaml

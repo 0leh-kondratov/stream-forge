@@ -8,3 +8,4 @@ pytest
 python-arango
 pytest-asyncio
 httpx
+aioarango

@@ -8,6 +8,8 @@ include:
 
 build-loader-api-candles:
   extends: .build_python_service
+  needs:
+    - test-loader-api-candles
   variables:
     SERVICE_NAME: loader-api-candles
     SERVICE_PATH: services/loader-api-candles
@@ -16,13 +18,27 @@ build-loader-api-candles:
 update-badge-loader-api-candles:
   extends: .update_badge_python_service
   needs:
+    - integration-test-loader-api-candles
+  variables:
+    SERVICE_NAME: loader-api-candles
+    SERVICE_PATH: services/loader-api-candles
+
+integration-test-loader-api-candles:
+  extends: .integration_test_python_service
+  needs:
     - build-loader-api-candles
   variables:
     SERVICE_NAME: loader-api-candles
     SERVICE_PATH: services/loader-api-candles
+  when: manual # Make it manual for now, user can change later
 
 test-loader-api-candles:
   extends: .test_python_service
   variables:
     SERVICE_PATH: services/loader-api-candles
   when: manual
+
+deploy-loader-api-candles:
+  extends: .deploy_kubernetes_service
+  variables:
+    K8S_MANIFEST_PATH: services/loader-api-candles/k8s/loader-api-candles-deployment.yaml
