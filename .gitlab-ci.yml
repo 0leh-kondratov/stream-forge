@@ -6,151 +6,23 @@ stages:
   - deploy
   - badges
 
-# This job ensures that the pipeline is never empty.
-# It runs on every pipeline, regardless of the changes.
-# always-run:
-#  stage: setup
-#  script:
-#    - echo "This job ensures the pipeline is not empty."
-#  rules:
-#    - when: always
-
 include:
-  - local: '/.gitlab/ci-templates/Python-Service.gitlab-ci.yml'
-  - local: '/.gitlab/ci-templates/Kubernetes-Deploy.gitlab-ci.yml'
-  - local: '/services/arango-candles/.gitlab-ci.yml'
-    rules:
-      - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
-        changes:
-          - services/arango-candles/**/*
-      - if: '$CI_COMMIT_BRANCH == "main"'
-        changes:
-          - services/arango-candles/**/*
-  - local: '/services/arango-connector/.gitlab-ci.yml'
-    rules:
-      - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
-        changes:
-          - services/arango-connector/**/*
-      - if: '$CI_COMMIT_BRANCH == "main"'
-        changes:
-          - services/arango-connector/**/*
-  - local: '/services/arango-graph-prep/.gitlab-ci.yml'
-    rules:
-      - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
-        changes:
-          - services/arango-graph-prep/**/*
-      - if: '$CI_COMMIT_BRANCH == "main"'
-        changes:
-          - services/arango-graph-prep/**/*
-  - local: '/services/arango-orderbook/.gitlab-ci.yml'
-    rules:
-      - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
-        changes:
-          - services/arango-orderbook/**/*
-      - if: '$CI_COMMIT_BRANCH == "main"'
-        changes:
-          - services/arango-orderbook/**/*
-  - local: '/services/arango-trades/.gitlab-ci.yml'
-    rules:
-      - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
-        changes:
-          - services/arango-trades/**/*
-      - if: '$CI_COMMIT_BRANCH == "main"'
-        changes:
-          - services/arango-trades/**/*
-  - local: '/services/dummy-service/.gitlab-ci.yml'
-    rules:
-      - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
-        changes:
-          - services/dummy-service/**/*
-      - if: '$CI_COMMIT_BRANCH == "main"'
-        changes:
-          - services/dummy-service/**/*
-  - local: '/services/gnn-trainer/.gitlab-ci.yml'
-    rules:
-      - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
-        changes:
-          - services/gnn-trainer/**/*
-      - if: '$CI_COMMIT_BRANCH == "main"'
-        changes:
-          - services/gnn-trainer/**/*
-  - local: '/services/graph_build/.gitlab-ci.yml'
-    rules:
-      - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
-        changes:
-          - services/graph_build/**/*
-      - if: '$CI_COMMIT_BRANCH == "main"'
-        changes:
-          - services/graph_build/**/*
-  - local: '/services/loader-api-candles/.gitlab-ci.yml'
-    rules:
-      - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
-        changes:
-          - services/loader-api-candles/**/*
-      - if: '$CI_COMMIT_BRANCH == "main"'
-        changes:
-          - services/loader-api-candles/**/*
-  - local: '/services/loader-api-trades/.gitlab-ci.yml'
-    rules:
-      - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
-        changes:
-          - services/loader-api-trades/**/*
-      - if: '$CI_COMMIT_BRANCH == "main"'
-        changes:
-          - services/loader-api-trades/**/*
-  - local: '/services/loader-producer/.gitlab-ci.yml'
-    rules:
-      - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
-        changes:
-          - services/loader-producer/**/*
-      - if: '$CI_COMMIT_BRANCH == "main"'
-        changes:
-          - services/loader-producer/**/*
-  - local: '/services/loader-ws-candles/.gitlab-ci.yml'
-    rules:
-      - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
-        changes:
-          - services/loader-ws-candles/**/*
-      - if: '$CI_COMMIT_BRANCH == "main"'
-        changes:
-          - services/loader-ws-candles/**/*
-  - local: '/services/loader-ws-orderbook/.gitlab-ci.yml'
-    rules:
-      - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
-        changes:
-          - services/loader-ws-orderbook/**/*
-      - if: '$CI_COMMIT_BRANCH == "main"'
-        changes:
-          - services/loader-ws-orderbook/**/*
-  - local: '/services/loader-ws-trades/.gitlab-ci.yml'
-    rules:
-      - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
-        changes:
-          - services/loader-ws-trades/**/*
-      - if: '$CI_COMMIT_BRANCH == "main"'
-        changes:
-          - services/loader-ws-trades/**/*
-  - local: '/services/queue-manager/.gitlab-ci.yml'
-    rules:
-      - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
-        changes:
-          - services/queue-manager/**/*
-      - if: '$CI_COMMIT_BRANCH == "main"'
-        changes:
-          - services/queue-manager/**/*
-  - local: '/services/visualizer/.gitlab-ci.yml'
-    rules:
-      - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
-        changes:
-          - services/visualizer/**/*
-      - if: '$CI_COMMIT_BRANCH == "main"'
-        changes:
-          - services/visualizer/**/*
-  - local: '/platform/.gitlab-ci.yml'
-    rules:
-      - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"'
-        changes:
-          - platform/**/*
-      - if: '$CI_COMMIT_BRANCH == "main"'
-        changes:
-          - platform/**/*
+  - '/.gitlab/ci-templates/Python-Service.gitlab-ci.yml'
+  - '/.gitlab/ci-templates/Kubernetes-Deploy.gitlab-ci.yml'
+#  - '/services/arango-candles/.gitlab-ci.yml'
+  - '/services/arango-connector/.gitlab-ci.yml'
+  - '/services/arango-graph-prep/.gitlab-ci.yml'
+  - '/services/arango-orderbook/.gitlab-ci.yml'
+  - '/services/arango-trades/.gitlab-ci.yml'
+  - '/services/dummy-service/.gitlab-ci.yml'
+  - '/services/gnn-trainer/.gitlab-ci.yml'
+  - '/services/graph_build/.gitlab-ci.yml'
+  - '/services/loader-api-candles/.gitlab-ci.yml'
+  - '/services/loader-api-trades/.gitlab-ci.yml'
+  - '/services/loader-producer/.gitlab-ci.yml'
+  - '/services/loader-ws-candles/.gitlab-ci.yml'
+  - '/services/loader-ws-orderbook/.gitlab-ci.yml'
+  - '/services/loader-ws-trades/.gitlab-ci.yml'
+  - '/services/queue-manager/.gitlab-ci.yml'
+  - '/services/visualizer/.gitlab-ci.yml'
+  - '/platform/.gitlab-ci.yml'
