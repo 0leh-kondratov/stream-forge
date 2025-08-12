@@ -1,19 +1,19 @@
-# 📦 StreamForge Queue Manager
+# \[Package] StreamForge Queue Manager
 
-Управляющий микросервис для запуска, остановки и мониторинга очередей обработки данных в StreamForge.
+Management microservice for launching, stopping, and monitoring data processing queues in StreamForge.
 
-## 🚀 Возможности
+## \[Features]
 
-- Запуск Kubernetes Job'ов: `loader-producer`, `arango-connector`, `gnn-trainer`, `visualizer`, `graph-builder`
-- Поддержка параметризированного запуска через Swagger
-- Управление очередями по `queue_id`
-- Поддержка команд через Kafka (`queue-control`, `queue-events`)
-- Поддержка Prometheus-метрик
-- Встроенная health-прослойка `/health/live`, `/health/ready`, `/health/startup`
+* Launching Kubernetes Jobs: `loader-producer`, `arango-connector`, `gnn-trainer`, `visualizer`, `graph-builder`
+* Parameterized execution via Swagger
+* Queue management by `queue_id`
+* Command support via Kafka (`queue-control`, `queue-events`)
+* Prometheus metrics support
+* Built-in health endpoints `/health/live`, `/health/ready`, `/health/startup`
 
-## 🛠️ Переменные окружения
+## \[Environment Variables]
 
-Файл `.env`:
+File `.env`:
 
 ```dotenv
 KAFKA_BOOTSTRAP_SERVERS=...
@@ -28,9 +28,11 @@ ARANGO_PASSWORD=...
 
 QUEUE_CONTROL_TOPIC=queue-control
 QUEUE_EVENTS_TOPIC=queue-events
+```
 
+## \[Project Structure]
 
-
+```
 queue-manager/
 ├── app/
 │   ├── __init__.py
@@ -68,10 +70,16 @@ queue-manager/
 ├── .gitlab-ci.yml
 ├── requirements.txt
 └── README.md
+```
 
+## \[Example: Multiple Microservice Group Execution]
 
-Проверь что что с множественной загрузкой группы микросервисов ?
+The service supports launching multiple microservices within a single queue request.
+Below are examples of valid payloads for different scenarios.
 
+**Example 1 — Historical Data Processing Pipeline:**
+
+```json
 {
   "symbol": "BTCUSDT",
   "time_range": "2024-06-01:2024-06-30",
@@ -110,7 +118,11 @@ queue-manager/
     }
   ]
 }
+```
 
+**Example 2 — Real-Time Data Processing Pipeline:**
+
+```json
 {
   "symbol": "BTCUSDT",
   "time_range": "2024-08-01:2024-08-01",
@@ -153,3 +165,4 @@ queue-manager/
     }
   ]
 }
+```

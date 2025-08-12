@@ -4,10 +4,10 @@ USER root
 
 COPY dev-ca.crt /tmp/dev-ca.crt
 
-# Установка пакета и добавление сертификата
+# Install package and add certificate
 RUN apk add --no-cache ca-certificates && \
     mkdir -p /usr/share/ca-certificates && \
-    echo "Копируем CA..." && \
+    echo "Copying CA..." && \
     cp /tmp/dev-ca.crt /usr/share/ca-certificates/dev-ca.crt && \
     cat /usr/share/ca-certificates/dev-ca.crt >> /etc/ssl/certs/ca-certificates.crt
 

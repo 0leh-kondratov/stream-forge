@@ -39,7 +39,7 @@ data:
         Time_Key              @timestamp
         Time_Key_Format       %Y-%m-%dT%H:%M:%S
 
-        # Если нужен логин (Elasticsearch 8+), раскомментируй:
+        # If login is needed (Elasticsearch 8+), uncomment:
         # HTTP_User             elastic
         # HTTP_Passwd           <your-password>
   output-file.conf: |

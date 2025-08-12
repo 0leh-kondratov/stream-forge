@@ -2,11 +2,11 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 
-# Загрузка переменных из .env
+# Loading variables from .env
 env_path = Path(".") / ".env"
 load_dotenv(dotenv_path=env_path)
 
-# Основные параметры очереди
+# Main queue parameters
 QUEUE_ID: str = os.getenv("QUEUE_ID")
 SYMBOL: str = os.getenv("SYMBOL")
 TYPE: str = os.getenv("TYPE")
@@ -26,7 +26,7 @@ QUEUE_EVENTS_TOPIC: str = os.getenv("QUEUE_EVENTS_TOPIC", "queue-events")
 BINANCE_API_KEY: str = os.getenv("BINANCE_API_KEY")
 BINANCE_API_SECRET: str = os.getenv("BINANCE_API_SECRET")
 
-# Телеметрия
+# Telemetry
 TELEMETRY_PRODUCER_ID: str = os.getenv("TELEMETRY_PRODUCER_ID")
 
 # Kubernetes and ArangoDB

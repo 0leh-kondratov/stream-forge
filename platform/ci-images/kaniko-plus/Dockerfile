@@ -1,7 +1,7 @@
-# Используем Alpine в качестве базового образа, т.к. он легкий.
+# Using Alpine as the base image, as it is lightweight.
 FROM alpine:3.18
 
-# Устанавливаем git, curl и ca-certificates (для работы с HTTPS)
+# Install git, curl and ca-certificates (for HTTPS)
 RUN apk add --no-cache \
     git \
     curl \

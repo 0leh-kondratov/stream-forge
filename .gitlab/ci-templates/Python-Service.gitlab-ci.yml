@@ -23,8 +23,6 @@
         - $SERVICE_PATH/**/*
     - when: manual
 
-
-
 .update_badge_python_service:
   stage: badges
   image: ${KANIKO_IMAGE}
@@ -67,7 +65,6 @@
       changes:
         - $SERVICE_PATH/**/*
       when: on_success
-
 
 .test_python_service:
   stage: test
