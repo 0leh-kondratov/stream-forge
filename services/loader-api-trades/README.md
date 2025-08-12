@@ -1,50 +1,59 @@
-# 📈 loader-api-trades
+# `loader-api-trades`
 
-Микросервис в экосистеме **StreamForge**, предназначенный для загрузки исторических данных о торговых сделках через REST API и публикации их в Kafka.
-
-## 🎯 Назначение
-
-`loader-api-trades` выполняет следующие задачи:
-
-1.  **Подключается** к внешнему API (например, Binance).
-2.  **Загружает** исторические данные о сделках для указанной торговой пары.
-3.  **Публикует** полученные данные в Kafka-топик.
-
-Этот сервис является stateless-воркером и предназначен для запуска в виде **Kubernetes Job**. Всю необходимую конфигурацию он получает через переменные окружения.
-
-## ⚙️ Переменные окружения
-
-Сервис полностью настраивается через переменные окружения.
-
-| Переменная                 | Описание                                                              | Пример                                           |
-| -------------------------- | --------------------------------------------------------------------- | ------------------------------------------------ |
-| **`QUEUE_ID`**             | Уникальный идентификатор всего workflow.                              | `wf-trades-load-20240801-a1b2c3`                  |
-| **`SYMBOL`**               | Торговая пара для загрузки данных.                                    | `BTCUSDT`                                        |
-| **`TYPE`**                 | Тип данных, который обрабатывается.                                   | `api_trades`                                     |
-| **`KAFKA_TOPIC`**          | Имя Kafka-топика, куда публиковать данные.                             | `wf-trades-load-20240801-a1b2c3-data`            |
-| **`TIME_RANGE`**           | Диапазон времени для загрузки данных (START_DATE:END_DATE).           | `2023-01-01:2023-01-02`                          |
-| **`LIMIT`**                | Максимальное количество сделок за один запрос.                        | `1000`                                           |
-| **`TELEMETRY_PRODUCER_ID`**| Уникальный ID этого экземпляра для телеметрии.                        | `loader-api-trades__a1b2c3`                      |
-| `KAFKA_BOOTSTRAP_SERVERS`  | Адреса брокеров Kafka.                                                | `kafka-bootstrap.kafka:9093`                     |
-| `KAFKA_USER_PRODUCER`      | Имя пользователя для аутентификации в Kafka (producer).               | `user-producer-tls`                              |
-| `KAFKA_PASSWORD_PRODUCER`  | Пароль для пользователя Kafka (передается через Secret).              | `your_kafka_password`                            |
-| `CA_PATH`                  | Путь к CA-сертификату для TLS-соединения с Kafka.                     | `/certs/ca.crt`                                  |
-| `QUEUE_CONTROL_TOPIC`      | Топик для получения управляющих команд (например, `stop`).            | `queue-control`                                  |
-| `QUEUE_EVENTS_TOPIC`       | Топик для отправки событий телеметрии.                                | `queue-events`                                   |
-| `BINANCE_API_KEY`          | API ключ для доступа к Binance API.                                   | `your_binance_api_key`                           |
-| `BINANCE_API_SECRET`       | API секрет для доступа к Binance API.                                 | `your_binance_api_secret`                        |
+A microservice in the **StreamForge** ecosystem designed to load historical trade data via REST API and publish it to Kafka.
 
 ---
 
-## 📥 Входные данные (API)
+## 1. Purpose
 
-Сервис подключается к внешнему API (например, Binance) для получения данных о сделках. Формат данных соответствует агрегированным сделкам Binance (`aggTrades`).
+`loader-api-trades` performs the following tasks:
+
+1. **Connects** to an external API (e.g., Binance).
+2. **Retrieves** historical trade data for the specified trading pair.
+3. **Publishes** the retrieved data to a Kafka topic.
+
+This service is a stateless worker intended to run as a **Kubernetes Job**.
+All configuration is provided via environment variables.
 
 ---
 
-## 📤 Выходные данные (Kafka)
+## 2. Environment Variables
 
-Сервис публикует полученные данные о сделках в топик `KAFKA_TOPIC` в формате JSON. Каждое сообщение представляет собой одну сделку.
+The service is fully configured through environment variables.
+
+| Variable                    | Description                                                       | Example                               |
+| --------------------------- | ----------------------------------------------------------------- | ------------------------------------- |
+| **`QUEUE_ID`**              | Unique workflow identifier.                                       | `wf-trades-load-20240801-a1b2c3`      |
+| **`SYMBOL`**                | Trading pair to load data for.                                    | `BTCUSDT`                             |
+| **`TYPE`**                  | Type of data being processed.                                     | `api_trades`                          |
+| **`KAFKA_TOPIC`**           | Kafka topic name to publish data to.                              | `wf-trades-load-20240801-a1b2c3-data` |
+| **`TIME_RANGE`**            | Time range for data loading (`START_DATE:END_DATE`).              | `2023-01-01:2023-01-02`               |
+| **`LIMIT`**                 | Maximum number of trades per request.                             | `1000`                                |
+| **`TELEMETRY_PRODUCER_ID`** | Unique ID of this instance for telemetry reporting.               | `loader-api-trades__a1b2c3`           |
+| `KAFKA_BOOTSTRAP_SERVERS`   | Kafka broker addresses.                                           | `kafka-bootstrap.kafka:9093`          |
+| `KAFKA_USER_PRODUCER`       | Kafka username for producer authentication.                       | `user-producer-tls`                   |
+| `KAFKA_PASSWORD_PRODUCER`   | Kafka password for producer authentication (provided via Secret). | `your_kafka_password`                 |
+| `CA_PATH`                   | Path to the CA certificate for Kafka TLS connection.              | `/certs/ca.crt`                       |
+| `QUEUE_CONTROL_TOPIC`       | Kafka topic for receiving control commands (e.g., `stop`).        | `queue-control`                       |
+| `QUEUE_EVENTS_TOPIC`        | Kafka topic for sending telemetry events.                         | `queue-events`                        |
+| `BINANCE_API_KEY`           | API key for accessing Binance API.                                | `your_binance_api_key`                |
+| `BINANCE_API_SECRET`        | API secret for accessing Binance API.                             | `your_binance_api_secret`             |
+
+---
+
+## 3. Input Data (API)
+
+The service connects to an external API (e.g., Binance) to fetch trade data.
+The data format follows Binance aggregated trade data (`aggTrades`).
+
+---
+
+## 4. Output Data (Kafka)
+
+The service publishes the retrieved trade data to the `KAFKA_TOPIC` in JSON format.
+Each message represents a single trade.
+
+**Example message:**
 
 ```json
 {
@@ -59,11 +68,12 @@
 
 ---
 
-## 📡 Телеметрия (Topic: `queue-events`)
+## 5. Telemetry (Topic: `queue-events`)
 
-Сервис отправляет события о своем состоянии в топик `queue-events`. Это позволяет `queue-manager` отслеживать прогресс выполнения задачи.
+The service sends status events to the `queue-events` topic.
+This enables the `queue-manager` to track the progress of the job.
 
-**Пример события `loading`:**
+**Example `loading` event:**
 
 ```json
 {
@@ -71,7 +81,7 @@
   "symbol": "BTCUSDT",
   "type": "api_trades",
   "status": "loading",
-  "message": "Загружено и опубликовано 15000 записей сделок",
+  "message": "Loaded and published 15000 trade records",
   "records_written": 15000,
   "finished": false,
   "producer": "loader-api-trades__a1b2c3",
@@ -79,15 +89,15 @@
 }
 ```
 
-**Возможные статусы:** `started`, `loading`, `interrupted`, `error`, `finished`.
+**Possible statuses:** `started`, `loading`, `interrupted`, `error`, `finished`.
 
 ---
 
-## 🔄 Управление (Topic: `queue-control`)
+## 6. Control (Topic: `queue-control`)
 
-Сервис слушает топик `queue-control` и реагирует на команды, адресованные его `queue_id`.
+The service listens to the `queue-control` topic and reacts to commands addressed to its `queue_id`.
 
-**Команда `stop`:**
+**Example `stop` command:**
 
 ```json
 {
@@ -96,4 +106,4 @@
 }
 ```
 
-При получении этой команды сервис корректно завершает свою работу.
+Upon receiving this command, the service performs a graceful shutdown.

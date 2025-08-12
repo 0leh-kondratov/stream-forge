@@ -1,45 +1,50 @@
-# 📚 arango-orderbook
+# arango-orderbook
 
-Микросервис-консьюмер в экосистеме **StreamForge**, предназначенный для персистентности данных книги ордеров в ArangoDB.
+A consumer microservice in the **StreamForge** ecosystem, designed for persisting order book data in ArangoDB.
 
-## 🎯 Назначение
+## Purpose
 
-`arango-orderbook` выполняет следующие задачи:
+`arango-orderbook` performs the following tasks:
 
-1.  **Слушает** определенный топик в Kafka, в который поступают данные книги ордеров.
-2.  **Обрабатывает** эти сообщения.
-3.  **Сохраняет** их в соответствующую коллекцию в базе данных ArangoDB.
+1. **Listens** to a specific Kafka topic that receives order book data.
+2. **Processes** these messages.
+3. **Stores** them in the corresponding collection in the ArangoDB database.
 
-Этот сервис является stateless-воркером и предназначен для запуска в виде **Kubernetes Job**. Всю необходимую конфигурацию он получает через переменные окружения.
+This service is a stateless worker and is intended to run as a **Kubernetes Job**.
+It receives all necessary configuration through environment variables.
 
-## ⚙️ Переменные окружения
+## Configuration — Environment Variables
 
-Сервис полностью настраивается через переменные окружения.
+The service is fully configurable via environment variables.
 
-| Переменная                 | Описание                                                              | Пример                                           |
-| -------------------------- | --------------------------------------------------------------------- | ------------------------------------------------ |
-| **`QUEUE_ID`**             | Уникальный идентификатор всего workflow.                              | `wf-orderbook-20240801-a1b2c3`                    |
-| **`SYMBOL`**               | Торговая пара.                                                        | `BTCUSDT`                                        |
-| **`TYPE`**                 | Тип данных, который обрабатывается.                                   | `orderbook_snapshot`                             |
-| **`KAFKA_TOPIC`**          | Имя Kafka-топика, из которого читать данные.                           | `wf-orderbook-20240801-a1b2c3-data`              |
-| **`COLLECTION_NAME`**      | Имя коллекции в ArangoDB для сохранения данных.                       | `btcusdt_orderbook_2024_08_01`                   |
-| **`TELEMETRY_PRODUCER_ID`**| Уникальный ID этого экземпляра для телеметрии.                        | `arango-orderbook__a1b2c3`                       |
-| `KAFKA_BOOTSTRAP_SERVERS`  | Адреса брокеров Kafka.                                                | `kafka-bootstrap.kafka:9093`                     |
-| `KAFKA_USER_CONSUMER`      | Имя пользователя для аутентификации в Kafka (consumer).               | `user-consumer-tls`                              |
-| `KAFKA_PASSWORD_CONSUMER`  | Пароль для пользователя Kafka (передается через Secret).              | `your_kafka_password`                            |
-| `CA_PATH`                  | Путь к CA-сертификату для TLS-соединения с Kafka.                     | `/certs/ca.crt`                                  |
-| `QUEUE_CONTROL_TOPIC`      | Топик для получения управляющих команд (например, `stop`).            | `queue-control`                                  |
-| `QUEUE_EVENTS_TOPIC`       | Топик для отправки событий телеметрии.                                | `queue-events`                                   |
-| `ARANGO_URL`               | URL для подключения к ArangoDB.                                       | `http://arango-cluster.db:8529`                  |
-| `ARANGO_DB`                | Имя базы данных в ArangoDB.                                           | `streamforge`                                    |
-| `ARANGO_USER`              | Пользователь для подключения к ArangoDB.                              | `root`                                           |
-| `ARANGO_PASSWORD`          | Пароль для ArangoDB (передается через Secret).                        | `your_arango_password`                           |
+| Variable                    | Description                                                | Example                             |
+| --------------------------- | ---------------------------------------------------------- | ----------------------------------- |
+| **`QUEUE_ID`**              | Unique identifier of the entire workflow.                  | `wf-orderbook-20240801-a1b2c3`      |
+| **`SYMBOL`**                | Trading pair.                                              | `BTCUSDT`                           |
+| **`TYPE`**                  | Type of data being processed.                              | `orderbook_snapshot`                |
+| **`KAFKA_TOPIC`**           | Name of the Kafka topic to consume from.                   | `wf-orderbook-20240801-a1b2c3-data` |
+| **`COLLECTION_NAME`**       | Name of the ArangoDB collection for storing data.          | `btcusdt_orderbook_2024_08_01`      |
+| **`TELEMETRY_PRODUCER_ID`** | Unique ID of this instance for telemetry purposes.         | `arango-orderbook__a1b2c3`          |
+| `KAFKA_BOOTSTRAP_SERVERS`   | Kafka broker addresses.                                    | `kafka-bootstrap.kafka:9093`        |
+| `KAFKA_USER_CONSUMER`       | Kafka username for authentication (consumer).              | `user-consumer-tls`                 |
+| `KAFKA_PASSWORD_CONSUMER`   | Password for the Kafka user (passed via Secret).           | `your_kafka_password`               |
+| `CA_PATH`                   | Path to the CA certificate for Kafka TLS connection.       | `/certs/ca.crt`                     |
+| `QUEUE_CONTROL_TOPIC`       | Kafka topic for receiving control commands (e.g., `stop`). | `queue-control`                     |
+| `QUEUE_EVENTS_TOPIC`        | Kafka topic for sending telemetry events.                  | `queue-events`                      |
+| `ARANGO_URL`                | Connection URL for ArangoDB.                               | `http://arango-cluster.db:8529`     |
+| `ARANGO_DB`                 | Database name in ArangoDB.                                 | `streamforge`                       |
+| `ARANGO_USER`               | ArangoDB username.                                         | `root`                              |
+| `ARANGO_PASSWORD`           | ArangoDB password (passed via Secret).                     | `your_arango_password`              |
 
 ---
 
-## 📥 Входные данные (Kafka)
+## Input Data (Kafka)
 
-Сервис ожидает получать из топика `KAFKA_TOPIC` JSON-сообщения, представляющие собой данные книги ордеров. Предполагается, что сообщения могут содержать поле `_key` для идемпотентной вставки/обновления данных в ArangoDB (`UPSERT`). Если `_key` отсутствует, ArangoDB сгенерирует его автоматически.
+The service expects JSON messages from the `KAFKA_TOPIC` representing order book data.
+It is assumed that messages may contain a `_key` field for idempotent insert/update operations in ArangoDB (`UPSERT`).
+If `_key` is missing, ArangoDB will generate it automatically.
+
+Example:
 
 ```json
 {
@@ -59,11 +64,11 @@
 
 ---
 
-## 📡 Телеметрия (Topic: `queue-events`)
+## Telemetry (Topic: `queue-events`)
 
-Сервис отправляет события о своем состоянии в топик `queue-events`. Это позволяет `queue-manager` отслеживать прогресс выполнения задачи.
+The service sends status events to the `queue-events` topic, enabling the `queue-manager` to track job progress.
 
-**Пример события `loading`:**
+**Example of a `loading` event:**
 
 ```json
 {
@@ -71,7 +76,7 @@
   "symbol": "BTCUSDT",
   "type": "orderbook_snapshot",
   "status": "loading",
-  "message": "Сохранено 15000 записей книги ордеров",
+  "message": "Saved 15000 order book records",
   "records_written": 15000,
   "finished": false,
   "producer": "arango-orderbook__a1b2c3",
@@ -79,15 +84,15 @@
 }
 ```
 
-**Возможные статусы:** `started`, `loading`, `interrupted`, `error`, `finished`.
+**Possible statuses:** `started`, `loading`, `interrupted`, `error`, `finished`.
 
 ---
 
-## 🔄 Управление (Topic: `queue-control`)
+## Control (Topic: `queue-control`)
 
-Сервис слушает топик `queue-control` и реагирует на команды, адресованные его `queue_id`.
+The service listens to the `queue-control` topic and responds to commands addressed to its `queue_id`.
 
-**Команда `stop`:**
+**Example: `stop` command**
 
 ```json
 {
@@ -96,4 +101,6 @@
 }
 ```
 
-При получении этой команды сервис корректно завершает свою работу: останавливает консьюмер, закрывает соединение с БД и отправляет финальное событие телеметрии со статусом `interrupted`.
+Upon receiving this command, the service gracefully shuts down:
+it stops the consumer, closes the database connection, and sends a final telemetry event with the status `interrupted`.
+
