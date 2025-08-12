@@ -60,6 +60,31 @@ The application of this approach guarantees high scalability, adaptability to ch
 
 These powerful functionalities make StreamForge an indispensable tool for anyone striving for maximum efficiency in working with cryptocurrency data.
 
+## Container Images
+
+The following Docker images are published to GitHub Container Registry (GHCR):
+
+| Service | Image Name | Latest Tag |
+| :--- | :--- | :---: |
+| `queue-manager` | `ghcr.io/oleh-kondratov/streamforge/queue-manager` | `latest` (or `vX.Y.Z`) |
+| `dummy-service` | `ghcr.io/oleh-kondratov/streamforge/dummy-service` | `latest` (or `vX.Y.Z`) |
+| `arango-connector` | `ghcr.io/oleh-kondratov/streamforge/arango-connector` | `latest` (or `vX.Y.Z`) |
+| `loader-api-candles` | `ghcr.io/oleh-kondratov/streamforge/loader-api-candles` | `latest` (or `vX.Y.Z`) |
+| `loader-api-trades` | `ghcr.io/oleh-kondratov/streamforge/loader-api-trades` | `latest` (or `vX.Y.Z`) |
+| `arango-candles` | `ghcr.io/oleh-kondratov/streamforge/arango-candles` | `latest` (or `vX.Y.Z`) |
+| `arango-graph-prep` | `ghcr.io/oleh-kondratov/streamforge/arango-graph-prep` | `latest` (or `vX.Y.Z`) |
+| `arango-orderbook` | `ghcr.io/oleh-kondratov/streamforge/arango-orderbook` | `latest` (or `vX.Y.Z`) |
+| `arango-trades` | `ghcr.io/oleh-kondratov/streamforge/arango-trades` | `latest` (or `vX.Y.Z`) |
+| `gnn-trainer` | `ghcr.io/oleh-kondratov/streamforge/gnn-trainer` | `latest` (or `vX.Y.Z`) |
+| `graph_build` | `ghcr.io/oleh-kondratov/streamforge/graph_build` | `latest` (or `vX.Y.Z`) |
+| `loader-producer` | `ghcr.io/oleh-kondratov/streamforge/loader-producer` | `latest` (or `vX.Y.Z`) |
+| `loader-ws-candles` | `ghcr.io/oleh-kondratov/streamforge/loader-ws-candles` | `latest` (or `vX.Y.Z`) |
+| `loader-ws-orderbook` | `ghcr.io/oleh-kondratov/streamforge/loader-ws-orderbook` | `latest` (or `vX.Y.Z`) |
+| `loader-ws-trades` | `ghcr.io/oleh-kondratov/streamforge/loader-ws-trades` | `latest` (or `vX.Y.Z`) |
+| `visualizer` | `ghcr.io/oleh-kondratov/streamforge/visualizer` | `latest` (or `vX.Y.Z`) |
+
+---
+
 # StreamForge Table of Contents
 
 ## [Part II: Architecture and Functioning](docs/StreamForge_II_Architecture_and_Functioning.md)
