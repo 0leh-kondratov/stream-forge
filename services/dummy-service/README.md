@@ -1,53 +1,52 @@
+# `dummy-service`: Telemetry & Command Simulation Microservice
 
-# 🧠 `dummy-service`: Telemetry & Command Simulation Microservice
+`dummy-service` is a test microservice in the **StreamForge** ecosystem, designed for:
 
-`dummy-service` — это тестовый микросервис StreamForge, предназначенный для:
-
-* получения команд из Kafka (`queue-control`);
-* отправки событий (`started`, `pong`, `interrupted`, `finished`) в Kafka (`queue-events`);
-* имитации загрузки и ошибок;
-* логирования в формате structured JSON;
-* публикации Prometheus-метрик через HTTP (`/metrics`);
-* запуска в Kubernetes как `Job`, `Pod`, `Deployment` или локально.
-
----
-
-## 🚀 Основные функции
-
-| Функция            | Описание                                                      |
-| ------------------ | ------------------------------------------------------------- |
-| `ping/pong`        | Реакция на `ping` команду, отправка `pong` с меткой времени   |
-| `stop`             | Завершение по команде с публикацией `interrupted` события     |
-| `simulate-loading` | Периодическая отправка `loading` событий в Kafka              |
-| `fail-after N`     | Принудительная отправка `error` и завершение через `N` секунд |
-| `/metrics`         | Экспорт Prometheus-метрик (счётчики событий, статус)          |
-| JSON-логирование   | Структурированные логи, совместимые с Fluent Bit / Loki       |
+* Receiving commands from Kafka (`queue-control`)
+* Sending events (`started`, `pong`, `interrupted`, `finished`) to Kafka (`queue-events`)
+* Simulating loading and errors
+* Logging in structured JSON format
+* Exposing Prometheus metrics via HTTP (`/metrics`)
+* Running in Kubernetes as a `Job`, `Pod`, `Deployment`, or locally
 
 ---
 
-## 🧾 Переменные окружения
+## 1. Main Features
 
-| Переменная                | Назначение                                      |
-| ------------------------- | ----------------------------------------------- |
-| `QUEUE_ID`                | Уникальный ID очереди (например, loader-...)    |
-| `SYMBOL`                  | Тикер, например `BTCUSDT`                       |
-| `TIME_RANGE`              | Диапазон, например `2024-01-01:2024-01-02`      |
-| `TYPE`                    | Тип источника: `api`, `ws`, `dummy`, ...        |
-| `TELEMETRY_PRODUCER_ID`   | Идентификатор сервиса в событиях                |
-| `KAFKA_TOPIC`             | Целевой Kafka-топик                             |
-| `QUEUE_EVENTS_TOPIC`      | Kafka topic для событий (обычно `queue-events`) |
-| `QUEUE_CONTROL_TOPIC`     | Kafka topic для команд (обычно `queue-control`) |
-| `KAFKA_BOOTSTRAP_SERVERS` | Адрес брокера Kafka                             |
-| `KAFKA_USER`              | SCRAM-пользователь                              |
-| `KAFKA_PASSWORD`          | SCRAM-пароль                                    |
-| `KAFKA_CA_PATH`           | Путь к CA-файлу для TLS                         |
-| `ARANGO_*`                | Данные подключения к ArangoDB (опционально)     |
+| Feature            | Description                                                     |
+| ------------------ | --------------------------------------------------------------- |
+| `ping/pong`        | Responds to `ping` command by sending a `pong` with a timestamp |
+| `stop`             | Stops on command, publishing an `interrupted` event             |
+| `simulate-loading` | Periodically sends `loading` events to Kafka                    |
+| `fail-after N`     | Sends `error` and terminates after `N` seconds                  |
+| `/metrics`         | Exports Prometheus metrics (event counters, status)             |
+| JSON logging       | Structured logs compatible with Fluent Bit / Loki               |
 
 ---
 
-## 🏁 Пример запуска (локально)
+## 2. Environment Variables
 
-Для запуска `dummy-service` локально (например, внутри `devcontainer`), сначала перейдите в директорию сервиса, а затем используйте флаг `-m` для запуска как модуля:
+| Variable                  | Description                                        |
+| ------------------------- | -------------------------------------------------- |
+| `QUEUE_ID`                | Unique workflow ID (e.g., `loader-...`)            |
+| `SYMBOL`                  | Symbol, e.g. `BTCUSDT`                             |
+| `TIME_RANGE`              | Range, e.g. `2024-01-01:2024-01-02`                |
+| `TYPE`                    | Source type: `api`, `ws`, `dummy`, etc.            |
+| `TELEMETRY_PRODUCER_ID`   | Service identifier in telemetry events             |
+| `KAFKA_TOPIC`             | Target Kafka topic                                 |
+| `QUEUE_EVENTS_TOPIC`      | Kafka topic for events (usually `queue-events`)    |
+| `QUEUE_CONTROL_TOPIC`     | Kafka topic for commands (usually `queue-control`) |
+| `KAFKA_BOOTSTRAP_SERVERS` | Kafka broker address                               |
+| `KAFKA_USER`              | SCRAM username                                     |
+| `KAFKA_PASSWORD`          | SCRAM password                                     |
+| `KAFKA_CA_PATH`           | Path to CA certificate for TLS                     |
+| `ARANGO_*`                | Optional ArangoDB connection details               |
+
+---
+
+## 3. Example Local Run
+
+To run `dummy-service` locally (e.g., inside a devcontainer), navigate to the service directory and start it as a Python module:
 
 ```bash
 cd /data/projects/stream-forge/services/dummy-service/
@@ -59,49 +58,48 @@ python3.11 -m app.main \
 
 ---
 
-## 🧪 Тестирование через `debug_producer.py`
+## 4. Testing with `debug_producer.py`
 
-`debug_producer.py` — это CLI-инструмент для отправки тестовых команд в Kafka-топик `queue-control` и ожидания ответов из `queue-events`. Он используется для отладки и тестирования микросервисов, взаимодействующих через Kafka.
+`debug_producer.py` is a CLI tool for sending test commands to the `queue-control` Kafka topic and waiting for responses from `queue-events`.
+It is used for debugging and testing microservices that communicate via Kafka.
 
-### Примеры использования:
+### Examples
 
-*   **Тестирование связности Kafka (ping/pong):**
-    Отправьте команду `ping` и ожидайте `pong` для проверки базовой связности и работоспособности целевого микросервиса.
-    ```bash
-    python3.11 debug_producer.py \
-      --queue-id <ваш-queue-id> \
-      --command ping \
-      --expect-pong
-    ```
+**4.1 Kafka Connectivity Test (ping/pong)**
 
-*   **Тестирование команды остановки (stop):**
-    Отправьте сигнал `stop` целевому сервису, который должен корректно завершить свою работу.
-    ```bash
-    python3.11 debug_producer.py \
-      --queue-id <ваш-queue-id> \
-      --command stop
-    ```
+```bash
+python3.11 debug_producer.py \
+  --queue-id <your-queue-id> \
+  --command ping \
+  --expect-pong
+```
 
+**4.2 Stop Command Test**
 
-
----
-
-## 🧩 Поддерживаемые флаги `main.py`
-
-| Флаг                 | Назначение                                                |
-| -------------------- | --------------------------------------------------------- |
-| `--debug`            | Включает DEBUG уровень логов                              |
-| `--noop`             | Только отправка `started`, без запуска Kafka consumer     |
-| `--exit-on-ping`     | Завершает работу после получения `ping` и отправки `pong` |
-| `--exit-after N`     | Завершает через `N` секунд                                |
-| `--simulate-loading` | Каждые 10 секунд отправляет `loading`                     |
-| `--fail-after N`     | Генерирует `error` и завершает работу через `N` секунд    |
+```bash
+python3.11 debug_producer.py \
+  --queue-id <your-queue-id> \
+  --command stop
+```
 
 ---
 
-## 📊 Метрики (`/metrics`)
+## 5. Supported `main.py` Flags
 
-Доступны по порту `8000`, включают:
+| Flag                 | Description                                                 |
+| -------------------- | ----------------------------------------------------------- |
+| `--debug`            | Enables DEBUG log level                                     |
+| `--noop`             | Sends `started` event only, without starting Kafka consumer |
+| `--exit-on-ping`     | Terminates after receiving `ping` and sending `pong`        |
+| `--exit-after N`     | Terminates after `N` seconds                                |
+| `--simulate-loading` | Sends `loading` event every 10 seconds                      |
+| `--fail-after N`     | Sends `error` and terminates after `N` seconds              |
+
+---
+
+## 6. Metrics (`/metrics`)
+
+Exposed on port `8000` and include:
 
 * `dummy_events_total{event="started|pong|interrupted|..."}`
 * `dummy_pings_total`, `dummy_pongs_total`
@@ -109,7 +107,7 @@ python3.11 -m app.main \
 
 ---
 
-## 🐳 Пример `Dockerfile` запуска
+## 7. Example `Dockerfile` Entry Point
 
 ```dockerfile
 CMD ["python3.11", "main.py", "--simulate-loading", "--exit-after", "30"]
@@ -117,24 +115,21 @@ CMD ["python3.11", "main.py", "--simulate-loading", "--exit-after", "30"]
 
 ---
 
-## ☸️ Kubernetes Integration
+## 8. Kubernetes Integration
 
-Рекомендуется запуск как `Job` или `Pod` с:
+Recommended to run as `Job` or `Pod` with:
 
 * `envFrom`: ConfigMap + Secret
-* Volume для CA (`/usr/local/share/ca-certificates/ca.crt`)
-* Подключение к Kafka через TLS + SCRAM
+* Volume mount for CA (`/usr/local/share/ca-certificates/ca.crt`)
+* Kafka connection via TLS + SCRAM
 
 ---
 
-## 📂 Использование в StreamForge
+## 9. Usage in StreamForge
 
-`dummy-service` может использоваться как:
+`dummy-service` can be used as:
 
-* 🔄 эмулятор загрузчика (`loader`)
-* 📡 проверка связности Kafka (`ping/pong`)
-* 🎯 CI/CD тест команд `stop`, `interrupted`
-* 🔍 мониторинг метрик и логов в реальном времени
-
----
-
+* Loader emulator (`loader`)
+* Kafka connectivity test (`ping/pong`)
+* CI/CD command test (`stop`, `interrupted`)
+* Real-time metrics and log monitoring tool

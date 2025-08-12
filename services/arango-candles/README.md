@@ -1,8 +1,8 @@
-# 🔥 arango-candles
+# arango-candles
 
 A consumer microservice in the **StreamForge** ecosystem.
 
-## 🎯 Purpose
+## Purpose
 
 `arango-candles` performs one primary task:
 
@@ -37,7 +37,7 @@ The service is fully configured through environment variables.
 
 ---
 
-## 📥 Input Data (Kafka)
+## Input Data (Kafka)
 
 The service expects to receive JSON messages in the following format from the `KAFKA_TOPIC` topic:
 
@@ -62,7 +62,7 @@ The `_key` field is used for idempotent insertion/updating of data in ArangoDB (
 
 ---
 
-## 📡 Telemetry (Topic: `queue-events`)
+## Telemetry (Topic: `queue-events`)
 
 The service sends events about its status to the `queue-events` topic. This allows the `queue-manager` to track the progress of the task.
 
@@ -86,7 +86,7 @@ The service sends events about its status to the `queue-events` topic. This allo
 
 ---
 
-## 🔄 Management (Topic: `queue-control`)
+## Management (Topic: `queue-control`)
 
 The service listens to the `queue-control` topic and reacts to commands addressed to its `queue_id`.
 
