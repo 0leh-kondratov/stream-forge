@@ -1,37 +1,37 @@
+# `debug_producer.py`: Kafka Command Tester for StreamForge
 
-# 🧪 `debug_producer.py`: Kafka Command Tester for StreamForge
+`debug_producer.py` is a CLI tool for sending test commands (`ping`, `stop`) to the Kafka topic `queue-control`, with the option to wait for a `pong` response from `queue-events`.
 
-`debug_producer.py` — это CLI-инструмент для отправки тестовых команд (`ping`, `stop`) в Kafka-топик `queue-control`, с возможностью ожидания ответа `pong` из `queue-events`.
-
-Используется для отладки микросервисов StreamForge, в первую очередь — `dummy-service`, `loader-producer`, `arango-connector`.
-
----
-
-## ⚙️ Основные возможности
-
-* Отправка команды `ping` с ожиданием `pong`
-* Отправка команды `stop`
-* Повторная отправка `ping` (режим `--repeat`)
-* Подсчёт RTT (время между `ping_ts` и `ponged_at`)
-* JSON-логирование отправленных и полученных событий
+It is used for debugging StreamForge microservices, primarily `dummy-service`, `loader-producer`, and `arango-connector`.
 
 ---
 
-## 📥 Аргументы командной строки
+## 1. Key Features
 
-| Аргумент        | Тип         | Описание                                                             |                                  |
-| --------------- | ----------- | -------------------------------------------------------------------- | -------------------------------- |
-| `--queue-id`    | str (обяз.) | Идентификатор целевой очереди (например: `loader-btcusdt-dummy-...`) |                                  |
-| `--command`     | \`ping      | stop\`                                                               | Команда, которую нужно отправить |
-| `--expect-pong` | флаг        | Ожидать `pong` после `ping`, логировать задержку                     |                                  |
-| `--repeat`      | int         | Повторить команду `N` раз                                            |                                  |
-| `--interval`    | float       | Интервал между повторами (в секундах, по умолчанию `1.0`)            |                                  |
+* Send a `ping` command and wait for a `pong` response.
+* Send a `stop` command.
+* Repeat `ping` commands (`--repeat` mode).
+* Measure RTT (round-trip time) between `ping_ts` and `ponged_at`.
+* Log sent and received events in JSON format.
 
 ---
 
-## 🔧 Требуемые переменные окружения
+## 2. Command-Line Arguments
 
-`debug_producer.py` использует Kafka через SASL + TLS. Настрой как `.env` или `export`:
+| Argument        | Type             | Description                                                |
+| --------------- | ---------------- | ---------------------------------------------------------- |
+| `--queue-id`    | str (req.)       | Target queue identifier (e.g., `loader-btcusdt-dummy-...`) |
+| `--command`     | `ping` or `stop` | Command to send                                            |
+| `--expect-pong` | flag             | Wait for `pong` after `ping` and log delay                 |
+| `--repeat`      | int              | Repeat the command `N` times                               |
+| `--interval`    | float            | Interval between repeats in seconds (default: `1.0`)       |
+
+---
+
+## 3. Required Environment Variables
+
+`debug_producer.py` connects to Kafka using SASL + TLS.
+Set them in `.env` or via `export`:
 
 ```dotenv
 KAFKA_BOOTSTRAP_SERVERS=k3-kafka-bootstrap.kafka:9093
@@ -45,9 +45,9 @@ QUEUE_EVENTS_TOPIC=queue-events
 
 ---
 
-## 🚀 Примеры использования
+## 4. Usage Examples
 
-### ✅ Отправить один `ping` и дождаться `pong`
+### 4.1 Send a single `ping` and wait for `pong`
 
 ```bash
 python3.11 debug_producer.py \
@@ -56,9 +56,7 @@ python3.11 debug_producer.py \
   --expect-pong
 ```
 
----
-
-### ✅ Отправить 5 `ping` с интервалом 2 секунды
+### 4.2 Send 5 `ping` commands with 2-second intervals
 
 ```bash
 python3.11 debug_producer.py \
@@ -69,9 +67,7 @@ python3.11 debug_producer.py \
   --interval 2
 ```
 
----
-
-### ✅ Отправить `stop` и завершить очередь
+### 4.3 Send a `stop` command
 
 ```bash
 python3.11 debug_producer.py \
@@ -81,9 +77,9 @@ python3.11 debug_producer.py \
 
 ---
 
-## 📊 Формат событий в Kafka
+## 5. Kafka Event Format
 
-### 📤 Отправляется:
+### 5.1 Sent (`ping`)
 
 ```json
 {
@@ -93,7 +89,7 @@ python3.11 debug_producer.py \
 }
 ```
 
-### 📥 Ожидается (от `dummy-service`):
+### 5.2 Expected from service (`pong`)
 
 ```json
 {
@@ -106,18 +102,17 @@ python3.11 debug_producer.py \
 
 ---
 
-## 🧠 Дополнительно
+## 6. Additional Notes
 
-* RTT (Round-Trip Time) рассчитывается как `ponged_at - ping_ts`
-* Утилита может использоваться для CI-тестов
-* Встроенный Kafka consumer автоматически отключается после `pong`
-
----
-
-## 📁 Рекомендации
-
-* Использовать внутри кластера Kubernetes как `Job` для диагностики
-* Применять в GitLab CI для проверки доступности Kafka и очередей
-* Подходит для наблюдения за `queue-events` и тестирования `loader`/`connector`
+* RTT is calculated as `ponged_at - ping_ts`.
+* Can be used in CI/CD pipelines for Kafka connectivity tests.
+* Built-in Kafka consumer automatically disconnects after receiving `pong`.
 
 ---
+
+## 7. Recommendations
+
+* Run inside the Kubernetes cluster as a `Job` for diagnostics.
+* Integrate into GitLab CI to verify Kafka and queue availability.
+* Suitable for monitoring `queue-events` and testing loader/connector microservices.
+
