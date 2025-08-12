@@ -61,7 +61,7 @@ spec:
           command: ["/bin/bash", "-c"]
           args:
             - |
-              echo "Запуск GitLab Runner sidecar...";
+              echo "Starting GitLab Runner sidecar...";
               gitlab-runner run \
                 --working-directory /home/gitlab-runner \
                 --config /home/gitlab-runner/config.toml

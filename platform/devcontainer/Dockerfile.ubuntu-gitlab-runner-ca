@@ -2,10 +2,10 @@ FROM registry.dmz.home/lib/k8s/devcontainer/gitlab-runner:ubuntu-bleeding
 
 USER root
 
-# Копируем CA
+# Copy CA
 COPY dev-ca.crt /usr/local/share/ca-certificates/dev-ca.crt
 
-# Обновляем хранилище доверенных сертификатов
+# Update trusted certificate store
 RUN apt-get update && \
     apt-get install -y ca-certificates && \
     update-ca-certificates

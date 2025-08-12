@@ -4,7 +4,7 @@ metadata:
   name: ssh-runner-service-inst1
   namespace: devtools
 spec:
-  clusterIP: None  # 👈 Делает сервис headless
+  clusterIP: None  # 👈 Makes the service headless
   selector:
     app: devcont0
   ports:

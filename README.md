@@ -12,15 +12,6 @@
 | **loader-api-candles** | ![version-loader-api-candles](badges/main/version-loader-api-candles.svg) | ![build-loader-api-candles](badges/main/build-loader-api-candles.svg) | ![test-loader-arango-connector](badges/main/test-loader-arango-connector.svg) | ![badges/main/deploy-api-candles.svg](badges/main/deploy-api-candles.svg) |
 | **loader-api-trades** | ![version-loader-api-trades](badges/main/version-loader-api-trades.svg) | ![build-loader-api-trades](badges/main/build-loader-api-trades.svg) | ![test-loader-api-trades](badges/main/test-loader-api-trades.svg) | ![deploy-api-trades.svg](badges/main/deploy-api-trades.svg) |
 
-## Статус Сервисов
-
-| Сервис             | Статус Сборки                                                                 | Версия                                                                    |
-| :----------------- | :---------------------------------------------------------------------------- | :------------------------------------------------------------------------ |
-| `arango-connector` | ![build-arango-connector](badges/main/build-arango-connector.svg)           | ![version-arango-connector](badges/main/version-arango-connector.svg)   |
-| `queue-manager`    | ![build-queue-manager](badges/main/build-queue-manager.svg)                 | ![version-queue-manager](badges/main/version-queue-manager.svg)         |
-| `loader-api-trades`| ![build-loader-api-trades](badges/main/build-loader-api-trades.svg)         | ![version-loader-api-trades](badges/main/version-loader-api-trades.svg) |
-| `loader-api-candles`| ![build-loader-api-candles](badges/main/build-loader-api-candles.svg)       | ![version-loader-api-candles](badges/main/version-loader-api-candles.svg)|
-| `dummy-service`    | ![build-dummy-service](badges/main/build-dummy-service.svg)                 | ![version-dummy-service](badges/main/version-dummy-service.svg)         |
 
 # StreamForge: A High-Performance, Event-Driven Platform for Real-Time Cryptocurrency Data Analytics
 

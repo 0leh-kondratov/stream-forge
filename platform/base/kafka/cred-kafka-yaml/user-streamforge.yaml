@@ -11,7 +11,7 @@ spec:
   authorization:
     type: simple
     acls:
-      # Чтение и запись ко всем топикам
+      # Read and write to all topics
       - resource:
           type: topic
           name: "*"
@@ -23,14 +23,14 @@ spec:
           patternType: literal
         operation: Write
 
-      # Разрешить создание топиков (если используется auto.create.topics.enable=true)
+      # Allow topic creation (if auto.create.topics.enable=true is used)
       - resource:
           type: topic
           name: "*"
           patternType: literal
         operation: Create
 
-      # Чтение всех consumer group
+      # Read all consumer groups
       - resource:
           type: group
           name: "*"

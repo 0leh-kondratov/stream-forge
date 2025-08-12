@@ -17,7 +17,7 @@ HOME_DIR="/home/$USER_NAME"
 mkdir -p "$HOME_DIR/.ssh"
 chmod 700 "$HOME_DIR/.ssh"
 
-# 🔐 Установка SSH-ключей и конфигурации (из Secret)
+# 🔐 Installing SSH keys and configuration (from Secret)
 if [ -f "/run/secrets/ssh_authorized_keys" ]; then
     echo "📥 Installing SSH public key..."
     cp /run/secrets/ssh_authorized_keys "$HOME_DIR/.ssh/authorized_keys"
@@ -37,11 +37,11 @@ if [ -f "/run/secrets/ssh_private_key" ]; then
     chown "$USER_NAME:$USER_NAME" "$HOME_DIR/.ssh/id_rsa"
 fi
 
-# 🔧 XRDP: создание сессии Openbox
+# 🔧 XRDP: creating Openbox session
 echo "exec openbox-session" > "$HOME_DIR/.xsession"
 chown "$USER_NAME:$USER_NAME" "$HOME_DIR/.xsession"
 
-# 🛡️ Кастомный CA (опционально)
+# 🛡️ Custom CA (optional)
 if [ -f /usr/local/share/dev-ca.crt ]; then
     echo "🔐 Installing custom CA certificate..."
     mkdir -p /usr/local/share/ca-certificates/extra
@@ -49,7 +49,7 @@ if [ -f /usr/local/share/dev-ca.crt ]; then
     update-ca-certificates
 fi
 
-# 🛠️ Обновим настройки SSH
+# 🛠️ Update SSH settings
 function set_sshd_option {
     local key="$1"
     local value="$2"
@@ -65,7 +65,7 @@ set_sshd_option AllowTcpForwarding yes
 set_sshd_option ClientAliveInterval 0
 set_sshd_option ServerAliveInterval 0
 
-# ✅ Запускаем службы
+# ✅ Starting services
 echo "🚀 Starting sshd and xrdp..."
 /etc/init.d/xrdp start
 exec /usr/sbin/sshd -D

@@ -1,47 +1,51 @@
-# 📖 loader-ws-orderbook
+# loader-ws-orderbook
 
-Микросервис в экосистеме **StreamForge**, предназначенный для загрузки данных книги ордеров в реальном времени через WebSocket и публикации их в Kafka.
+A microservice in the **StreamForge** ecosystem designed to load real-time order book data via WebSocket and publish it to Kafka.
 
-## 🎯 Назначение
+## Purpose
 
-`loader-ws-orderbook` выполняет следующие задачи:
+`loader-ws-orderbook` performs the following tasks:
 
-1.  **Подключается** к внешнему WebSocket API (например, Binance).
-2.  **Получает** данные книги ордеров в реальном времени для указанной торговой пары.
-3.  **Публикует** полученные данные в Kafka-топик.
+1. **Connects** to an external WebSocket API (e.g., Binance).
+2. **Receives** real-time order book data for the specified trading pair.
+3. **Publishes** the received data to a Kafka topic.
 
-Этот сервис является stateless-воркером и предназначен для запуска в виде **Kubernetes Job**. Всю необходимую конфигурацию он получает через переменные окружения.
-
-## ⚙️ Переменные окружения
-
-Сервис полностью настраивается через переменные окружения.
-
-| Переменная                 | Описание                                                              | Пример                                           |
-| -------------------------- | --------------------------------------------------------------------- | ------------------------------------------------ |
-| **`QUEUE_ID`**             | Уникальный идентификатор всего workflow.                              | `wf-ws-orderbook-20240801-a1b2c3`                 |
-| **`SYMBOL`**               | Торговая пара для загрузки данных.                                    | `BTCUSDT`                                        |
-| **`TYPE`**                 | Тип данных, который обрабатывается (например, `ws_depth`, `ws_diff_depth`). | `ws_depth`                                       |
-| **`KAFKA_TOPIC`**          | Имя Kafka-топика, куда публиковать данные.                             | `wf-ws-orderbook-20240801-a1b2c3-data`           |
-| **`TELEMETRY_PRODUCER_ID`**| Уникальный ID этого экземпляра для телеметрии.                        | `loader-ws-orderbook__a1b2c3`                    |
-| `KAFKA_BOOTSTRAP_SERVERS`  | Адреса брокеров Kafka.                                                | `kafka-bootstrap.kafka:9093`                     |
-| `KAFKA_USER_PRODUCER`      | Имя пользователя для аутентификации в Kafka (producer).               | `user-producer-tls`                              |
-| `KAFKA_PASSWORD_PRODUCER`  | Пароль для пользователя Kafka (передается через Secret).              | `your_kafka_password`                            |
-| `CA_PATH`                  | Путь к CA-сертификату для TLS-соединения с Kafka.                     | `/certs/ca.crt`                                  |
-| `QUEUE_CONTROL_TOPIC`      | Топик для получения управляющих команд (например, `stop`).            | `queue-control`                                  |
-| `QUEUE_EVENTS_TOPIC`       | Топик для отправки событий телеметрии.                                | `queue-events`                                   |
-| `BINANCE_WS_URL`           | Базовый URL для Binance WebSocket API.                                | `wss://stream.binance.com:9443/ws`               |
+This service is a stateless worker intended to run as a **Kubernetes Job**. All configuration is provided through environment variables.
 
 ---
 
-## 📥 Входные данные (WebSocket)
+## Environment Variables
 
-Сервис подключается к внешнему WebSocket API (например, Binance) для получения данных книги ордеров в реальном времени. Формат данных соответствует стандартному формату WebSocket для книги ордеров.
+The service is fully configured via environment variables.
+
+| Variable                    | Description                                                       | Example                                |
+| --------------------------- | ----------------------------------------------------------------- | -------------------------------------- |
+| **`QUEUE_ID`**              | Unique identifier for the entire workflow.                        | `wf-ws-orderbook-20240801-a1b2c3`      |
+| **`SYMBOL`**                | Trading pair to load data for.                                    | `BTCUSDT`                              |
+| **`TYPE`**                  | Type of data processed (e.g., `ws_depth`, `ws_diff_depth`).       | `ws_depth`                             |
+| **`KAFKA_TOPIC`**           | Name of the Kafka topic to publish data to.                       | `wf-ws-orderbook-20240801-a1b2c3-data` |
+| **`TELEMETRY_PRODUCER_ID`** | Unique ID of this instance for telemetry.                         | `loader-ws-orderbook__a1b2c3`          |
+| `KAFKA_BOOTSTRAP_SERVERS`   | Kafka broker addresses.                                           | `kafka-bootstrap.kafka:9093`           |
+| `KAFKA_USER_PRODUCER`       | Kafka username for producer authentication.                       | `user-producer-tls`                    |
+| `KAFKA_PASSWORD_PRODUCER`   | Kafka password for producer authentication (provided via Secret). | `your_kafka_password`                  |
+| `CA_PATH`                   | Path to the CA certificate for TLS connection to Kafka.           | `/certs/ca.crt`                        |
+| `QUEUE_CONTROL_TOPIC`       | Topic for receiving control commands (e.g., `stop`).              | `queue-control`                        |
+| `QUEUE_EVENTS_TOPIC`        | Topic for sending telemetry events.                               | `queue-events`                         |
+| `BINANCE_WS_URL`            | Base URL for the Binance WebSocket API.                           | `wss://stream.binance.com:9443/ws`     |
 
 ---
 
-## 📤 Выходные данные (Kafka)
+## Input Data (WebSocket)
 
-Сервис публикует полученные данные книги ордеров в топик `KAFKA_TOPIC` в формате JSON. Каждое сообщение представляет собой снимок или дельту книги ордеров.
+The service connects to an external WebSocket API (e.g., Binance) to receive real-time order book data.
+The data format follows the standard WebSocket specification for order book updates.
+
+---
+
+## Output Data (Kafka)
+
+The service publishes the received order book data to the `KAFKA_TOPIC` in JSON format.
+Each message represents either a snapshot or a delta of the order book.
 
 ```json
 {
@@ -63,11 +67,11 @@
 
 ---
 
-## 📡 Телеметрия (Topic: `queue-events`)
+## Telemetry (Topic: `queue-events`)
 
-Сервис отправляет события о своем состоянии в топик `queue-events`. Это позволяет `queue-manager` отслеживать прогресс выполнения задачи.
+The service sends status events to the `queue-events` topic, enabling `queue-manager` to track task progress.
 
-**Пример события `loading`:**
+**Example `loading` event:**
 
 ```json
 {
@@ -75,7 +79,7 @@
   "symbol": "BTCUSDT",
   "type": "ws_depth",
   "status": "loading",
-  "message": "Загружено и опубликовано 15000 записей книги ордеров",
+  "message": "Loaded and published 15000 order book records",
   "records_written": 15000,
   "finished": false,
   "producer": "loader-ws-orderbook__a1b2c3",
@@ -83,15 +87,15 @@
 }
 ```
 
-**Возможные статусы:** `started`, `loading`, `interrupted`, `error`, `finished`.
+**Possible statuses:** `started`, `loading`, `interrupted`, `error`, `finished`.
 
 ---
 
-## 🔄 Управление (Topic: `queue-control`)
+## Control (Topic: `queue-control`)
 
-Сервис слушает топик `queue-control` и реагирует на команды, адресованные его `queue_id`.
+The service listens to the `queue-control` topic and reacts to commands addressed to its `queue_id`.
 
-**Команда `stop`:**
+**Example `stop` command:**
 
 ```json
 {
@@ -100,4 +104,4 @@
 }
 ```
 
-При получении этой команды сервис корректно завершает свою работу.
+Upon receiving this command, the service shuts down gracefully.
