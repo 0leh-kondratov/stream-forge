@@ -1,0 +1,25 @@
+version: 2
+updates:
+  - package-ecosystem: "pip" # See documentation for possible values
+    directory: "/" # Location of package manifests
+    schedule:
+      interval: "weekly"
+    # Allow up to 10 open pull requests for pip dependencies
+    open-pull-requests-limit: 10
+    # Group pip updates into a single pull request
+    groups:
+      pip-dependencies:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # Allow up to 5 open pull requests for Docker dependencies
+    open-pull-requests-limit: 5
+    # Group Docker updates into a single pull request
+    groups:
+      docker-dependencies:
+        patterns:
+          - "*"

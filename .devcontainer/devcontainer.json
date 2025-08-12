@@ -1,0 +1,32 @@
+{
+    "name": "StreamForge Dev Container",
+    "build": {
+        "dockerfile": "platform/devcontainer/Dockerfile",
+        "context": ".."
+    },
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "python.pythonPath": "/usr/bin/python3",
+                "editor.formatOnSave": true,
+                "python.linting.pylintEnabled": true,
+                "python.linting.enabled": true,
+                "python.formatting.provider": "black",
+                "editor.defaultFormatter": "ms-python.python"
+            },
+            "extensions": [
+                "ms-python.python",
+                "ms-azuretools.vscode-docker",
+                "redhat.vscode-yaml",
+                "EditorConfig.EditorConfig",
+                "esbenp.prettier-vscode",
+                "streetsidesoftware.code-spell-checker",
+                "eamodio.gitlens",
+                "GitHub.copilot"
+            ]
+        }
+    },
+    "postCreateCommand": "pip install --user pre-commit && pre-commit install && pip install -r requirements.txt",
+    "remoteUser": "root",
+    "forwardPorts": []
+}

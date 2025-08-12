@@ -1,0 +1,28 @@
+site_name: StreamForge Documentation
+site_url: https://oleh-kondratov.github.io/stream-forge/ # IMPORTANT: Update this to your actual GitHub Pages URL
+repo_url: https://github.com/oleh-kondratov/stream-forge
+repo_name: oleh-kondratov/stream-forge
+
+theme:
+  name: material
+  palette:
+    primary: 'indigo'
+    accent: 'indigo'
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.copy
+
+nav:
+  - Introduction: index.md # You might want to create a docs/index.md file in the docs/ directory
+  - Architecture and Functioning: docs/StreamForge_II_Architecture_and_Functioning.md
+  - Infrastructure and Environment: docs/StreamForge_III_Infrastructure_and_Environment.md
+  - Future Prospects: docs/StreamForge_IV_What_Next_My_Development_Plans.md
+  - Technical Details and Appendices: docs/StreamForge_V_Technical_Details_and_Appendices.md
+
+plugins:
+  - search
