@@ -19,15 +19,15 @@ app.include_router(metrics_router)
 
 
 async def handle_control_messages(telemetry: TelemetryProducer):
-    """Подписка на команды управления (stop) из Kafka."""
+    """Subscribe to control commands (stop) from Kafka."""
     listener = KafkaControlListener(config.QUEUE_ID)
     await listener.start()
     async for command in listener.listen():
         if command.get("command") == "stop":
-            logger.warning(f"🛑 Получена команда STOP: {command}")
+            logger.warning(f"🛑 STOP command received: {command}")
             await telemetry.send_status_update(
                 status="interrupted",
-                message="Остановлено пользователем по команде",
+                message="Stopped by user command",
                 finished=True
             )
             stop_event.set()
@@ -38,30 +38,30 @@ async def handle_control_messages(telemetry: TelemetryProducer):
 async def main():
     telemetry = TelemetryProducer()
     await telemetry.start()
-    logger.info(f"🚀 Старт arango-candles: {config.QUEUE_ID} -> {config.COLLECTION_NAME}")
+    logger.info(f"🚀 Starting arango-candles: {config.QUEUE_ID} -> {config.COLLECTION_NAME}")
     await telemetry.send_status_update(status="started", message="Arango-candles consumer started")
 
     consumer_task = asyncio.create_task(run_consumer(stop_event, telemetry))
     control_task = asyncio.create_task(handle_control_messages(telemetry))
 
-    # Ждем завершения одной из задач
+    # Wait for one of the tasks to complete
     done, pending = await asyncio.wait([consumer_task, control_task], return_when=asyncio.FIRST_COMPLETED)
 
-    # Отменяем оставшиеся задачи
+    # Cancel the remaining tasks
     for task in pending:
         try:
             task.cancel()
             await task
         except asyncio.CancelledError:
-            pass # Ожидаемое исключение
+            pass # Expected exception
 
-    # Финальная телеметрия отправляется из consumer.py
+    # Final telemetry is sent from consumer.py
 
-    logger.info("✅ Завершение работы arango-candles.")
+    logger.info("✅ Shutting down arango-candles.")
     await close_telemetry(telemetry)
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except Exception as e:
-        logger.exception(f"❌ Фатальная ошибка в arango-candles: {e}")
+        logger.exception(f"❌ Fatal error in arango-candles: {e}")

@@ -1,6 +1,7 @@
 import asyncio
 import json
 import ssl
+import time
 from aiokafka import AIOKafkaConsumer
 from arango import ArangoClient
 from loguru import logger

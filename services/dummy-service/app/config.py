@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS")
-KAFKA_USER = os.getenv("KAFKA_USER")  # 👈 вот это должно быть
+KAFKA_USER = os.getenv("KAFKA_USER")
 KAFKA_PASSWORD = os.getenv("KAFKA_PASSWORD")
 CA_PATH = os.getenv("CA_PATH")
 
