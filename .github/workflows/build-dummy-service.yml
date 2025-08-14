@@ -11,7 +11,8 @@ jobs:
   build:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
-
+    container:
+      image: ${{ vars.BASE_IMAGE }}
     permissions:
       contents: read
       packages: write
