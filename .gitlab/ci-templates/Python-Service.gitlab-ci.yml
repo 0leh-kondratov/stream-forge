@@ -2,6 +2,9 @@
   stage: build
   image: ${KANIKO_IMAGE}
   script:
+    - echo "BASE_IMAGE = $BASE_IMAGE"
+    - echo "SERVICE_NAME = $SERVICE_NAME"
+    - echo "SERVICE_PATH = $SERVICE_PATH"
     - SERVICE_VERSION=$(cat $CI_PROJECT_DIR/$SERVICE_PATH/VERSION)
     - mkdir -p /kaniko/.docker
     - echo '{"auths":{"$CI_REGISTRY":{"username":"$CI_REGISTRY_USER","password":"$CI_REGISTRY_PASSWORD"}}}' > /kaniko/.docker/config.json
