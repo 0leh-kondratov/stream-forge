@@ -1,4 +1,4 @@
-name: dummy-service — test & build
+name: dummy-service — test & build (manual ready)
 
 on:
   push:
@@ -11,27 +11,37 @@ on:
     paths:
       - "services/dummy-service/**"
       - ".github/workflows/dummy-service-ci.yml"
+  # Manual trigger from GitHub UI / CLI / API
+  workflow_dispatch:
+    inputs:
+      run_tests_only:
+        description: "Skip build and only run tests?"
+        required: false
+        type: boolean
+        default: false
+      extra_tag:
+        description: "Optional tag to push in addition to VERSION/branch/sha (e.g. 'rc' or 'staging')"
+        required: false
+        type: string
+        default: ""
 
-# Use the minimum required permissions and enable packages read/write for GHCR.
 permissions:
-  contents: read         # required for checkout
-  packages: write        # read for pulling base; write for pushing built image
+  contents: read   # checkout
+  packages: write  # read base image & push built image to GHCR
 
 env:
-  # Image coordinates in GHCR; change if you want a different repo/name
   IMAGE_REGISTRY: ghcr.io
   IMAGE_NAME: 0leh-kondratov/dummy-service
-  # Base working dir for the service
   SERVICE_DIR: services/dummy-service
 
 jobs:
   tests:
     name: Unit tests (in BASE_IMAGE)
     runs-on: ubuntu-latest
-    # Run the job steps inside your custom base image
+    # Run all steps inside your private base image (GHCR)
     container:
       image: ghcr.io/0leh-kondratov/stream-forge-base:v0.1.3
-      # Authenticate to pull a private container image from GHCR
+      # GHCR auth using the automatic GITHUB_TOKEN
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -44,11 +54,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Print Python version
-        run: python --version
+      - name: Show runtime
+        run: |
+          echo "Runner: $RUNNER_OS"
+          python --version
+          pip --version
+          docker version || true
 
       - name: Cache pip
-        # Cache keyed by OS + hash of requirements* files inside the service dir
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
@@ -56,7 +69,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Install deps for tests
+      - name: Install test deps
         run: |
           pip install -r requirements.txt
           pip install pytest pytest-asyncio httpx
@@ -65,18 +78,18 @@ jobs:
         run: pytest -q tests
 
   build:
-    name: Build & Push image (to GHCR)
+    name: Build & Push image (GHCR)
     needs: tests
     runs-on: ubuntu-latest
+    # If manual run asked "tests only", skip this job.
+    if: ${{ !fromJson(github.event.inputs.run_tests_only || 'false') }}
 
-    # Build on the host runner (not inside BASE_IMAGE); Buildx handles the rest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Read version
+      - name: Read VERSION
         id: ver
-        # Read VERSION file from the service directory
         run: |
           echo "version=$(cat ${SERVICE_DIR}/VERSION)" >> $GITHUB_OUTPUT
 
@@ -87,7 +100,6 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Login to GHCR
-        # Use GITHUB_TOKEN for GHCR auth (needs packages: write)
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.IMAGE_REGISTRY }} -u ${{ github.actor }} --password-stdin
 
       - name: Docker metadata (tags & labels)
@@ -96,10 +108,16 @@ jobs:
         with:
           images: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
+            # version from file
             type=raw,value=${{ steps.ver.outputs.version }}
+            # git branch tag (e.g., main)
             type=ref,event=branch
+            # short sha tag
             type=sha,prefix=sha-,format=short
+            # latest only on main
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            # optional extra tag from manual input
+            type=raw,value=${{ github.event.inputs.extra_tag }},enable=${{ github.event.inputs.extra_tag != '' }}
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
@@ -114,9 +132,10 @@ jobs:
           platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # Optional: enable inline cache
           cache-from: type=registry,ref=${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
 
-      - name: Print image digest
-        run: echo "Digest ${{ steps.meta.outputs.tags }} -> ${{ steps.meta.outputs.labels }}"
+      - name: Summary
+        run: |
+          echo "Pushed tags:"
+          echo "${{ steps.meta.outputs.tags }}"
