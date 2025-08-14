@@ -1,0 +1,35 @@
+name: Build & Publish Base Image
+
+on:
+  push:
+    paths:
+      - 'platform/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build_base:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Read version for base
+        id: version
+        run: echo "VERSION=$(cat platform/VERSION)" >> $GITHUB_ENV
+
+      - name: Build and push base image
+        uses: docker/build-push-action@v6
+        with:
+          context: platform
+          file: platform/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/stream-forge-base:${{ env.VERSION }}
+            ghcr.io/${{ github.repository_owner }}/stream-forge-base:latest
+          build-args: |
+            BASE_IMAGE=python:3.11-slim
