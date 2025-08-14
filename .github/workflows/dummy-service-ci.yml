@@ -1,270 +1,135 @@
-name: dummy-service — test & build (dynamic badges, svg + json)
+- name: Fetch artifacts (if jobs on different runners)
+  # Если tests/build и badges в одном workflow и не сохраняют артефакты через upload/download,
+  # этот шаг не нужен. Иначе — добавь upload в tests и download здесь.
 
-on:
-  push:
-    branches: [ main ]
-    paths:
-      - "services/dummy-service/**"
-      - ".github/workflows/dummy-service-ci.yml"
-      - "README.md"
-  pull_request:
-    branches: [ main ]
-    paths:
-      - "services/dummy-service/**"
-      - ".github/workflows/dummy-service-ci.yml"
-  workflow_dispatch:
-    inputs:
-      run_tests_only:
-        description: "Skip build and only run tests?"
-        required: false
-        type: boolean
-        default: false
-      extra_tag:
-        description: "Optional tag to push in addition to VERSION/branch/sha (e.g. 'rc' or 'staging')"
-        required: false
-        type: string
-        default: ""
+- name: Install jq + xmlstarlet + curl
+  run: |
+    sudo apt-get update -y
+    sudo apt-get install -y jq xmlstarlet curl
 
-permissions:
-  contents: write    # commit badges (json/svg)
-  packages: write    # pull base image, push build to GHCR
+- name: Parse pytest JSON (counts, duration)
+  id: q
+  run: |
+    set -euo pipefail
+    # Extract counts from pytest-json-report
+    TOTAL=$(jq '.summary.total' pytest-report.json)
+    PASSED=$(jq '.summary.passed' pytest-report.json)
+    FAILED=$(jq '.summary.failed' pytest-report.json)
+    SKIPPED=$(jq '.summary.skipped' pytest-report.json // 0)
+    XFAILED=$(jq '.summary.xfailed' pytest-report.json // 0)
+    XPASSED=$(jq '.summary.xpassed' pytest-report.json // 0)
+    ERROR=$(jq '.summary.errors' pytest-report.json // 0)
 
-env:
-  IMAGE_REGISTRY: ghcr.io
-  IMAGE_NAME: 0leh-kondratov/dummy-service
-  SERVICE_DIR: services/dummy-service
+    DURATION=$(jq -r '.duration' pytest-report.json)
+    # Pass rate in %
+    if [ "$TOTAL" -gt 0 ]; then
+      PASS_RATE=$(python - <<'PY'
+import os
+total=int(os.environ["TOTAL"]); passed=int(os.environ["PASSED"])
+print(round(100.0*passed/total,2))
+PY
+)
+    else
+      PASS_RATE=0
+    fi
 
-jobs:
-  tests:
-    name: Unit tests (in BASE_IMAGE)
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/0leh-kondratov/stream-forge-base:v0.1.3
-      # Use GHCR_TOKEN provided as a repository/organization secret
-      credentials:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GHCR_TOKEN }}
+    echo "total=$TOTAL" >> $GITHUB_OUTPUT
+    echo "passed=$PASSED" >> $GITHUB_OUTPUT
+    echo "failed=$FAILED" >> $GITHUB_OUTPUT
+    echo "skipped=$SKIPPED" >> $GITHUB_OUTPUT
+    echo "xfailed=$XFAILED" >> $GITHUB_OUTPUT
+    echo "xpassed=$XPASSED" >> $GITHUB_OUTPUT
+    echo "errors=$ERROR" >> $GITHUB_OUTPUT
+    echo "duration=$DURATION" >> $GITHUB_OUTPUT
+    echo "pass_rate=$PASS_RATE" >> $GITHUB_OUTPUT
 
-    defaults:
-      run:
-        working-directory: ${{ env.SERVICE_DIR }}
+- name: Parse coverage.xml (line-rate)
+  id: cov
+  run: |
+    set -euo pipefail
+    # coverage.xml from pytest-cov (Cobertura-like)
+    # Try Cobertura format: <coverage line-rate="0.87" ...>
+    LINE_RATE=$(xmlstarlet sel -t -v "/coverage/@line-rate" coverage.xml 2>/dev/null || true)
+    if [ -z "$LINE_RATE" ]; then LINE_RATE=0; fi
+    COV_PCT=$(python - <<'PY'
+import os
+lr=os.environ.get("LINE_RATE","0")
+try: print(round(float(lr)*100,2))
+except: print(0)
+PY
+)
+    echo "coverage_pct=$COV_PCT" >> $GITHUB_OUTPUT
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+- name: Make badges dir
+  run: mkdir -p badges/github
 
-      - name: Show runtime
-        run: |
-          echo "Runner: $RUNNER_OS"
-          python --version
-          pip --version
-          docker version || true
-
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles(format('{0}/requirements*.txt', env.SERVICE_DIR)) }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Install test deps
-        run: |
-          pip install -r requirements.txt
-          pip install pytest pytest-asyncio httpx
-
-      - name: Run pytest
-        run: pytest -q tests
-
-  build:
-    name: Build & Push image (GHCR)
-    needs: tests
-    runs-on: ubuntu-latest
-    if: ${{ !fromJson(github.event.inputs.run_tests_only || 'false') }}
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Read VERSION
-        id: ver
-        run: |
-          echo "version=$(cat ${SERVICE_DIR}/VERSION)" >> $GITHUB_OUTPUT
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to GHCR (push)
-        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ${{ env.IMAGE_REGISTRY }} -u ${{ github.actor }} --password-stdin
-
-      - name: Docker metadata (tags & labels)
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=${{ steps.ver.outputs.version }}
-            type=ref,event=branch
-            type=sha,prefix=sha-,format=short
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=raw,value=${{ github.event.inputs.extra_tag }},enable=${{ github.event.inputs.extra_tag != '' }}
-          labels: |
-            org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.version=${{ steps.ver.outputs.version }}
-
-      - name: Build & Push (dummy-service)
-        uses: docker/build-push-action@v6
-        with:
-          context: ${{ env.SERVICE_DIR }}
-          file: ${{ env.SERVICE_DIR }}/Dockerfile
-          push: true
-          platforms: linux/amd64
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
-          cache-to: type=registry,ref=${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
-
-      # --- Dynamic badges (JSON + SVG) ---
-      - name: Install tooling (jq + skopeo + curl)
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y jq skopeo curl
-
-      - name: Compute digests & sizes for :latest and :VERSION
-        id: info
-        run: |
-          set -euo pipefail
-
-          IMG="${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}"
-          VER="${{ steps.ver.outputs.version }}"
-          BRANCH="${GITHUB_REF_NAME}"
-
-          # Compute digest for :VERSION using raw manifest hash
-          DIGEST_VERSION=$(skopeo inspect --raw "docker://${IMG}:${VER}" | sha256sum | awk '{print "sha256:"$1}')
-          DIGEST_LATEST=""
-          # Only compute latest on main
-          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            DIGEST_LATEST=$(skopeo inspect --raw "docker://${IMG}:latest" | sha256sum | awk '{print "sha256:"$1}')
-          fi
-
-          # Sizes (sum of layer sizes) for version and latest (if exists)
-          SIZE_VERSION=$(skopeo inspect --raw "docker://${IMG}@${DIGEST_VERSION}" | jq -r '
-            if .layers then
-              [ .layers[].size ] | add
-            else
-              ( try (.manifests | map(.size) | add) // 0 )
-            end
-          ')
-          SIZE_LATEST="0"
-          if [ -n "$DIGEST_LATEST" ]; then
-            SIZE_LATEST=$(skopeo inspect --raw "docker://${IMG}@${DIGEST_LATEST}" | jq -r '
-              if .layers then
-                [ .layers[].size ] | add
-              else
-                ( try (.manifests | map(.size) | add) // 0 )
-              end
-            ')
-          fi
-
-          # Short digests for nice look
-          SHORT_VER=$(echo "$DIGEST_VERSION" | sed 's/^sha256://; s/^\(........\).*/\1/')
-          SHORT_LATEST=""
-          if [ -n "$DIGEST_LATEST" ]; then
-            SHORT_LATEST=$(echo "$DIGEST_LATEST" | sed 's/^sha256://; s/^\(........\).*/\1/')
-          fi
-
-          # Human readable sizes
-          hr () {
-            num=$1
-            if [ "$num" = "0" ] || [ -z "$num" ]; then
-              echo "n/a"
-              return
-            fi
-            awk -v bytes="$num" 'function human(x){ s="B KB MB GB TB PB"; while (x>=1024 && length(s)>1){x/=1024; s=substr(s, index(s," ")+1)} return sprintf("%.1f %s", x, substr(s,1,index(s," ")-1)) } BEGIN{ print human(bytes) }'
-          }
-          HR_SIZE_VERSION=$(hr "$SIZE_VERSION")
-          HR_SIZE_LATEST=$(hr "$SIZE_LATEST")
-
-          NOW=$(date -u +"%Y-%m-%d %H:%M UTC")
-
-          mkdir -p badges badges/github
-
-          # --- JSON badges (for Shields endpoint) ---
-          cat > badges/dummy-version.json <<EOF
-          { "schemaVersion": 1, "label": "version", "message": "${VER}", "color": "informational" }
-          EOF
-
-          cat > badges/dummy-digest-version.json <<EOF
-          { "schemaVersion": 1, "label": "digest (ver)", "message": "${SHORT_VER}", "color": "blue" }
-          EOF
-
-          cat > badges/dummy-size-version.json <<EOF
-          { "schemaVersion": 1, "label": "image size (ver)", "message": "${HR_SIZE_VERSION}", "color": "green" }
-          EOF
-
-          cat > badges/dummy-updated.json <<EOF
-          { "schemaVersion": 1, "label": "updated", "message": "${NOW}", "color": "success" }
-          EOF
-
-          if [ -n "${DIGEST_LATEST}" ]; then
-          cat > badges/dummy-digest-latest.json <<EOF
-          { "schemaVersion": 1, "label": "digest (latest)", "message": "${SHORT_LATEST}", "color": "blue" }
-          EOF
-
-          cat > badges/dummy-size-latest.json <<EOF
-          { "schemaVersion": 1, "label": "image size (latest)", "message": "${HR_SIZE_LATEST}", "color": "green" }
-          EOF
-          fi
-
-          # --- SVG badges (saved into repo) ---
-          urlenc () {
-            # simple URL-encoder for spaces and some symbols used here
-            python - <<'PY'
+- name: Render SVG badges (quality)
+  run: |
+    urlenc () { python - <<'PY'
 import sys, urllib.parse
 print(urllib.parse.quote(sys.argv[1]))
 PY
-          }
+    }
 
-          VLAB=$(urlenc "version")
-          VMSG=$(urlenc "${VER}")
-          curl -sL "https://img.shields.io/badge/${VLAB}-${VMSG}-informational.svg" -o badges/github/dummy-version.svg
+    # Coverage badge
+    CLAB=$(urlenc "coverage")
+    CMSG=$(urlenc "${{ steps.cov.outputs.coverage_pct }}%")
+    CCOL="yellow"
+    # color bands for coverage
+    python - <<'PY'
+import os
+cov=float(os.environ.get("COV",0))
+# pick a color band
+if cov >= 90: col="brightgreen"
+elif cov >= 80: col="green"
+elif cov >= 70: col="yellowgreen"
+elif cov >= 60: col="yellow"
+elif cov >= 50: col="orange"
+else: col="red"
+print(col)
+PY
+    > /tmp/cov_color.txt
+    CCOL=$(cat /tmp/cov_color.txt)
+    curl -sL "https://img.shields.io/badge/${CLAB}-${CMSG}-${CCOL}.svg" -o badges/github/tests-coverage.svg
 
-          DVER_LAB=$(urlenc "digest (ver)")
-          DVER_MSG=$(urlenc "${SHORT_VER}")
-          curl -sL "https://img.shields.io/badge/${DVER_LAB}-${DVER_MSG}-blue.svg" -o badges/github/dummy-digest-version.svg
+    # Pass rate badge
+    PLAB=$(urlenc "pass rate")
+    PMSG=$(urlenc "${{ steps.q.outputs.pass_rate }}%")
+    # color similar to coverage
+    python - <<'PY'
+import os
+pr=float(os.environ.get("PR",0))
+if pr >= 99: col="brightgreen"
+elif pr >= 95: col="green"
+elif pr >= 85: col="yellowgreen"
+elif pr >= 70: col="yellow"
+elif pr >= 50: col="orange"
+else: col="red"
+print(col)
+PY
+    > /tmp/pr_color.txt
+    PR="${{ steps.q.outputs.pass_rate }}"
+    PRCOL=$(cat /tmp/pr_color.txt)
+    curl -sL "https://img.shields.io/badge/${PLAB}-${PMSG}-${PRCOL}.svg" -o badges/github/tests-passrate.svg
 
-          SVER_LAB=$(urlenc "image size (ver)")
-          SVER_MSG=$(urlenc "${HR_SIZE_VERSION}")
-          curl -sL "https://img.shields.io/badge/${SVER_LAB}-${SVER_MSG}-green.svg" -o badges/github/dummy-size-version.svg
+    # Totals badge
+    TLAB=$(urlenc "tests")
+    TMSG=$(urlenc "total:${{ steps.q.outputs.total }} passed:${{ steps.q.outputs.passed }} failed:${{ steps.q.outputs.failed }}")
+    curl -sL "https://img.shields.io/badge/${TLAB}-${TMSG}-informational.svg" -o badges/github/tests-totals.svg
 
-          UPD_LAB=$(urlenc "updated")
-          UPD_MSG=$(urlenc "${NOW}")
-          curl -sL "https://img.shields.io/badge/${UPD_LAB}-${UPD_MSG}-success.svg" -o badges/github/dummy-updated.svg
+    # Duration badge
+    DLAB=$(urlenc "duration")
+    DMSG=$(urlenc "${{ steps.q.outputs.duration }}s")
+    curl -sL "https://img.shields.io/badge/${DLAB}-${DMSG}-blue.svg" -o badges/github/tests-duration.svg
 
-          if [ -n "${SHORT_LATEST}" ]; then
-            DLT_LAB=$(urlenc "digest (latest)")
-            DLT_MSG=$(urlenc "${SHORT_LATEST}")
-            curl -sL "https://img.shields.io/badge/${DLT_LAB}-${DLT_MSG}-blue.svg" -o badges/github/dummy-digest-latest.svg
-
-            SLT_LAB=$(urlenc "image size (latest)")
-            SLT_MSG=$(urlenc "${HR_SIZE_LATEST}")
-            curl -sL "https://img.shields.io/badge/${SLT_LAB}-${SLT_MSG}-green.svg" -o badges/github/dummy-size-latest.svg
-          fi
-
-          echo "ver_digest=${DIGEST_VERSION}" >> $GITHUB_OUTPUT
-          if [ -n "${DIGEST_LATEST}" ]; then
-            echo "latest_digest=${DIGEST_LATEST}" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Commit badges (json + svg) to repo (main only)
-        if: github.ref == 'refs/heads/main'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add badges/*.json badges/github/*.svg
-          git commit -m "chore: update dynamic badges (json+svg) for dummy-service ${{ steps.ver.outputs.version }}" || echo "No changes"
-          git push
+- name: Commit quality badges
+  if: github.ref == 'refs/heads/main'
+  run: |
+    git config user.name "github-actions[bot]"
+    git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+    git add badges/github/tests-coverage.svg \
+            badges/github/tests-passrate.svg \
+            badges/github/tests-totals.svg \
+            badges/github/tests-duration.svg
+    git commit -m "chore: update test-quality badges (cov/pass-rate/totals/duration)" || echo "No changes"
+    git push
