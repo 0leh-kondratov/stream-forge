@@ -1,10 +1,16 @@
-# Base image defined externally, e.g., in GitHub Actions or GitLab
-ARG BASE_IMAGE=ghcr.io/0leh-kondratov/stream-forge-base:latest
+#  Must be the first line if we use it in FROM
+ARG BASE_IMAGE
+
 FROM ${BASE_IMAGE}
 
+# Optionally redeclare if you use BASE_IMAGE later
+ARG BASE_IMAGE
+
 WORKDIR /app
-COPY . .
 
-RUN pip install --no-cache-dir -r requirements.txt
+COPY services/dummy-service/requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
+COPY services/dummy-service .
 CMD ["python", "main.py"]
