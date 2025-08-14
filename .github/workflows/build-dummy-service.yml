@@ -41,10 +41,10 @@ jobs:
     # Run all steps inside your private base image (GHCR)
     container:
       image: ghcr.io/0leh-kondratov/stream-forge-base:v0.1.3
-      # GHCR auth using the automatic GITHUB_TOKEN
+      # GHCR auth using the automatic GHCR_TOKEN
       credentials:
         username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        password: ${{ secrets.GHCR_TOKEN }}
 
     defaults:
       run:
@@ -100,7 +100,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Login to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.IMAGE_REGISTRY }} -u ${{ github.actor }} --password-stdin
+        run: echo "${{ secrets.GHCR_TOKEN }}" | docker login ${{ env.IMAGE_REGISTRY }} -u ${{ github.actor }} --password-stdin
 
       - name: Docker metadata (tags & labels)
         id: meta
