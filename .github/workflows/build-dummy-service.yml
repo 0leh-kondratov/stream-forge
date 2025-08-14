@@ -13,6 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ${{ vars.BASE_IMAGE }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GHCR_TOKEN }}
+
     permissions:
       contents: read
       packages: write
