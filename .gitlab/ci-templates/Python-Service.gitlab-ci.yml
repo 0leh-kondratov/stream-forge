@@ -8,7 +8,7 @@
     - SERVICE_VERSION=$(cat $CI_PROJECT_DIR/$SERVICE_PATH/VERSION)
     - mkdir -p /kaniko/.docker
     - echo '{"auths":{"$CI_REGISTRY":{"username":"$CI_REGISTRY_USER","password":"$CI_REGISTRY_PASSWORD"}}}' > /kaniko/.docker/config.json
-    - /kaniko/executor       --context $CI_PROJECT_DIR/$SERVICE_PATH       --dockerfile Dockerfile       --destination $CI_REGISTRY_IMAGE:$SERVICE_VERSION       --destination $CI_REGISTRY_IMAGE:latest       --cache=true       --cache-repo "$CI_REGISTRY_IMAGE/cache"
+    - /kaniko/executor --context $CI_PROJECT_DIR/$SERVICE_PATH --dockerfile Dockerfile --destination $CI_REGISTRY_IMAGE:$SERVICE_VERSION --build-arg BASE_IMAGE=$BASE_IMAGE --destination $CI_REGISTRY_IMAGE:latest --cache=true --cache-repo "$CI_REGISTRY_IMAGE/cache"
     - echo "success" > build_status.txt # Write success status
   after_script: # Add after_script to handle failure
     - if [ "$CI_JOB_STATUS" == "failed" ]; then echo "failure" > build_status.txt; fi
