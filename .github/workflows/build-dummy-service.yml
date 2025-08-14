@@ -1,0 +1,39 @@
+name: Build & Publish Dummy Service Image
+
+on:
+  push:
+    paths:
+      - 'services/dummy-service/**'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Read version from file
+        id: version
+        run: echo "VERSION=$(cat services/dummy-service/VERSION)" >> $GITHUB_ENV
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: services/dummy-service
+          file: services/dummy-service/Dockerfile
+          push: true
+          tags:
+            - ghcr.io/${{ github.repository_owner }}/stream-forge-dummy-service:${{ env.VERSION }}
+            - ghcr.io/${{ github.repository_owner }}/stream-forge-dummy-service:latest
