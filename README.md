@@ -64,24 +64,11 @@ These powerful functionalities make StreamForge an indispensable tool for anyone
 
 The following Docker images are published to GitHub Container Registry (GHCR):
 
-| Service | Image Name | Latest Tag |
-| :--- | :--- | :---: |
-| `queue-manager` | `ghcr.io/oleh-kondratov/streamforge/queue-manager` | `latest` (or `vX.Y.Z`) |
-| `dummy-service` | `ghcr.io/oleh-kondratov/streamforge/dummy-service` | `latest` (or `vX.Y.Z`) |
-| `arango-connector` | `ghcr.io/oleh-kondratov/streamforge/arango-connector` | `latest` (or `vX.Y.Z`) |
-| `loader-api-candles` | `ghcr.io/oleh-kondratov/streamforge/loader-api-candles` | `latest` (or `vX.Y.Z`) |
-| `loader-api-trades` | `ghcr.io/oleh-kondratov/streamforge/loader-api-trades` | `latest` (or `vX.Y.Z`) |
-| `arango-candles` | `ghcr.io/oleh-kondratov/streamforge/arango-candles` | `latest` (or `vX.Y.Z`) |
-| `arango-graph-prep` | `ghcr.io/oleh-kondratov/streamforge/arango-graph-prep` | `latest` (or `vX.Y.Z`) |
-| `arango-orderbook` | `ghcr.io/oleh-kondratov/streamforge/arango-orderbook` | `latest` (or `vX.Y.Z`) |
-| `arango-trades` | `ghcr.io/oleh-kondratov/streamforge/arango-trades` | `latest` (or `vX.Y.Z`) |
-| `gnn-trainer` | `ghcr.io/oleh-kondratov/streamforge/gnn-trainer` | `latest` (or `vX.Y.Z`) |
-| `graph_build` | `ghcr.io/oleh-kondratov/streamforge/graph_build` | `latest` (or `vX.Y.Z`) |
-| `loader-producer` | `ghcr.io/oleh-kondratov/streamforge/loader-producer` | `latest` (or `vX.Y.Z`) |
-| `loader-ws-candles` | `ghcr.io/oleh-kondratov/streamforge/loader-ws-candles` | `latest` (or `vX.Y.Z`) |
-| `loader-ws-orderbook` | `ghcr.io/oleh-kondratov/streamforge/loader-ws-orderbook` | `latest` (or `vX.Y.Z`) |
-| `loader-ws-trades` | `ghcr.io/oleh-kondratov/streamforge/loader-ws-trades` | `latest` (or `vX.Y.Z`) |
-| `visualizer` | `ghcr.io/oleh-kondratov/streamforge/visualizer` | `latest` (or `vX.Y.Z`) |
+| Service           | Status                                                                                                                                               | Image                                                                                         | Pull command                                                                                  |
+|-------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
+| dummy-service     | [![CI](https://github.com/0leh-kondratov/stream-forge/actions/workflows/dummy-service-ci.yml/badge.svg)](https://github.com/0leh-kondratov/stream-forge/actions/workflows/dummy-service-ci.yml) | `ghcr.io/0leh-kondratov/dummy-service:latest`                                                 | `docker pull ghcr.io/0leh-kondratov/dummy-service:latest`                                     |
+| streamforge-base  | ![Image size](https://img.shields.io/docker/image-size/0leh-kondratov/stream-forge-base/latest?label=size) ![Pulls](https://img.shields.io/docker/pulls/0leh-kondratov/stream-forge-base) | `ghcr.io/0leh-kondratov/stream-forge-base:v0.1.3`                                             | `docker pull ghcr.io/0leh-kondratov/stream-forge-base:v0.1.3`                                 |
+
 
 ---
 
