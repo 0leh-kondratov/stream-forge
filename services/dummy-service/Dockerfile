@@ -8,7 +8,7 @@ ARG BASE_IMAGE
 
 WORKDIR /app
 
-COPY services/dummy-service/requirements.txt .
+COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
