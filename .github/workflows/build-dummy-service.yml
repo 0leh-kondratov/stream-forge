@@ -1,55 +1,122 @@
-name: Build Dummy Service
+name: dummy-service — test & build
 
 on:
   push:
+    branches: [ main ]
     paths:
-      - 'services/dummy-service/**'
-      - '.github/workflows/build-dummy-service.yml'
-  workflow_dispatch:
+      - "services/dummy-service/**"
+      - ".github/workflows/dummy-service-ci.yml"
+  pull_request:
+    branches: [ main ]
+    paths:
+      - "services/dummy-service/**"
+      - ".github/workflows/dummy-service-ci.yml"
+
+# Use the minimum required permissions and enable packages read/write for GHCR.
+permissions:
+  contents: read         # required for checkout
+  packages: write        # read for pulling base; write for pushing built image
+
+env:
+  # Image coordinates in GHCR; change if you want a different repo/name
+  IMAGE_REGISTRY: ghcr.io
+  IMAGE_NAME: 0leh-kondratov/dummy-service
+  # Base working dir for the service
+  SERVICE_DIR: services/dummy-service
 
 jobs:
-  build:
-    name: Build and Push Docker Image
+  tests:
+    name: Unit tests (in BASE_IMAGE)
     runs-on: ubuntu-latest
+    # Run the job steps inside your custom base image
     container:
-      image: ${{ vars.BASE_IMAGE }}
+      image: ghcr.io/0leh-kondratov/stream-forge-base:v0.1.3
+      # Authenticate to pull a private container image from GHCR
       credentials:
         username: ${{ github.actor }}
-        password: ${{ secrets.GHCR_TOKEN }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
-    permissions:
-      contents: read
-      packages: write
-
-    env:
-      BASE_IMAGE: ${{ vars.BASE_IMAGE }}
+    defaults:
+      run:
+        working-directory: ${{ env.SERVICE_DIR }}
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Read version from file
-        id: get_version
-        run: echo "version=$(cat services/dummy-service/VERSION)" >> $GITHUB_OUTPUT
+      - name: Print Python version
+        run: python --version
 
-      - name: Set up Docker Buildx
+      - name: Cache pip
+        # Cache keyed by OS + hash of requirements* files inside the service dir
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles(format('{0}/requirements*.txt', env.SERVICE_DIR)) }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install deps for tests
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio httpx
+
+      - name: Run pytest
+        run: pytest -q tests
+
+  build:
+    name: Build & Push image (to GHCR)
+    needs: tests
+    runs-on: ubuntu-latest
+
+    # Build on the host runner (not inside BASE_IMAGE); Buildx handles the rest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read version
+        id: ver
+        # Read VERSION file from the service directory
+        run: |
+          echo "version=$(cat ${SERVICE_DIR}/VERSION)" >> $GITHUB_OUTPUT
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_TOKEN }}
+      - name: Login to GHCR
+        # Use GITHUB_TOKEN for GHCR auth (needs packages: write)
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.IMAGE_REGISTRY }} -u ${{ github.actor }} --password-stdin
 
-      - name: Build and push Docker image
+      - name: Docker metadata (tags & labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ steps.ver.outputs.version }}
+            type=ref,event=branch
+            type=sha,prefix=sha-,format=short
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.ver.outputs.version }}
+
+      - name: Build & Push (dummy-service)
         uses: docker/build-push-action@v6
         with:
-          context: services/dummy-service
-          file: services/dummy-service/Dockerfile
+          context: ${{ env.SERVICE_DIR }}
+          file: ${{ env.SERVICE_DIR }}/Dockerfile
           push: true
-          build-args: |
-            BASE_IMAGE=${{ env.BASE_IMAGE }}
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/stream-forge-dummy-service:${{ steps.get_version.outputs.version }}
-            ghcr.io/${{ github.repository_owner }}/stream-forge-dummy-service:latest
+          platforms: linux/amd64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Optional: enable inline cache
+          cache-from: type=registry,ref=${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+
+      - name: Print image digest
+        run: echo "Digest ${{ steps.meta.outputs.tags }} -> ${{ steps.meta.outputs.labels }}"
