@@ -1,21 +1,39 @@
-FROM registry.dmz.home/kinga/stream-forge/python:3.11-slim
+# Base image based on the official Python 3.11 slim version
+FROM python:3.11-slim
 
-ENV PYTHONDONTWRITEBYTECODE=1     PYTHONUNBUFFERED=1     PIP_NO_CACHE_DIR=1     SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt     REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
 
-# Install common system dependencies if needed
-
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
-
-# Copy and install dev-ca.crt to system's trusted CA store
-COPY ca.crt /usr/local/share/ca-certificates/dev-ca.crt
-RUN update-ca-certificates
-
-# Copy and install common Python and test dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy and install our common library via wheel
-COPY libs /tmp/libs
-RUN pip install --no-cache-dir /tmp/libs/streamforge_utils && rm -rf /tmp/libs
-
+# Set working directory
 WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        gcc \
+        libpq-dev \
+        curl \
+        gnupg \
+        git \
+        && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip and install poetry
+RUN pip install --upgrade pip && \
+    pip install poetry
+
+# Copy only dependency files to leverage Docker cache
+COPY pyproject.toml poetry.lock ./
+
+# Install Python dependencies
+RUN poetry config virtualenvs.create false && \
+    poetry install --no-root --no-interaction --no-ansi
+
+# Copy application code
+COPY . .
+
+# Default command
+CMD ["python"]
