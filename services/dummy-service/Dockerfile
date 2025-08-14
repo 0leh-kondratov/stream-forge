@@ -1,21 +1,10 @@
-# Declare a build argument for base image
-ARG BASE_IMAGE
-
-# Use the base image dynamically provided via build args
+# Base image defined externally, e.g., in GitHub Actions or GitLab
+ARG BASE_IMAGE=ghcr.io/0leh-kondratov/stream-forge-base:latest
 FROM ${BASE_IMAGE}
 
-# Set working directory inside the container
 WORKDIR /app
+COPY . .
 
-# Copy Python dependency file
-COPY services/dummy-service/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install dependencies with pip
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
-
-# Copy service source code
-COPY services/dummy-service .
-
-# Default command to run when container starts
 CMD ["python", "main.py"]
