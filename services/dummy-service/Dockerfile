@@ -10,7 +10,7 @@ WORKDIR /app
 
 COPY services/dummy-service/requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r services/dummy-service/requirements.txt
+    pip install --no-cache-dir -r requirements.txt
 
 COPY services/dummy-service .
 CMD ["python", "main.py"]
