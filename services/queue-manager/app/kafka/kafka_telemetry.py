@@ -29,16 +29,16 @@ class KafkaTelemetryReceiver:
             value_deserializer=lambda m: json.loads(m.decode("utf-8")),
         )
         await self.consumer.start()
-        logger.info("📥 KafkaTelemetryReceiver подключён")
+        logger.info("📥 KafkaTelemetryReceiver connected")
 
     async def listen(self) -> AsyncGenerator[dict, None]:
         if not self.consumer:
-            raise RuntimeError("Telemetry consumer не инициализирован")
+            raise RuntimeError("Telemetry consumer not initialized")
         async for msg in self.consumer:
-            logger.debug(f"📨 Получена телеметрия: {msg.value}")
+            logger.debug(f"📨 Telemetry received: {msg.value}")
             yield msg.value
 
     async def stop(self):
         if self.consumer:
             await self.consumer.stop()
-            logger.info("🛑 KafkaTelemetryReceiver остановлен")
+            logger.info("🛑 KafkaTelemetryReceiver stopped")
