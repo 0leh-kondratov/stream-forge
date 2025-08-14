@@ -4,7 +4,7 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
-    # === Общие параметры ===
+    # === General Parameters ===
     DEBUG: bool = Field(default=False)
     K8S_NAMESPACE: str = Field(default="stf")
 
@@ -24,14 +24,14 @@ class Settings(BaseSettings):
     ARANGO_USER: str
     ARANGO_PASSWORD: str
 
-    # === Образы микросервисов ===
+    # === Microservice Images ===
     LOADER_IMAGE: str
     CONSUMER_IMAGE: str
     GNN_TRAINER_IMAGE: str
     VISUALIZER_IMAGE: str
     GRAPH_BUILDER_IMAGE: str = Field(default="registry.dmz.home/streamforge/graph-builder:v0.1.0")
 
-    # === MinIO (опционально) ===
+    # === MinIO (optional) ===
     MINIO_ENDPOINT: str = Field(default="")
     MINIO_ACCESS_KEY: str = Field(default="")
     MINIO_SECRET_KEY: str = Field(default="")
@@ -48,5 +48,5 @@ def get_settings():
     return Settings()
 
 
-# Глобальные настройки
+# Global settings
 settings = get_settings()

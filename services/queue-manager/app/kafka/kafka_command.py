@@ -26,15 +26,15 @@ class KafkaCommandSender:
             value_serializer=lambda m: json.dumps(m).encode("utf-8"),
         )
         await self.producer.start()
-        logger.info("📡 KafkaCommandSender инициализирован")
+        logger.info("📡 KafkaCommandSender initialized")
 
     async def send_command(self, command: dict):
         if not self.producer:
-            raise RuntimeError("KafkaCommandSender не запущен")
+            raise RuntimeError("KafkaCommandSender not started")
         await self.producer.send_and_wait(QUEUE_CONTROL_TOPIC, value=command)
-        logger.debug(f"📤 Команда отправлена в Kafka: {command}")
+        logger.debug(f"📤 Command sent to Kafka: {command}")
 
     async def stop(self):
         if self.producer:
             await self.producer.stop()
-            logger.info("🛑 KafkaCommandSender остановлен")
+            logger.info("🛑 KafkaCommandSender stopped")

@@ -4,7 +4,7 @@ from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_
 from starlette.responses import Response
 import time
 
-# HTTP метрики
+# HTTP metrics
 REQUEST_COUNT = Counter(
     "http_requests_total",
     "Total HTTP requests",
@@ -17,7 +17,7 @@ REQUEST_LATENCY = Histogram(
     ["endpoint"]
 )
 
-# Метрики очередей
+# Queue metrics
 QUEUE_COMMANDS_TOTAL = Counter(
     "queue_commands_total",
     "Total number of queue control commands sent",
@@ -32,7 +32,7 @@ TELEMETRY_EVENTS_TOTAL = Counter(
 
 def setup_metrics(app):
     """
-    Middleware для сбора HTTP метрик.
+    Middleware for collecting HTTP metrics.
     """
     @app.middleware("http")
     async def metrics_middleware(request, call_next):

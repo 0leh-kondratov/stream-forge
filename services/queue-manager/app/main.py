@@ -27,18 +27,18 @@ app.add_middleware(
 # Trusted Hosts
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
 
-# Метрики
+# Metrics
 setup_metrics(app)
 
-# Роутеры
+# Routers
 app.include_router(health_router, prefix="/health", tags=["health"])
 app.include_router(queue_router, prefix="/queues", tags=["queues"])
 
-# Логирование событий запуска
+# Startup event logging
 @app.on_event("startup")
 async def startup_event():
-    logger.info("🚀 Queue Manager запущен")
+    logger.info("🚀 Queue Manager started")
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    logger.info("🛑 Queue Manager завершает работу")
+    logger.info("🛑 Queue Manager shutting down")

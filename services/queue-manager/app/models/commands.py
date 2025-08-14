@@ -4,51 +4,51 @@ from typing import Literal, Optional, List
 
 class QueueCommand(BaseModel):
     command: Literal["start", "stop"] = Field(
-        ..., example="start", description="Тип команды: 'start' или 'stop'"
+        ..., example="start", description="Command type: 'start' or 'stop'"
     )
     queue_id: str = Field(
         ..., example="loader-btcusdt-api_candles_5m-2024_06_01-abc123",
-        description="Уникальный идентификатор очереди"
+        description="Unique queue identifier"
     )
     target: str = Field(
         ..., example="loader-producer",
-        description="Название микросервиса-исполнителя"
+        description="Name of the executing microservice"
     )
     timestamp: float = Field(
         ..., example=1722346211.177,
-        description="Метка времени команды (unix timestamp)"
+        description="Command timestamp (unix timestamp)"
     )
     symbol: str = Field(
         ..., example="BTCUSDT",
-        description="Название торгового инструмента"
+        description="Trading instrument name"
     )
     type: str = Field(
         ..., example="api_candles_5m",
-        description="Тип данных, например: api_candles_5m, ws_trades"
+        description="Data type, e.g.: api_candles_5m, ws_trades"
     )
     kafka_topic: str = Field(
         ..., example="loader-btcusdt-api-candles-5m-2024-06-01-abc123",
-        description="Kafka topic, в который будут писаться данные"
+        description="Kafka topic to which data will be written"
     )
     telemetry_id: str = Field(
         ..., example="loader-producer__abc123",
-        description="Идентификатор источника телеметрии"
+        description="Telemetry source identifier"
     )
     image: str = Field(
         ..., example="registry.dmz.home/streamforge/loader-producer:v0.1.7",
-        description="Docker-образ микросервиса"
+        description="Docker image of the microservice"
     )
     time_range: Optional[str] = Field(
         default=None, example="2024-06-01:2024-06-02",
-        description="Диапазон дат (для исторических данных)"
+        description="Date range (for historical data)"
     )
     interval: Optional[str] = Field(
         default=None, example="5m",
-        description="Интервал свечей или агрегации"
+        description="Candle or aggregation interval"
     )
     collection_name: Optional[str] = Field(
         default=None, example="btc_candles_5m_2024_06_01",
-        description="Название коллекции в ArangoDB"
+        description="Collection name in ArangoDB"
     )
 
     class Config:
@@ -72,7 +72,7 @@ class QueueCommand(BaseModel):
 
 
 class ServiceConfig(BaseModel):
-    name: str = Field(..., description="Название микросервиса (например, loader-producer)")
+    name: str = Field(..., description="Microservice name (e.g., loader-producer)")
     image: Optional[str] = Field(None, description="Docker-образ микросервиса")
     type: Optional[str] = Field(None, description="Тип данных, который обрабатывает сервис")
     kafka_topic: Optional[str] = Field(None, description="Kafka topic для сервиса")
