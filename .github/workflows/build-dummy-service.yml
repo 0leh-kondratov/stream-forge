@@ -1,6 +1,7 @@
 name: Build & Publish Dummy Service Image
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - 'services/dummy-service/**'
