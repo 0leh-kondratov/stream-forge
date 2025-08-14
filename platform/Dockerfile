@@ -21,19 +21,9 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip and install poetry
-RUN pip install --upgrade pip && \
-    pip install poetry
-
-# Copy only dependency files to leverage Docker cache
-COPY pyproject.toml poetry.lock ./
-
-# Install Python dependencies
-RUN poetry config virtualenvs.create false && \
-    poetry install --no-root --no-interaction --no-ansi
-
-# Copy application code
-COPY . .
+# Upgrade pip (you can optionally install poetry or any global tools here)
+RUN pip install --upgrade pip
 
 # Default command
 CMD ["python"]
+
