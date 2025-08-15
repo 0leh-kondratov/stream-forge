@@ -34,3 +34,61 @@ Thumbs.db
 
 input/
 output/
+
+infra/cred.txt
+
+# ── Terraform рабочие каталоги
+.terraform/
+.terraform.tfstate.lock.info
+
+# ── Terraform state (никогда не коммитим)
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+# ── Локальные переменные/секреты
+terraform.tfvars
+*.tfvars
+*.auto.tfvars
+*.auto.tfvars.json
+
+# Если используете примеры значений — держите их в репо:
+# terraform.tfvars.example
+# dev.auto.tfvars.example
+
+# ── Планы/артефакты
+*.plan
+plan.out
+
+# ── Креды/ключи (GCP/SA, kubeconfig и пр.)
+sa.json
+*.key.json
+*.p12
+kubeconfig
+.kube/
+*.pem
+
+# ── Helm: приватные values
+values/*secrets*.yaml
+values/*secret*.yaml
+
+# ── direnv / локальные окружения
+.env
+.env.*
+.envrc
+.direnv/
+
+# ── IDE/OS мусор
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# ── Python/Go/Node (на всякий случай)
+.venv/
+__pycache__/
+dist/
+build/
+node_modules/
