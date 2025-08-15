@@ -1,33 +1,35 @@
+
 variable "project_id" {
-  description = "GCP project ID"
+  description = "The GCP project ID"
   type        = string
 }
 
 variable "region" {
-  description = "GKE region (Autopilot кластеры региональные)"
+  description = "The GCP region"
   type        = string
   default     = "us-central1"
 }
 
 variable "cluster_name" {
-  description = "Имя кластера (делай уникальным, если создаёшь второй)"
+  description = "The name of the GKE cluster"
   type        = string
   default     = "gke-free-autopilot"
 }
 
-# Сети — можно не трогать
 variable "vpc_cidr" {
+  description = "The CIDR block for the VPC"
   type        = string
   default     = "10.0.0.0/16"
-  description = "Primary CIDR для сабнета"
 }
 
 variable "pods_cidr" {
-  type    = string
-  default = "10.1.0.0/16"
+  description = "The CIDR block for pods"
+  type        = string
+  default     = "10.1.0.0/16"
 }
 
 variable "services_cidr" {
-  type    = string
-  default = "10.2.0.0/20"
+  description = "The CIDR block for services"
+  type        = string
+  default     = "10.2.0.0/20"
 }
