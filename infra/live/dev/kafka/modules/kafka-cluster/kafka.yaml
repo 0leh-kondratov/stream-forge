@@ -1,0 +1,49 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: {{KAFKA_NAME}}
+  namespace: {{NAMESPACE}}
+  annotations:
+    strimzi.io/kraft: "enabled"
+    strimzi.io/node-pools: "enabled"
+spec:
+  kafka:
+    version: "{{KAFKA_VERSION}}"
+    authorization:
+      type: simple
+    listeners:
+      - name: internal
+        port: 9092
+        type: internal
+        tls: true
+        authentication:
+          type: scram-sha-512
+      # external listener disabled by default, enable via patch if needed
+  entityOperator:
+    topicOperator: {}
+    userOperator: {}
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: combined
+  namespace: {{NAMESPACE}}
+  labels:
+    strimzi.io/cluster: {{KAFKA_NAME}}
+spec:
+  replicas: {{REPLICAS}}
+  roles:
+    - controller
+    - broker
+  storage:
+    type: persistent-claim
+    size: 100Gi # Hardcoded for now, can be templated later if needed
+    deleteClaim: false
+    class: standard-rwo # Hardcoded for now, can be templated later if needed
+  resources:
+    requests:
+      cpu: "800m"
+      memory: "4Gi"
+    limits:
+      cpu: "2"
+      memory: "6Gi"
