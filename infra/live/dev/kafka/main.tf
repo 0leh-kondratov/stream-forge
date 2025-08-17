@@ -1,7 +1,10 @@
-# ЭТАП 1: оператор Strimzi
 module "strimzi_operator" {
-  source    = "./modules/strimzi-operator"
-  namespace = var.namespace
+  source = "./modules/strimzi-operator"
+  providers = {
+    kubernetes = kubernetes.ctx
+    helm       = helm.ctx
+  }
+  namespace = "kafka"
 }
 
 # Небольшая пауза после установки чарта, чтобы webhook/CRD стабилизировались

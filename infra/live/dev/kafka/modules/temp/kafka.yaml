@@ -1,14 +1,14 @@
 apiVersion: kafka.strimzi.io/v1beta2
 kind: Kafka
 metadata:
-  name: {{KAFKA_NAME}}
-  namespace: {{NAMESPACE}}
+  name: k3
+  namespace: kafka
   annotations:
     strimzi.io/kraft: "enabled"
     strimzi.io/node-pools: "enabled"
 spec:
   kafka:
-    version: "{{KAFKA_VERSION}}"   # напр. "4.0.0" для Strimzi 0.47
+    version: "4.0.0"
     authorization:
       type: simple
     listeners:
@@ -43,14 +43,14 @@ apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaNodePool
 metadata:
   name: combined
-  namespace: {{NAMESPACE}}
+  namespace: kafka
   labels:
-    strimzi.io/cluster: {{KAFKA_NAME}}
+    strimzi.io/cluster: k3
 spec:
-  replicas: {{REPLICAS}}      # dev: 1; HA: 3
+  replicas: 1
   storage:
     type: persistent-claim
-    class: standard-rwo       # при необходимости параметризуйте как {{STORAGE_CLASS}}
+    class: standard-rwo
     size: 2Gi
     deleteClaim: true
   roles:

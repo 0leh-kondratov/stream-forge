@@ -36,3 +36,8 @@ variable "kafka_replicas" {
   type    = number
   default = 3
 }
+
+variable "kafka_version" {
+  type    = string
+  default = "4.0.0"
+}

@@ -9,19 +9,20 @@ resource "kubernetes_namespace" "ns" {
 
 resource "helm_release" "strimzi" {
   name       = "strimzi-kafka-operator"
-  repository = "https://strimzi.io/charts/"
+  repository = "oci://quay.io/strimzi-helm"
   chart      = "strimzi-kafka-operator"
-  version    = "0.41.0" # при необходимости обновите
+  version    = "0.47.0"
   namespace  = var.namespace
 
-  set {
-    name  = "installCRDs"
-    value = "true"
-  }
+  wait            = true
+  atomic          = true
+  cleanup_on_fail = true
+  timeout         = 900
 
-  wait          = true
-  timeout       = 600
-  recreate_pods = true
+  # Если нужны какие-то values — используйте values или set-список.
+  # Пример ограничения оператором наблюдаемого неймспейса:
+  # values = [yamlencode({ watchNamespaces = [var.namespace] })]
 
   depends_on = [kubernetes_namespace.ns]
 }
+

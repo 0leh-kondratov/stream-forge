@@ -10,6 +10,7 @@ terraform {
 variable "namespace"  { type = string }
 variable "kafka_name" { type = string }
 
+
 locals {
   rendered = replace(
     replace(
@@ -20,12 +21,14 @@ locals {
   )
 }
 
+# 🔹 Разбираем много-документный YAML на список отдельных документов
 data "kubectl_file_documents" "objs" {
   content = local.rendered
 }
 
+# 🔹 Создаём kubectl_manifest для каждого документа
 resource "kubectl_manifest" "objs" {
-  for_each  = data.kubectl_file_documents.objs.manifests
-  yaml_body = each.value
+  count     = length(data.kubectl_file_documents.objs.documents)
+  yaml_body = data.kubectl_file_documents.objs.documents[count.index]
   wait      = true
 }

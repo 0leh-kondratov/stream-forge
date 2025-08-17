@@ -1,31 +1,12 @@
 terraform {
   required_version = ">= 1.6.0"
-
   required_providers {
-    google = {
-      source  = "hashicorp/google"
-      version = "~> 6.48"
-    }
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "~> 2.31"
-    }
-    helm = {
-      source  = "hashicorp/helm"
-      version = "~> 2.13"
-    }
-    kubectl = {
-      source  = "gavinbunney/kubectl"
-      version = "~> 1.14"
-    }
-    time = {
-      source  = "hashicorp/time"
-      version = "~> 0.11"
-    }
-    null = {
-      source  = "hashicorp/null"
-      version = "~> 3.2"
-    }
+    google     = { source = "hashicorp/google",     version = "~> 6.48" }
+    kubernetes = { source = "hashicorp/kubernetes", version = "~> 2.31" }
+    helm       = { source = "hashicorp/helm",       version = "~> 3.0" }
+    kubectl    = { source = "gavinbunney/kubectl",  version = "~> 1.19" }
+    time       = { source = "hashicorp/time",       version = "~> 0.11" }
+    null       = { source = "hashicorp/null",       version = "~> 3.2" }
   }
 }
 
@@ -42,23 +23,18 @@ data "google_container_cluster" "gke" {
 
 data "google_client_config" "default" {}
 
+# kubernetes-провайдер — без изменений (v2.x)
 provider "kubernetes" {
-  host                   = "https://${data.google_container_cluster.gke.endpoint}"
-  token                  = data.google_client_config.default.access_token
-  cluster_ca_certificate = base64decode(data.google_container_cluster.gke.master_auth[0].cluster_ca_certificate)
+  alias          = "ctx"
+  config_path    = pathexpand("~/.kube/config")
+  config_context = "gke_${var.project_id}_${var.region}_${var.cluster_name}"
 }
 
+# helm v3 — kubernetes как ОДИН аргумент-объект, а не блок
 provider "helm" {
-  kubernetes {
-    host                   = "https://${data.google_container_cluster.gke.endpoint}"
-    token                  = data.google_client_config.default.access_token
-    cluster_ca_certificate = base64decode(data.google_container_cluster.gke.master_auth[0].cluster_ca_certificate)
+  alias = "ctx"
+  kubernetes = {
+    config_path    = pathexpand("~/.kube/config")
+    config_context = "gke_${var.project_id}_${var.region}_${var.cluster_name}"
   }
-}
-
-provider "kubectl" {
-  host                   = "https://${data.google_container_cluster.gke.endpoint}"
-  token                  = data.google_client_config.default.access_token
-  cluster_ca_certificate = base64decode(data.google_container_cluster.gke.master_auth[0].cluster_ca_certificate)
-  load_config_file       = false
 }
