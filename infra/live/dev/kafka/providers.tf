@@ -1,29 +1,25 @@
-provider "google" {
-  project = var.project_id
-  region  = var.region
-}
-
-# Токен текущего аккаунта gcloud
-data "google_client_config" "default" {}
-
-# Данные о существующем GKE Autopilot кластере
-data "google_container_cluster" "cluster" {
-  name     = var.cluster
+data "google_container_cluster" "gke" {
+  project  = var.project_id
+  name     = var.cluster_name
   location = var.region
 }
 
-# Инициализация kubernetes-провайдера по данным кластера
+data "google_client_config" "default" {}
+
 provider "kubernetes" {
-  host                   = "https://${data.google_container_cluster.cluster.endpoint}"
-  token                  = data.google_client_config.default.access_token
-  cluster_ca_certificate = base64decode(data.google_container_cluster.cluster.master_auth[0].cluster_ca_certificate)
+  host  = "https://${data.google_container_cluster.gke.endpoint}"
+  token = data.google_client_config.default.access_token
+  cluster_ca_certificate = base64decode(
+    data.google_container_cluster.gke.master_auth[0].cluster_ca_certificate
+  )
 }
 
-# Helm использует те же креды/endpoint
 provider "helm" {
   kubernetes {
-    host                   = "https://${data.google_container_cluster.cluster.endpoint}"
-    token                  = data.google_client_config.default.access_token
-    cluster_ca_certificate = base64decode(data.google_container_cluster.cluster.master_auth[0].cluster_ca_certificate)
+    host  = "https://${data.google_container_cluster.gke.endpoint}"
+    token = data.google_client_config.default.access_token
+    cluster_ca_certificate = base64decode(
+      data.google_container_cluster.gke.master_auth[0].cluster_ca_certificate
+    )
   }
 }

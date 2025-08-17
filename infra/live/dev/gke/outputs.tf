@@ -1,12 +1,12 @@
 
 output "cluster_name" {
   description = "The name of the GKE cluster"
-  value       = module.gke_cluster.cluster_name
+  value       = module.gke_cluster.name
 }
 
 output "cluster_region" {
   description = "The region of the GKE cluster"
-  value       = module.gke_cluster.cluster_region
+  value       = module.gke_cluster.location
 }
 
 output "get_credentials_hint" {

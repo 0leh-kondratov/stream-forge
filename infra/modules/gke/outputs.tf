@@ -1,25 +1,30 @@
-
-output "cluster_name" {
-  description = "The name of the GKE cluster"
+output "name" {
+  description = "Cluster name"
   value       = google_container_cluster.autopilot_cluster.name
 }
 
-output "cluster_region" {
-  description = "The region of the GKE cluster"
-  value       = var.region
-}
-
-output "get_credentials_hint" {
-  description = "Command to get kubeconfig for the cluster"
-  value       = "gcloud container clusters get-credentials ${google_container_cluster.autopilot_cluster.name} --region ${var.region} --project ${var.project_id}"
+output "location" {
+  description = "Cluster location (region)"
+  value       = google_container_cluster.autopilot_cluster.location
 }
 
 output "endpoint" {
-  description = "The endpoint of the GKE cluster"
+  description = "GKE API endpoint"
   value       = google_container_cluster.autopilot_cluster.endpoint
 }
 
 output "ca_certificate" {
-  description = "The CA certificate of the GKE cluster"
+  description = "Cluster CA certificate"
   value       = google_container_cluster.autopilot_cluster.master_auth[0].cluster_ca_certificate
+  sensitive   = true
+}
+
+output "workload_identity_pool" {
+  description = "Workload Identity pool (for KSA->GSA bindings)"
+  value       = try(google_container_cluster.autopilot_cluster.workload_identity_config[0].workload_pool, null)
+}
+
+output "get_credentials_hint" {
+  description = "Convenience command to update kubeconfig"
+  value       = "gcloud container clusters get-credentials ${google_container_cluster.autopilot_cluster.name} --region ${var.region} --project ${var.project_id}"
 }

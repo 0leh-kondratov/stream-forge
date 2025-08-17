@@ -1,6 +1,5 @@
 terraform {
-  required_version = ">= 1.6.0"
-
+  required_version = ">= 1.6"
   required_providers {
     google = {
       source  = "hashicorp/google"
@@ -15,4 +14,7 @@ terraform {
       version = "~> 2.13"
     }
   }
+
+  # Опционально: GitLab HTTP backend как в вашем GKE проекте (заполняете при init).
+  # backend "http" {}
 }
