@@ -28,9 +28,10 @@ resource "null_resource" "wait_crds" {
 # ЭТАП 2: кластер Kafka (CR Kafka)
 module "kafka_cluster" {
   source     = "./modules/kafka-cluster"
-  namespace  = var.namespace
-  kafka_name = var.kafka_name
-  replicas   = var.kafka_replicas
+  namespace         = var.namespace
+  kafka_name        = var.kafka_name
+  replicas          = var.kafka_replicas
+  kafka_version_str = var.kafka_version
 
   # Важно: кластер создаём только после CRD
   depends_on = [null_resource.wait_crds]

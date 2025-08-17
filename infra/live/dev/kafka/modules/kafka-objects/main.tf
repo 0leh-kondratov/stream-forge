@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    kubectl = {
+      source  = "gavinbunney/kubectl"
+      version = "~> 1.14"
+    }
+  }
+}
+
 variable "namespace"  { type = string }
 variable "kafka_name" { type = string }
 
@@ -18,6 +27,5 @@ data "kubectl_file_documents" "objs" {
 resource "kubectl_manifest" "objs" {
   for_each  = data.kubectl_file_documents.objs.manifests
   yaml_body = each.value
-  force     = true
   wait      = true
 }
