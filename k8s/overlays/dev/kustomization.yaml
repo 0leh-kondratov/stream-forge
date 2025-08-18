@@ -1,0 +1,35 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+bases:
+  - ../../base
+images:
+  - name: us-central1-docker.pkg.dev/__PROJECT_ID__/streamforge/__SERVICE_NAME__
+    newName: us-central1-docker.pkg.dev/__PROJECT_ID__/streamforge/__SERVICE_NAME__
+    newTag: __IMAGE_TAG__
+patchesJSON6902:
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: __SERVICE_NAME__
+    patch: |
+      - op: replace
+        path: /metadata/name
+        value: __SERVICE_NAME__
+      - op: replace
+        path: /spec/selector/matchLabels/app.kubernetes.io~1name
+        value: __SERVICE_NAME__
+      - op: replace
+        path: /spec/template/metadata/labels/app.kubernetes.io~1name
+        value: __SERVICE_NAME__
+  - target:
+      version: v1
+      kind: Service
+      name: __SERVICE_NAME__
+    patch: |
+      - op: replace
+        path: /metadata/name
+        value: __SERVICE_NAME__
+      - op: replace
+        path: /spec/selector/app.kubernetes.io~1name
+        value: __SERVICE_NAME__

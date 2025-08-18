@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: __SERVICE_NAME__
+  namespace: stf
+  labels:
+    app.kubernetes.io/name: __SERVICE_NAME__
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: __SERVICE_NAME__
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: __SERVICE_NAME__
+    spec:
+      serviceAccountName: app-sa
+      containers:
+      - name: __SERVICE_NAME__
+        image: us-central1-docker.pkg.dev/__PROJECT_ID__/streamforge/__SERVICE_NAME__:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+        env:
+        - name: STAGE
+          value: "dev"
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
+          limits:
+            cpu: "250m"
+            memory: "256Mi"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          periodSeconds: 10
+          failureThreshold: 6
+        livenessProbe:
+          httpGet:
+            path: /live
+            port: 8000
+          periodSeconds: 20
+          failureThreshold: 6
