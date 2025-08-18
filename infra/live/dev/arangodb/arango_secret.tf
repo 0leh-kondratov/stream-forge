@@ -7,5 +7,6 @@ resource "kubernetes_secret" "root" {
     username = base64encode("root")
     password = base64encode(var.root_password)
   }
-  type = "Opaque"
+  type       = "Opaque"
+  depends_on = [kubernetes_namespace.this]
 }

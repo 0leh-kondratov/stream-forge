@@ -1,7 +1,8 @@
 data "google_client_config" "default" {}
 
+# Берём endpoint/CA токен из GKE-кластера
 data "google_container_cluster" "gke" {
-  name     = var.cluster
+  name     = var.cluster_name # 👈 важно: cluster_name
   location = var.region
   project  = var.project_id
 }

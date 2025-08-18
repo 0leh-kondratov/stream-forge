@@ -1,16 +1,6 @@
-locals {
-  arango_repo = "https://arangodb.github.io/kube-arangodb"
-}
-
-resource "helm_repository" "arangodb" {
-  name = "arangodb"
-  url  = local.arango_repo
-}
-
-# 1) CRDs — отдельный чарт
 resource "helm_release" "arangodb_crd" {
   name       = "kube-arangodb-crd"
-  repository = helm_repository.arangodb.url
+  repository = "https://arangodb.github.io/kube-arangodb"
   chart      = "kube-arangodb-crd"
   version    = var.crd_chart_version
   namespace  = var.namespace
@@ -20,13 +10,13 @@ resource "helm_release" "arangodb_crd" {
   atomic           = true
   cleanup_on_fail  = true
 
+  # 👇 добавь это
   depends_on = [kubernetes_namespace.this]
 }
 
-# 2) Operator
 resource "helm_release" "arangodb_operator" {
   name       = "kube-arangodb"
-  repository = helm_repository.arangodb.url
+  repository = "https://arangodb.github.io/kube-arangodb"
   chart      = "kube-arangodb"
   version    = var.operator_chart_version
   namespace  = var.namespace
@@ -36,18 +26,17 @@ resource "helm_release" "arangodb_operator" {
   atomic           = true
   cleanup_on_fail  = true
 
-  # Пример полезных настройкок (можно расширять)
   values = [yamlencode({
     operator = {
       features = {
-        # включённые операторы: deployment, storage, backup, replication
         deployment  = { enabled = true }
-        storage     = { enabled = false } # в Autopilot чаще используем CSI PV, локальное хранилище не нужно
+        storage     = { enabled = false }
         backup      = { enabled = true }
         replication = { enabled = false }
       }
     }
   })]
 
-  depends_on = [helm_release.arangodb_crd]
+  # 👇 и здесь тоже
+  depends_on = [kubernetes_namespace.this, helm_release.arangodb_crd]
 }

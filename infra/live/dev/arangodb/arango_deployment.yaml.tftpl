@@ -6,15 +6,14 @@ metadata:
 spec:
   mode: ${mode} # Single | Cluster | ActiveFailover
   image: ${arango_image}
-  # TLS по умолчанию включён у оператора; чтобы выключить:
-  # tls:
-  #   caSecretName: None
-  # (не рекомендуется)  # ref: https://arangodb.github.io/kube-arangodb/docs/tls.html
+  externalAccess:
+    type: None
+  metrics:
+    enabled: true
   bootstrap:
     passwordSecretNames:
       root: ${root_secret_name}
-  environment: Production
-  storageEngine: rocksdb
+  environment: Development
 %{ if mode == "Single" ~}
   single:
     count: 1
