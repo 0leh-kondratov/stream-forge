@@ -1,0 +1,14 @@
+server:
+  service:
+    type: LoadBalancer
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+      - argocd.dmz.home
+    tls:
+      - secretName: argocd-tls
+        hosts: [argocd.dmz.home]
+configs:
+  params:
+    server.insecure: true

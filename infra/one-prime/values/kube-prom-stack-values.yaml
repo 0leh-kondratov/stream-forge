@@ -1,0 +1,19 @@
+grafana:
+  adminPassword: "admin"
+  service:
+    type: LoadBalancer
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts: ["grafana.dmz.home"]
+    tls:
+      - secretName: grafana-tls
+        hosts: ["grafana.dmz.home"]
+
+prometheus:
+  ingress:
+    enabled: false
+
+alertmanager:
+  ingress:
+    enabled: false
