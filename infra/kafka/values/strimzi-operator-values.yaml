@@ -1,0 +1,4 @@
+# Minimal; extend if you need watchNamespaces or RBAC tweaks
+watchAnyNamespace: false
+watchNamespaces:
+  - kafka
