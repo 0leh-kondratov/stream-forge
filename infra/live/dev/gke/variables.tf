@@ -1,19 +1,50 @@
-
 variable "project_id" {
-  description = "The GCP project ID"
-  type        = string
+  type = string
 }
 
 variable "region" {
-  description = "The GCP region"
-  type        = string
-  default     = "us-central1"
+  type    = string
+  default = "europe-central2"
+  description = "регион GCP"
+}
+
+variable "gke_location" {
+  type = string
+  description = "регион или зона кластера (например, \"europe-central2\")"
 }
 
 variable "cluster_name" {
-  description = "The name of the GKE cluster"
-  type        = string
-  default     = "gke-free-autopilot"
+  type = string
+  description = "имя GKE кластера"
+}
+
+# GitHub OIDC ограничения
+variable "github_repo" {
+  type = string
+  description = "\"owner/repo\", напр. \"0leh-kondratov/stream-forge\""
+}
+
+variable "github_ref" {
+  type    = string
+  default = "refs/heads/main"
+  description = "ветка/тег"
+}
+
+# Artifact Registry
+variable "gar_location" {
+  type    = string
+  default = "europe-central2"
+}
+
+variable "gar_repo_name" {
+  type    = string
+  default = "apps"
+}
+
+# Kubernetes namespace для деплоя
+variable "k8s_namespace" {
+  type    = string
+  default = "default"
 }
 
 variable "vpc_cidr" {

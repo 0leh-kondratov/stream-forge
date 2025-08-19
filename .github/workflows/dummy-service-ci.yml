@@ -177,6 +177,35 @@ PY
           cache-from: type=registry,ref=${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
 
+  deploy:
+    name: Deploy to GKE
+    needs: build
+    runs-on: [self-hosted, Linux, X64, k8s, gke, docker, dmz] # Use the self-hosted runner
+    environment: production # Or whatever environment is appropriate
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: gke-free-autopilot # The target cluster name
+          location: us-central1 # The region of the cluster (from variables.tf/terraform.tfvars)
+          project_id: ${{ vars.GCP_PROJECT_ID }} # Assuming project_id is a GitHub variable
+
+      - name: Deploy dummy-service
+        run: |
+          # Assuming your deployment manifests are in services/dummy-service/k8s/
+          kubectl apply -f services/dummy-service/k8s/deployment.yaml
+          kubectl rollout status deployment/dummy-service -n default # Assuming default namespace
+
   badges:
     name: Generate badges (tests + build)
     needs: [tests, build]
@@ -212,7 +241,8 @@ PY
               failure) echo "critical" ;;     # red
               cancelled) echo "inactive" ;;   # gray
               skipped) echo "informational" ;;# blue
-              *) echo "lightgrey" ;;
+              *)
+                echo "lightgrey" ;; 
             esac
           }
 

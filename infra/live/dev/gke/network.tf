@@ -22,4 +22,10 @@ resource "google_compute_subnetwork" "subnet" {
   depends_on = [
     google_compute_network.vpc
   ]
+
+  lifecycle {
+    ignore_changes = [
+      secondary_ip_range,
+    ]
+  }
 }

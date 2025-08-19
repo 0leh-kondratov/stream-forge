@@ -1,15 +1,15 @@
-
-output "cluster_name" {
-  description = "The name of the GKE cluster"
-  value       = module.gke_cluster.name
+output "gsa_email" {
+  value       = google_service_account.github_cicd.email
+  description = "GCP Service Account email used by GitHub OIDC"
 }
 
-output "cluster_region" {
-  description = "The region of the GKE cluster"
-  value       = module.gke_cluster.location
+output "workload_identity_provider" {
+  # Полный resource name провайдера (нужен в GitHub Secrets)
+  value       = google_iam_workload_identity_pool_provider.github.name
+  description = "projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/<POOL_ID>/providers/<PROVIDER_ID>"
 }
 
-output "get_credentials_hint" {
-  description = "Command to get kubeconfig for the cluster"
-  value       = module.gke_cluster.get_credentials_hint
+output "artifact_registry_repo_url" {
+  value       = "${var.gar_location}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.docker_repo.repository_id}"
+  description = "Base URL for Artifact Registry Docker repo"
 }

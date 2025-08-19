@@ -37,6 +37,34 @@ This directory contains Terraform code to deploy a Kafka cluster on Google Kuber
     ```
     Type `yes` when prompted to confirm the deployment.
 
+## Staged Installation (Optional)
+
+If you want to deploy the components in stages, you can use the `-target` option with `terraform apply`. This can be useful for debugging or for a more controlled rollout.
+
+### Stage 1: Install Strimzi Operator
+
+This will install the Strimzi operator and wait for the Custom Resource Definitions (CRDs) to be ready.
+
+```bash
+terraform apply -target=module.strimzi_operator -target=time_sleep.pause_after_operator -target=null_resource.wait_crds -auto-approve
+```
+
+### Stage 2: Install Kafka Cluster
+
+This will create the Kafka cluster custom resource and wait for the cluster to be ready.
+
+```bash
+terraform apply -target=module.kafka_cluster -target=time_sleep.pause_after_cluster -target=null_resource.wait_kafka_ready -auto-approve
+```
+
+### Stage 3: Install Kafka Objects (Topics/Users)
+
+This will create the Kafka topics and users.
+
+```bash
+terraform apply -target=module.kafka_objects -auto-approve
+```
+
 ## Checking Deployment Status
 
 After running `terraform apply`, you can check the status of your Kafka cluster:
