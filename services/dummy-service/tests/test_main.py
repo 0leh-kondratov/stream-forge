@@ -42,12 +42,14 @@ def mock_asyncio_event():
     mock.set = MagicMock()
     return mock
 
+import sys
+
 @pytest.fixture(autouse=True)
 def mock_logger():
-    with patch('loguru.logger.remove') as mock_remove, \
-         patch('loguru.logger.add') as mock_add, \
-         patch('loguru.logger.info') as mock_info:
-        yield MagicMock(remove=mock_remove, add=mock_add, info=mock_info)
+    logger.remove() # Remove default handler
+    logger.add(sys.stderr, level="DEBUG") # Add a handler to stderr with DEBUG level
+    yield logger # Yield the actual logger instance
+    logger.remove() # Clean up after test
 
 @pytest.fixture(autouse=True)
 def mock_asyncio_tasks():
