@@ -1,6 +1,6 @@
 aiohttp
 pydantic
-python-kubernetes
+kubernetes
 fastapi
 uvicorn
 confluent-kafka
