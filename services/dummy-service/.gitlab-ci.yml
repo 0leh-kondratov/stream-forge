@@ -9,6 +9,7 @@ include:
 test-dummy-service:
   extends: .test_python_service
   variables:
+    SERVICE_NAME: dummy-service
     SERVICE_PATH: services/dummy-service
   when: manual
 
