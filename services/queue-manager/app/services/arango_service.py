@@ -37,7 +37,7 @@ class ArangoQueueStore:
             logger.error(f"Failed to connect to ArangoDB: {e}")
             raise
 
-    async def save_queue_meta(self, queue_id: str, command: QueueCommand):
+    async def save_queue_meta(self, queue_id: str, command: QueueStartRequest):
         """Saves initial metadata for a new queue/workflow."""
         if not self.queues_collection:
             await self.connect() # Ensure connected

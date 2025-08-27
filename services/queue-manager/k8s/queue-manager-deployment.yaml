@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: queue-manager
+  namespace: stf
+  labels:
+    app: queue-manager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: queue-manager
+  template:
+    metadata:
+      labels:
+        app: queue-manager
+    spec:
+      containers:
+        - name: queue-manager
+          image: registry.dmz.home/kinga/stream-forge/queue-manager:latest # Образ будет обновляться CI/CD
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: K8S_NAMESPACE
+              value: "stf"
+            # --- Подключение переменных из GitLab CI/CD Variables ---
+            - name: LOADER_IMAGE
+              value: "${LOADER_IMAGE}"
+            - name: CONSUMER_IMAGE
+              value: "${CONSUMER_IMAGE}"
+            - name: GNN_TRAINER_IMAGE
+              value: "${GNN_TRAINER_IMAGE}"
+            - name: VISUALIZER_IMAGE
+              value: "${VISUALIZER_IMAGE}"
+            - name: GRAPH_BUILDER_IMAGE
+              value: "registry.dmz.home/streamforge/graph-builder:v0.1.0" # Можно также вынести в переменную
+            
+            # --- Подключение переменных из Kubernetes Secrets ---
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              valueFrom:
+                secretKeyRef:
+                  name: kafka-credentials
+                  key: bootstrap_servers
+            - name: KAFKA_USER
+              valueFrom:
+                secretKeyRef:
+                  name: kafka-credentials
+                  key: username
+            - name: KAFKA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: kafka-credentials
+                  key: password
+            - name: ARANGO_URL
+              valueFrom:
+                secretKeyRef:
+                  name: arango-credentials
+                  key: url
+            - name: ARANGO_DB
+              valueFrom:
+                secretKeyRef:
+                  name: arango-credentials
+                  key: database
+            - name: ARANGO_USER
+              valueFrom:
+                secretKeyRef:
+                  name: arango-credentials
+                  key: username
+            - name: ARANGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: arango-credentials
+                  key: password
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: queue-manager-svc
+  namespace: stf
+spec:
+  selector:
+    app: queue-manager
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: http
