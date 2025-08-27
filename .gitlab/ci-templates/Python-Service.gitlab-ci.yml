@@ -75,7 +75,7 @@
   allow_failure: true
   script:
     - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt
-    - python -m pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/ --ignore=$CI_PROJECT_DIR/$SERVICE_PATH/tests/integration/ --ignore=$CI_PROJECT_DIR/$SERVICE_PATH/tests/test_main.py --junitxml=report.xml --no-tests-found-exit-code=0
+    - python -m pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/ --junitxml=report.xml
   artifacts:
     when: always
     paths:
