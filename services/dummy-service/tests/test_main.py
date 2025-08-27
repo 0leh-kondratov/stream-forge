@@ -38,7 +38,7 @@ def mock_kafka_consumer():
 @pytest.fixture
 def mock_asyncio_event():
     mock = AsyncMock(spec=asyncio.Event)
-    mock.wait = AsyncMock()
+    mock.wait = AsyncMock(return_value=None)
     mock.set = MagicMock()
     return mock
 
