@@ -3,7 +3,7 @@ from loguru import logger
 
 from app.models.commands import QueueStartRequest, StartTestFlowCommand, StartQueueCommand
 from app.services.job_launcher import launch_job
-from app.services.arango_service import save_queue_meta
+from app.services.arango_service import arango_service
 from app.utils.naming import generate_ids
 from app.services.testing_service import launch_test_flow
 
@@ -26,7 +26,7 @@ async def start_pipeline(request: QueueStartRequest = Body(...)):
 
     try:
         # Сохранение метаданных о всем конвейере
-        await save_queue_meta(queue_id=queue_id, command=request)
+        await arango_service.save_queue_meta(queue_id=queue_id, command=request)
 
         # Запуск каждого микросервиса в конвейере
         for microservice_config in request.microservices:
@@ -74,7 +74,7 @@ async def start_queue_legacy(command: StartQueueCommand = Body(...)):
     queue_id = ids["queue_id"]
     
     try:
-        await save_queue_meta(queue_id=queue_id, command=command)
+        await arango_service.save_queue_meta(queue_id=queue_id, command=command)
         # Этот эндпоинт теперь несовместим с launch_job, так как command не является MicroserviceConfig
         # Оставляем как заглушку или адаптируем, если нужно сохранить функциональность
         logger.info(f"🚀 Запуск очереди (legacy): {queue_id}")
@@ -89,7 +89,7 @@ async def start_queue_legacy(command: StartQueueCommand = Body(...)):
 @router.get("/list", summary="Список всех очередей")
 async def list_queues():
     from app.services.arango_service import arango_service
-        queues = await arango_service.list_all_queues()
+    queues = await arango_service.list_all_queues()
     return {"queues": queues}
 
 
@@ -103,4 +103,3 @@ async def stop_queue(data: dict = Body(...)):
 
     await send_stop_command(queue_id=queue_id)
     return {"status": "stopping", "queue_id": queue_id}
-
