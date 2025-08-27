@@ -44,6 +44,6 @@ async def launch_test_flow(command: StartTestFlowCommand) -> str:
 
     # 3. Используем существующие сервисы для сохранения и запуска
     await save_queue_meta(queue_id=queue_id, command=full_command)
-        await launch_job(queue_id=queue_id, command=full_command)
+    await launch_jobs(queue_id=queue_id, command=full_command)
 
     return queue_id
