@@ -75,13 +75,13 @@
   allow_failure: true
   script:
     - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt
-    - python -m pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/ --junitxml=report.xml
+    - python -m pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/ --junitxml=${SERVICE_NAME}-${CI_COMMIT_SHORT_SHA}-report.xml
   artifacts:
     when: always
     paths:
-      - report.xml
+      - ${SERVICE_NAME}-${CI_COMMIT_SHORT_SHA}-report.xml
     reports:
-      junit: report.xml
+      junit: ${SERVICE_NAME}-${CI_COMMIT_SHORT_SHA}-report.xml
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       changes:
@@ -166,13 +166,13 @@
       curl http://localhost:8080/metrics # Show metrics for debugging
   script:
     # Run integration tests
-    - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/integration/ --junitxml=integration_report.xml
+    - pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/integration/ --junitxml=${SERVICE_NAME}-${CI_COMMIT_SHORT_SHA}-integration_report.xml
   artifacts:
     when: always
     paths:
-      - integration_report.xml
+      - ${SERVICE_NAME}-${CI_COMMIT_SHORT_SHA}-integration_report.xml
     reports:
-      junit: integration_report.xml
+      junit: ${SERVICE_NAME}-${CI_COMMIT_SHORT_SHA}-integration_report.xml
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
       changes:
