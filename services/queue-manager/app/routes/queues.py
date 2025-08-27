@@ -89,7 +89,7 @@ async def start_queue_legacy(command: StartQueueCommand = Body(...)):
 @router.get("/list", summary="Список всех очередей")
 async def list_queues():
     from app.services.arango_service import arango_service
-    queues = await arango_service.list_all_queues()
+        queues = await arango_service.list_all_queues()
     return {"queues": queues}
 
 
