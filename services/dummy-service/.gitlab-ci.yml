@@ -11,6 +11,7 @@ test-dummy-service:
   variables:
     SERVICE_NAME: dummy-service
     SERVICE_PATH: services/dummy-service
+    LOGURU_LEVEL: DEBUG # Add this line
   when: manual
 
 build-dummy-service:
