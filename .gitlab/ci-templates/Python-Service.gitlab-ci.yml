@@ -149,7 +149,8 @@
     # Ensure curl is available for health checks
     - apt-get update && apt-get install -y curl
     # Start the service in the background
-    - python -m app.main --noop & # Run with --noop to avoid starting Kafka consumer
+    - cd $CI_PROJECT_DIR/$SERVICE_PATH
+    - python -m app.main --noop &
     # Wait for the service to be ready (e.g., check its /metrics endpoint)
     - |
       echo "Waiting for service to start..."
