@@ -1,7 +1,7 @@
 from loguru import logger
 from arango import ArangoClient
 from app.config import settings # Use settings from config
-from app.models.commands import QueueCommand # Import QueueCommand
+from app.models.commands import QueueStartRequest
 from app.models.telemetry import QueueTelemetry # Import QueueTelemetry
 
 class ArangoQueueStore:
