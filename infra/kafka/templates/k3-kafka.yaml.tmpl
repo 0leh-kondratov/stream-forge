@@ -1,0 +1,53 @@
+# All comments in English
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: ${cluster_name}
+  namespace: ${namespace}
+  labels:
+    app.kubernetes.io/part-of: streamforge
+spec:
+  kafka:
+    version: 3.7.0
+    replicas: ${kafka_replicas}
+    storage:
+      type: persistent-claim
+      size: 50Gi
+      class: ${storage_class}
+      deleteClaim: false
+    listeners:
+      - name: plain
+        port: 9092
+        type: internal
+        tls: false
+      - name: tls
+        port: 9093
+        type: internal
+        tls: true
+      - name: external
+        port: 9094
+        type: ingress
+        tls: true
+        authentication:
+          type: scram-sha-512
+        configuration:
+          class: ${ingress_class}
+          bootstrap:
+            host: ${bootstrap_host}
+          brokers:
+%{ for idx, host in broker_hosts ~}
+            - broker: ${idx}
+              host: ${host}
+%{ endfor ~}
+    authorization:
+      type: simple
+  zookeeper:
+    replicas: ${zk_replicas}
+    storage:
+      type: persistent-claim
+      size: 10Gi
+      class: ${storage_class}
+      deleteClaim: false
+  entityOperator:
+    topicOperator: {}
+    userOperator: {}

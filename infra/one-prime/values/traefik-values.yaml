@@ -1,0 +1,13 @@
+ingressClass:
+  enabled: true
+  isDefaultClass: false  # co-exist with nginx
+service:
+  type: LoadBalancer
+logs:
+  general:
+    level: INFO
+providers:
+  kubernetesCRD:
+    enabled: true
+  kubernetesIngress:
+    enabled: true

@@ -1,0 +1,14 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: ${topic_name}
+  namespace: ${namespace}
+  labels:
+    strimzi.io/cluster: ${cluster_name}
+    app.kubernetes.io/part-of: streamforge
+spec:
+  partitions: ${partitions}
+  replicas: ${replicas}
+  config:
+    cleanup.policy: ${cleanup_policy}
+    retention.ms: ${retention_ms}

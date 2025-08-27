@@ -1,0 +1,11 @@
+controller:
+  ingressClassResource:
+    name: nginx
+    controllerValue: "k8s.io/ingress-nginx"
+    enabled: true
+    default: false   # keep false if you also run Traefik
+  service:
+    type: LoadBalancer
+    externalTrafficPolicy: Local
+  admissionWebhooks:
+    enabled: true

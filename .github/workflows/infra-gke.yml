@@ -1,0 +1,57 @@
+name: infra-gke
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'infra/live/dev/gke/**'
+
+jobs:
+  tf-apply:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    env:
+      GOOGLE_PROJECT: ${{ vars.GCP_PROJECT_ID }}
+      GOOGLE_REGION:  ${{ vars.GKE_REGION }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Auth to GCP via OIDC
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform Init (HTTP backend via CLI flags)
+        working-directory: infra/live/dev/gke
+        run: |
+          terraform init -reconfigure \
+            -backend-config="address=https://gitlab.dmz.home/api/v4/projects/136/terraform/state/gke-dev" \
+            -backend-config="lock_address=https://gitlab.dmz.home/api/v4/projects/136/terraform/state/gke-dev/lock" \
+            -backend-config="unlock_address=https://gitlab.dmz.home/api/v4/projects/136/terraform/state/gke-dev/lock" \
+            -backend-config="lock_method=POST" \
+            -backend-config="unlock_method=DELETE" \
+            -backend-config="username=kinga" \
+            -backend-config="password=${{ secrets.GITLAB_ACCESS_TOKEN }}"
+
+      - name: Terraform Plan
+        working-directory: infra/live/dev/gke
+        run: terraform plan -input=false
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        working-directory: infra/live/dev/gke
+        run: terraform apply -auto-approve -input=false

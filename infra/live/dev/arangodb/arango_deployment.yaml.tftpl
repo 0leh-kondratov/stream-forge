@@ -1,0 +1,54 @@
+apiVersion: database.arangodb.com/v1
+kind: ArangoDeployment
+metadata:
+  name: ${deployment_name}
+  namespace: ${namespace}
+spec:
+  mode: ${mode} # Single | Cluster | ActiveFailover
+  image: ${arango_image}
+  externalAccess:
+    type: None
+  metrics:
+    enabled: true
+  bootstrap:
+    passwordSecretNames:
+      root: ${root_secret_name}
+  environment: Development
+%{ if mode == "Single" ~}
+  single:
+    count: 1
+    volumeClaimTemplate:
+      metadata:
+        name: data
+      spec:
+        storageClassName: ${storage_class}
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: ${storage_size}
+%{ else ~}
+  agents:
+    count: 3
+    volumeClaimTemplate:
+      metadata:
+        name: data
+      spec:
+        storageClassName: ${storage_class}
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: ${storage_size}
+  dbservers:
+    count: 3
+    volumeClaimTemplate:
+      metadata:
+        name: data
+      spec:
+        storageClassName: ${storage_class}
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: ${storage_size}
+  coordinators:
+    count: 2
+%{ endif ~}

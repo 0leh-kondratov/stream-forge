@@ -8,7 +8,6 @@ from app.config import settings
 from app.models.commands import MicroserviceConfig
 from app.utils.naming import sanitize_name
 
-
 def load_k8s_config():
     """Загружает конфигурацию Kubernetes (in-cluster или из kubeconfig)."""
     try:

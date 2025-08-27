@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-logger-py-deployment
+  namespace: logging-smoke-test
+  labels:
+    app: sample-logger-py
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-logger-py
+  template:
+    metadata:
+      labels:
+        app: sample-logger-py # Used in Log View filter
+        app.kubernetes.io/name: sample-logger-py
+        app.kubernetes.io/version: "1.0.0"
+        app.kubernetes.io/instance: sample-logger-py-instance1
+        team: sample
+        env: dev
+    spec:
+      containers:
+      - name: sample-logger-py
+        # IMPORTANT: Replace with your image in Artifact Registry
+        # For this example, we assume a public image exists.
+        # You must build and push the image from samples/logging/python
+        image: us-central1-docker.pkg.dev/stream-forge-4/stream-forge-images/sample-logger-py:v2
+        ports:
+        - containerPort: 8080
+        env:
+        - name: GCP_PROJECT_ID
+          value: "stream-forge-4"
+        - name: APP_ENV
+          value: "dev"
+        - name: TENANT
+          value: "smoke-test"
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 3
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10

@@ -1,0 +1,24 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaUser
+metadata:
+  name: user-streamforge
+  namespace: ${namespace}
+  labels:
+    strimzi.io/cluster: ${cluster_name}
+    app.kubernetes.io/part-of: streamforge
+spec:
+  authentication:
+    type: scram-sha-512
+  authorization:
+    type: simple
+    acls:
+      - resource: { type: topic, name: queue-control, patternType: literal }
+        operation: Read
+      - resource: { type: topic, name: queue-control, patternType: literal }
+        operation: Write
+      - resource: { type: topic, name: queue-events,  patternType: literal }
+        operation: Read
+      - resource: { type: topic, name: queue-events,  patternType: literal }
+        operation: Write
+      - resource: { type: group, name: "*", patternType: literal }
+        operation: Read

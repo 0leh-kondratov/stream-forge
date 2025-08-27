@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: sample-logger-py
+  namespace: logging-smoke-test
+spec:
+  type: ClusterIP
+  selector:
+    app: sample-logger-py
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080

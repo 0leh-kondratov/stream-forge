@@ -1,0 +1,6 @@
+storageClass:
+  name: nfs-client
+  defaultClass: false     # keep not default if you also use LINSTOR as default
+  allowVolumeExpansion: true
+  reclaimPolicy: Delete
+  pathPattern: "${.PVC.namespace}/${.PVC.name}"
