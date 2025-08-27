@@ -75,7 +75,7 @@
   allow_failure: true
   script:
     - pip install -r $CI_PROJECT_DIR/$SERVICE_PATH/requirements.txt
-    - python -m pytest $CI_PROJECT_DIR/$SERVICE_PATH/tests/ --ignore=$CI_PROJECT_DIR/$SERVICE_PATH/tests/integration/ --junitxml=${SERVICE_NAME}-${CI_COMMIT_SHORT_SHA}-report.xml
+    - python -m pytest -n auto $CI_PROJECT_DIR/$SERVICE_PATH/tests/ --ignore=$CI_PROJECT_DIR/$SERVICE_PATH/tests/integration/ --junitxml=${SERVICE_NAME}-${CI_COMMIT_SHORT_SHA}-report.xml 
   artifacts:
     when: always
     paths:

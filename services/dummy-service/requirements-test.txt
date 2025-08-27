@@ -10,3 +10,4 @@ loguru
 # Coverage / JSON reporters for quality badges
 pytest-cov
 pytest-json-report
+pytest-xdist
