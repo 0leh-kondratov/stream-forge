@@ -1,3 +1,9 @@
 aiohttp
 pydantic
 python-kubernetes
+fastapi
+uvicorn
+confluent-kafka
+prometheus-client
+python-arango
+streamforge-utils @ file:../../platform/libs/streamforge_utils
