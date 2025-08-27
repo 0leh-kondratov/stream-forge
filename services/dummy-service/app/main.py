@@ -39,7 +39,7 @@ def configure_logging(debug: bool):
 def setup_signal_handlers(shutdown_event: asyncio.Event):
     loop = asyncio.get_event_loop()
     for sig in (signal.SIGTERM, signal.SIGINT):
-        loop.add_signal_handler(sig, lambda: shutdown_event.set())
+        loop.add_signal_handler(sig, shutdown_event.set)
 
 async def main():
     args = parse_args()
