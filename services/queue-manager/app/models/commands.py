@@ -1,116 +1,84 @@
-from pydantic import BaseModel, Field
-from typing import Literal, Optional, List
+"""
+Pydantic модели для валидации входящих команд и конфигураций.
+"""
+from typing import List, Literal, Optional
+from pydantic import BaseModel, Field, constr, validator
+
+# Определение поддерживаемых типов данных и сервисов для валидации
+SUPPORTED_TARGETS = Literal[
+    "loader-producer",
+    "arango-connector",
+    "graph-builder",
+    "gnn-trainer",
+    "visualizer",
+    "loader-ws",
+    "arango-orderbook",
+]
+
+SUPPORTED_TYPE_PREFIXES = (
+    "api_candles",
+    "api_trades",
+    "ws_candles",
+    "ws_trades",
+    "ws_depth",
+    "gnn_graph",
+    "gnn_train",
+    "realtime_graph",
+    "realtime_gnn_infer",
+    "graph_metrics_stream",
+)
 
 
-class QueueCommand(BaseModel):
-    command: Literal["start", "stop"] = Field(
-        ..., example="start", description="Command type: 'start' or 'stop'"
-    )
-    queue_id: str = Field(
-        ..., example="loader-btcusdt-api_candles_5m-2024_06_01-abc123",
-        description="Unique queue identifier"
-    )
-    target: str = Field(
-        ..., example="loader-producer",
-        description="Name of the executing microservice"
-    )
-    timestamp: float = Field(
-        ..., example=1722346211.177,
-        description="Command timestamp (unix timestamp)"
-    )
-    symbol: str = Field(
-        ..., example="BTCUSDT",
-        description="Trading instrument name"
-    )
-    type: str = Field(
-        ..., example="api_candles_5m",
-        description="Data type, e.g.: api_candles_5m, ws_trades"
-    )
-    kafka_topic: str = Field(
-        ..., example="loader-btcusdt-api-candles-5m-2024-06-01-abc123",
-        description="Kafka topic to which data will be written"
-    )
-    telemetry_id: str = Field(
-        ..., example="loader-producer__abc123",
-        description="Telemetry source identifier"
-    )
-    image: str = Field(
-        ..., example="registry.dmz.home/streamforge/loader-producer:v0.1.7",
-        description="Docker image of the microservice"
-    )
-    time_range: Optional[str] = Field(
-        default=None, example="2024-06-01:2024-06-02",
-        description="Date range (for historical data)"
-    )
-    interval: Optional[str] = Field(
-        default=None, example="5m",
-        description="Candle or aggregation interval"
-    )
-    collection_name: Optional[str] = Field(
-        default=None, example="btc_candles_5m_2024_06_01",
-        description="Collection name in ArangoDB"
-    )
+class MicroserviceConfig(BaseModel):
+    """
+    Конфигурация для одного микросервиса внутри конвейера.
+    """
+    target: SUPPORTED_TARGETS = Field(..., description="Целевой микросервис для запуска.")
+    type: str = Field(..., description="Тип задачи или данных (например, 'api_candles_5m').")
+    image: Optional[str] = Field(None, description="Docker-образ для запуска. Если не указан, используется образ по умолчанию.")
+    
+    # Поля, которые могут быть переопределены для конкретного микросервиса
+    collection_name: Optional[str] = Field(None, description="Имя коллекции в ArangoDB.")
+    collection_inputs: Optional[List[str]] = Field(None, description="Список входных коллекций (для graph-builder).")
+    collection_output: Optional[str] = Field(None, description="Выходная коллекция (для graph-builder).")
+    model_output: Optional[str] = Field(None, description="Имя выходной модели (для gnn-trainer).")
+    graph_collection: Optional[str] = Field(None, description="Коллекция с графом (для gnn-trainer).")
+    inference_interval: Optional[str] = Field(None, description="Интервал инференса (для gnn-trainer).")
+    source: Optional[str] = Field(None, description="Источник данных (для visualizer).")
+    interval: Optional[str] = Field(None, description="Интервал свечей (например, '5m').")
+
+    @validator("type")
+    def validate_type(cls, v):
+        if not v.startswith(SUPPORTED_TYPE_PREFIXES):
+            raise ValueError(f"Неподдерживаемый тип: {v}. Должен начинаться с одного из: {SUPPORTED_TYPE_PREFIXES}")
+        return v
 
     class Config:
-        schema_extra = {
-            "example": {
-                "command": "start",
-                "queue_id": "loader-btcusdt-api_candles_5m-2024_06_01-abc123",
-                "target": "loader-producer",
-                "timestamp": 1722346211.177,
-                "symbol": "BTCUSDT",
-                "type": "api_candles_5m",
-                "kafka_topic": "loader-btcusdt-api-candles-5m-2024-06-01-abc123",
-                "telemetry_id": "loader-producer__abc123",
-                "image": "registry.dmz.home/streamforge/loader-producer:v0.1.7",
-                "time_range": "2024-06-01:2024-06-02",
-                "interval": "5m",
-                "collection_name": "btc_candles_5m_2024_06_01"
-            }
-        }
         extra = "forbid"
 
 
-class ServiceConfig(BaseModel):
-    name: str = Field(..., description="Microservice name (e.g., loader-producer)")
-    image: Optional[str] = Field(None, description="Docker-образ микросервиса")
-    type: Optional[str] = Field(None, description="Тип данных, который обрабатывает сервис")
-    kafka_topic: Optional[str] = Field(None, description="Kafka topic для сервиса")
-    collection_name: Optional[str] = Field(None, description="Название коллекции в ArangoDB для сервиса")
-    # Add other service-specific parameters as needed
-    # For example, for loader-api-candles, you might have 'interval'
-    interval: Optional[str] = Field(None, description="Интервал свечей или агрегации (для loader-api-candles)")
-
-
-class StartQueueCommand(BaseModel):
-    symbol: str = Field(..., example="BTCUSDT", description="Название торгового инструмента")
-    time_range: str = Field(..., example="2024-06-01:2024-06-02", description="Диапазон дат (для исторических данных)")
-    services: List[ServiceConfig] = Field(..., description="Список конфигураций микросервисов для запуска")
+class QueueStartRequest(BaseModel):
+    """
+    Модель запроса на запуск нового конвейера (очереди).
+    """
+    symbol: constr(strip_whitespace=True, to_upper=True) = Field(..., description="Торговый символ (например, 'BTCUSDT').")
+    time_range: Optional[str] = Field(None, description="Диапазон дат для исторических данных (например, '2024-06-01:2024-06-30').")
+    microservices: List[MicroserviceConfig] = Field(..., description="Список микросервисов для запуска в рамках конвейера.")
 
     class Config:
+        extra = "forbid"
         schema_extra = {
             "example": {
                 "symbol": "BTCUSDT",
-                "time_range": "2024-07-01:2024-07-02",
-                "services": [
-                    {
-                        "name": "loader-producer",
-                        "image": "registry.dmz.home/streamforge/loader-producer:v0.1.7",
-                        "type": "api_candles_5m",
-                        "kafka_topic": "loader-btcusdt-api-candles-5m-2024-06-01-abc123"
-                    },
-                    {
-                        "name": "arango-connector",
-                        "image": "registry.dmz.home/streamforge/arango-connector:v0.1.0",
-                        "type": "api_candles_5m",
-                        "kafka_topic": "loader-btcusdt-api-candles-5m-2024-06-01-abc123",
-                        "collection_name": "btc_candles_5m_2024_06_01"
-                    }
-                ]
+                "time_range": "2024-06-01:2024-06-30",
+                "microservices": [
+                    {"target": "loader-producer", "type": "api_candles_5m", "interval": "5m"},
+                    {"target": "arango-connector", "type": "api_candles_5m"},
+                ],
             }
         }
-        extra = "forbid"
 
+# --- Legacy and Test Models ---
 
 class StartTestFlowCommand(BaseModel):
     symbol: str = Field(
@@ -126,11 +94,13 @@ class StartTestFlowCommand(BaseModel):
         description="Название тестового прогона из файла test_flows.yaml"
     )
 
-    class Config:
-        schema_extra = {
-            "example": {
-                "symbol": "BTCUSDT",
-                "time_range": "2024-07-01:2024-07-02",
-                "flow_name": "default_trade_flow"
-            }
-        }
+class StartQueueCommand(BaseModel):
+    symbol: str
+    type: str
+    time_range: str
+    target: str
+    kafka_topic: str
+    telemetry_id: str
+    image: str
+    interval: Optional[str] = None
+    collection_name: Optional[str] = None

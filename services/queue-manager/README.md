@@ -1,89 +1,82 @@
-# \[Package] StreamForge Queue Manager
+# [Orchestrator] StreamForge Queue Manager
 
-Management microservice for launching, stopping, and monitoring data processing queues in StreamForge.
+**Queue Manager** — это центральный оркестрационный сервис платформы **StreamForge**, спроектированный для управления жизненным циклом сложных, событийно-ориентированных конвейеров обработки данных. Он выступает в роли единой точки входа для запуска, мониторинга и остановки всех ETL и ML процессов в системе.
 
-## \[Features]
+---
 
-* Launching Kubernetes Jobs: `loader-producer`, `arango-connector`, `gnn-trainer`, `visualizer`, `graph-builder`
-* Parameterized execution via Swagger
-* Queue management by `queue_id`
-* Command support via Kafka (`queue-control`, `queue-events`)
-* Prometheus metrics support
-* Built-in health endpoints `/health/live`, `/health/ready`, `/health/startup`
+## 🎯 Core Responsibilities
 
-## \[Environment Variables]
+- **Pipeline Orchestration**: Динамический запуск и координация цепочек микросервисов (`loader`, `connector`, `graph-builder`, `gnn-trainer`) в виде заданий Kubernetes.
+- **Lifecycle Management**: Управление полным жизненным циклом очередей обработки, от инициации до завершения или принудительной остановки.
+- **State Persistence**: Сохранение метаданных и конфигураций запущенных конвейеров в **ArangoDB** для обеспечения отслеживаемости и возможности последующего анализа.
+- **Dynamic ID Generation**: Автоматическая генерация стандартизированных идентификаторов (`queue_id`, `kafka_topic`, `collection_name`) для всех компонентов системы, что обеспечивает предсказуемость и упрощает отладку.
+- **Asynchronous Control**: Взаимодействие с микросервисами через брокер сообщений **Kafka** для отправки команд (`queue-control`) и приема телеметрии (`queue-events`).
 
-File `.env`:
+---
 
-```dotenv
-KAFKA_BOOTSTRAP_SERVERS=...
-KAFKA_USER=...
-KAFKA_PASSWORD=...
-CA_PATH=...
+## 🏛️ Architecture
 
-ARANGO_URL=...
-ARANGO_DB=...
-ARANGO_USER=...
-ARANGO_PASSWORD=...
+Сервис построен на базе **FastAPI**, что обеспечивает высокую производительность и автоматическую генерацию интерактивной документации API (Swagger).
 
-QUEUE_CONTROL_TOPIC=queue-control
-QUEUE_EVENTS_TOPIC=queue-events
-```
+- **API Layer**: Предоставляет RESTful API для управления конвейерами.
+- **Orchestration Logic**: Транслирует API-запросы в конкретные действия: генерация имен, формирование переменных окружения и запуск заданий в **Kubernetes** через клиент `python-kubernetes`.
+- **State Layer**: Взаимодействует с **ArangoDB** для сохранения и извлечения информации о запущенных очередях.
+- **Communication Layer**: Интегрируется с **Kafka** для асинхронного обмена командами и событиями с другими микросервисами.
 
-## \[Project Structure]
+---
 
-```
-queue-manager/
-├── app/
-│   ├── __init__.py
-│   ├── config.py
-│   ├── main.py
-│   ├── logging_config.py
-│   ├── models/
-│   │   ├── __init__.py
-│   │   ├── base.py
-│   │   ├── commands.py
-│   │   ├── telemetry.py
-│   ├── routes/
-│   │   ├── __init__.py
-│   │   ├── queues.py
-│   │   ├── health.py
-│   ├── services/
-│   │   ├── __init__.py
-│   │   ├── job_launcher.py
-│   │   ├── arango_service.py
-│   │   ├── telemetry_dispatcher.py
-│   │   ├── queue_id_generator.py
-│   ├── utils/
-│   │   ├── __init__.py
-│   │   ├── naming.py
-│   │   ├── validators.py
-│   ├── kafka/
-│   │   ├── __init__.py
-│   │   ├── kafka_command.py
-│   │   ├── kafka_telemetry.py
-│   ├── metrics/
-│   │   ├── __init__.py
-│   │   ├── prometheus_metrics.py
-├── .env
-├── Dockerfile
-├── .gitlab-ci.yml
-├── requirements.txt
-└── README.md
-```
+## ⚙️ API Endpoints (Swagger)
 
-## \[Example: Multiple Microservice Group Execution]
+Основной и наиболее мощный эндпоинт системы — `/queues/start-pipeline`. Он позволяет запустить сложный конвейер, состоящий из нескольких взаимосвязанных микросервисов, одним запросом.
 
-The service supports launching multiple microservices within a single queue request.
-Below are examples of valid payloads for different scenarios.
+### `POST /queues/start-pipeline`
 
-**Example 1 — Historical Data Processing Pipeline:**
+Этот эндпоинт принимает объект `QueueStartRequest`, который описывает общие параметры конвейера (например, `symbol`) и содержит список `microservices` для последовательного запуска.
+
+#### Модель запроса: `QueueStartRequest`
 
 ```json
 {
   "symbol": "BTCUSDT",
   "time_range": "2024-06-01:2024-06-30",
-  "requests": [
+  "microservices": [
+    {
+      "target": "loader-producer",
+      "type": "api_candles_5m",
+      "interval": "5m"
+    },
+    {
+      "target": "arango-connector",
+      "type": "api_candles_5m"
+    }
+  ]
+}
+```
+
+- `symbol` (`string`, **required**): Торговый символ (например, `BTCUSDT`).
+- `time_range` (`string`, optional): Временной диапазон для загрузки исторических данных.
+- `microservices` (`list[MicroserviceConfig]`, **required**): Список конфигураций микросервисов для запуска.
+
+#### Модель `MicroserviceConfig`
+
+- `target` (`string`, **required**): Имя целевого микросервиса. Допустимые значения: `loader-producer`, `arango-connector`, `graph-builder`, `gnn-trainer`, `visualizer`, и др.
+- `type` (`string`, **required**): Тип задачи, определяющий логику работы микросервиса (например, `api_candles_5m`, `ws_trades`, `gnn_graph`).
+- `image` (`string`, optional): Позволяет переопределить Docker-образ для конкретного задания.
+- `...прочие_поля`: Дополнительные параметры, специфичные для каждого микросервиса (`collection_inputs`, `model_output` и т.д.).
+
+---
+
+### 💡 Примеры запросов
+
+#### Пример 1: Конвейер для обучения GNN на исторических данных
+
+Этот запрос запускает полную цепочку: загрузка свечей и сделок, сохранение их в ArangoDB, построение графа и запуск обучения GNN-модели.
+
+```json
+{
+  "symbol": "ETHUSDT",
+  "time_range": "2024-07-01:2024-07-31",
+  "microservices": [
     {
       "target": "loader-producer",
       "type": "api_candles_5m",
@@ -105,64 +98,77 @@ Below are examples of valid payloads for different scenarios.
       "target": "graph-builder",
       "type": "gnn_graph",
       "collection_inputs": [
-        "btc_candles_5m_2024_06",
-        "btc_trades_2024_06"
+        "eth_candles_5m_2024_07",
+        "eth_trades_2024_07"
       ],
-      "collection_output": "btc_graph_2024_06"
+      "collection_output": "eth_graph_2024_07"
     },
     {
       "target": "gnn-trainer",
       "type": "gnn_train",
-      "graph_collection": "btc_graph_2024_06",
-      "model_output": "gnn_model_btc_2024_06"
+      "graph_collection": "eth_graph_2024_07",
+      "model_output": "gnn_model_eth_2024_07"
     }
   ]
 }
 ```
+**Анализ запроса:**
+- Запускается 6 заданий в Kubernetes.
+- `loader-producer` и `arango-connector` работают с общим `kafka_topic`, сгенерированным на основе `symbol` и `type` первого элемента (`api_candles_5m`).
+- `graph-builder` использует `collection_inputs` для указания исходных коллекций и `collection_output` для результата.
+- `gnn-trainer` получает на вход граф из `graph_collection` и сохраняет обученную модель под именем `model_output`.
 
-**Example 2 — Real-Time Data Processing Pipeline:**
+#### Пример 2: Конвейер для real-time визуализации данных
+
+Этот запрос запускает загрузку данных по WebSocket и их отображение.
 
 ```json
 {
   "symbol": "BTCUSDT",
-  "time_range": "2024-08-01:2024-08-01",
-  "requests": [
+  "time_range": null,
+  "microservices": [
     {
-      "target": "loader-producer",
-      "type": "ws_candles_1m"
-    },
-    {
-      "target": "loader-producer",
+      "target": "loader-ws",
       "type": "ws_trades"
     },
     {
       "target": "arango-connector",
-      "type": "ws_candles_1m"
-    },
-    {
-      "target": "arango-connector",
       "type": "ws_trades"
-    },
-    {
-      "target": "graph-builder",
-      "type": "realtime_graph",
-      "collection_inputs": [
-        "btc_ws_candles_1m_2024_08_01",
-        "btc_ws_trades_2024_08_01"
-      ],
-      "collection_output": "btc_graph_rt_2024_08_01"
-    },
-    {
-      "target": "gnn-trainer",
-      "type": "realtime_gnn_infer",
-      "graph_collection": "btc_graph_rt_2024_08_01",
-      "inference_interval": "5m"
     },
     {
       "target": "visualizer",
       "type": "graph_metrics_stream",
-      "source": "btc_graph_rt_2024_08_01"
+      "source": "btc_ws_trades_realtime"
     }
   ]
 }
 ```
+**Анализ запроса:**
+- `time_range` установлен в `null`, так как данные поступают в реальном времени.
+- Запускаются сервисы для получения (`loader-ws`), сохранения (`arango-connector`) и визуализации (`visualizer`) данных.
+- `visualizer` использует параметр `source` для подписки на нужный поток данных.
+
+---
+
+## 🏷️ Генерация имен и ID
+
+На основе одного запроса `queue-manager` автоматически генерирует стандартизированные идентификаторы для всех ресурсов, обеспечивая их уникальность и предсказуемость.
+
+**Входные данные:**
+- `symbol`: `BTCUSDT`
+- `type`: `api_candles_1h`
+- `time_range`: `2024-08-01:2024-08-02`
+
+**Сгенерированные ресурсы:**
+- `short_id`: `jLd4fG` (уникальный идентификатор)
+- `queue_id`: `loader-btcusdt-api-candles-1h-2024-08-01-jLd4fG`
+- `kafka_topic`: `loader-btcusdt-api-candles-1h-2024-08-01-jLd4fG`
+- `collection_name`: `btc_candles_1h_2024_08_01`
+- `telemetry_id` (для `loader-producer`): `loader-producer__jLd4fG`
+
+---
+
+## 📡 Асинхронное взаимодействие (Kafka)
+
+- **`queue-events` (Topic)**: Все микросервисы отправляют в этот топик события о своем состоянии (старт, прогресс, завершение, ошибка), что позволяет `queue-manager` (и другим системам) отслеживать статус выполнения в реальном времени.
+- **`queue-control` (Topic)**: `queue-manager` отправляет в этот топик команды, например, на остановку. Микросервисы подписываются на него и корректно завершают свою работу при получении команды, адресованной их `queue_id`.
