@@ -28,7 +28,6 @@ integration-test-queue-manager:
   variables:
     SERVICE_NAME: queue-manager
     SERVICE_PATH: services/queue-manager
-  when: manual # Make it manual for now, user can change later
 
 deploy-queue-manager:
   extends: .deploy_kubernetes_service

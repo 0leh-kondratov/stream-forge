@@ -35,5 +35,4 @@
     paths:
       - deploy_status.txt
   rules:
-    - when: manual
-      allow_failure: false
+    - when: on_success
