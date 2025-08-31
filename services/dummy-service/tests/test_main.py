@@ -109,7 +109,7 @@ def test_setup_signal_handlers(mock_asyncio_event):
 
 # Test main function scenarios
 @pytest.mark.asyncio
-async def test_main_basic_run(
+async def test_main_basic_run_startup(
     mock_telemetry_producer,
     mock_kafka_consumer,
     mock_asyncio_event,
@@ -117,16 +117,62 @@ async def test_main_basic_run(
     mock_asyncio_tasks,
     mock_telemetry_functions
 ):
+    """Tests the startup sequence of the main function."""
     with patch('app.main.parse_args', return_value=MagicMock(debug=False, noop=False, exit_on_ping=False, exit_after=None, simulate_loading=False, fail_after=None)), \
          patch('app.main.TelemetryProducer', return_value=mock_telemetry_producer), \
          patch('app.main.KafkaCommandConsumer', return_value=mock_kafka_consumer):
         
+        logger.info("--- Running test_main_basic_run_startup ---")
+        logger.info("Step 1: Running main function to test startup.")
         await main()
 
+        logger.info("Step 2: Verifying startup procedures.")
         mock_telemetry_producer.start.assert_called_once()
         mock_telemetry_functions.log_startup_event.assert_called_once_with(mock_telemetry_producer)
         mock_kafka_consumer.start.assert_called_once()
+        logger.info("--- Finished test_main_basic_run_startup ---")
+
+@pytest.mark.asyncio
+async def test_main_basic_run_wait(
+    mock_telemetry_producer,
+    mock_kafka_consumer,
+    mock_asyncio_event,
+    mock_logger,
+    mock_asyncio_tasks,
+    mock_telemetry_functions
+):
+    """Tests that the main function waits for the shutdown event."""
+    with patch('app.main.parse_args', return_value=MagicMock(debug=False, noop=False, exit_on_ping=False, exit_after=None, simulate_loading=False, fail_after=None)), \
+         patch('app.main.TelemetryProducer', return_value=mock_telemetry_producer), \
+         patch('app.main.KafkaCommandConsumer', return_value=mock_kafka_consumer):
+        
+        logger.info("--- Running test_main_basic_run_wait ---")
+        logger.info("Step 1: Running main function to test waiting.")
+        await main()
+
+        logger.info("Step 2: Verifying that main loop waits for shutdown.")
         mock_asyncio_event.wait.assert_called_once()
+        logger.info("--- Finished test_main_basic_run_wait ---")
+
+@pytest.mark.asyncio
+async def test_main_basic_run_shutdown(
+    mock_telemetry_producer,
+    mock_kafka_consumer,
+    mock_asyncio_event,
+    mock_logger,
+    mock_asyncio_tasks,
+    mock_telemetry_functions
+):
+    """Tests the shutdown sequence of the main function."""
+    with patch('app.main.parse_args', return_value=MagicMock(debug=False, noop=False, exit_on_ping=False, exit_after=None, simulate_loading=False, fail_after=None)), \
+         patch('app.main.TelemetryProducer', return_value=mock_telemetry_producer), \
+         patch('app.main.KafkaCommandConsumer', return_value=mock_kafka_consumer):
+        
+        logger.info("--- Running test_main_basic_run_shutdown ---")
+        logger.info("Step 1: Running main function to test shutdown.")
+        await main()
+
+        logger.info("Step 2: Verifying shutdown procedures.")
         mock_kafka_consumer.stop.assert_called_once()
         mock_telemetry_producer.send_status_update.assert_called_once_with(
             status="finished",
@@ -135,6 +181,8 @@ async def test_main_basic_run(
             records_written=999
         )
         mock_telemetry_producer.stop.assert_called_once()
+        logger.info("--- Finished test_main_basic_run_shutdown ---")
+
 
 @pytest.mark.asyncio
 async def test_main_noop_mode(
