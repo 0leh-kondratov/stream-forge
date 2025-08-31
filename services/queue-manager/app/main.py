@@ -1,6 +1,6 @@
 # app/main.py
 import argparse
-import sys
+import uvicorn
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -47,12 +47,10 @@ app.include_router(queue_router, prefix="/queues", tags=["queues"])
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--noop", action="store_true", help="Do not start the service, just check imports.")
+    parser.add_argument("--noop", action="store_true", help="Accepted for compatibility, but does nothing.")
     args = parser.parse_args()
 
     if args.noop:
-        logger.info("NOOP mode enabled. Exiting.")
-        sys.exit(0)
-    else:
-        import uvicorn
-        uvicorn.run(app, host="0.0.0.0", port=8000)
+        logger.info("NOOP mode enabled, but starting server anyway for CI health check.")
+
+    uvicorn.run(app, host="0.0.0.0", port=8080)
