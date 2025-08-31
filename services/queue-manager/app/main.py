@@ -1,4 +1,5 @@
 # app/main.py
+import argparse
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -42,3 +43,14 @@ setup_metrics(app)
 # Routers
 app.include_router(health_router, prefix="/health", tags=["health"])
 app.include_router(queue_router, prefix="/queues", tags=["queues"])
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--noop", action="store_true", help="Do not start the service, just check imports.")
+    args = parser.parse_args()
+
+    if args.noop:
+        logger.info("NOOP mode enabled. Exiting.")
+    else:
+        import uvicorn
+        uvicorn.run(app, host="0.0.0.0", port=8000)
