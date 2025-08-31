@@ -4,3 +4,4 @@ orjson
 fastapi
 uvicorn
 python-dotenv
+prometheus-client
