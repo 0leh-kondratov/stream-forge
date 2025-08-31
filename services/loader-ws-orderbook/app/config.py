@@ -19,6 +19,8 @@ KAFKA_BOOTSTRAP_SERVERS: str = os.getenv("KAFKA_BOOTSTRAP_SERVERS")
 KAFKA_TOPIC: str = os.getenv("KAFKA_TOPIC") # Output Kafka topic for orderbook data
 KAFKA_USER_PRODUCER: str = os.getenv("KAFKA_USER_PRODUCER")
 KAFKA_PASSWORD_PRODUCER: str = os.getenv("KAFKA_PASSWORD_PRODUCER")
+KAFKA_USER_CONSUMER: str = os.getenv("KAFKA_USER_CONSUMER")
+KAFKA_PASSWORD_CONSUMER: str = os.getenv("KAFKA_PASSWORD_CONSUMER")
 CA_PATH: str = os.getenv("CA_PATH", "/usr/local/share/ca-certificates/ca.crt")
 
 # Метки телеметрии и Webhook
