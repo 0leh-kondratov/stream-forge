@@ -1,3 +1,5 @@
 websockets
 uvloop
 orjson
+fastapi
+uvicorn

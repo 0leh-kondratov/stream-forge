@@ -1,3 +1,5 @@
 aiohttp
 uvloop
 orjson
+fastapi
+uvicorn
