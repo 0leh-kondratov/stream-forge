@@ -1,9 +1,10 @@
 import yaml
 from loguru import logger
-from app.models.commands import StartQueueCommand, StartTestFlowCommand
-from app.services.job_launcher import launch_jobs
-from app.services.arango_service import save_queue_meta
-from app.services.queue_id_generator import generate_queue_id
+
+from app.models.commands import StartTestFlowCommand, MicroserviceConfig, QueueStartRequest
+from app.services.job_launcher import launch_job
+from app.services.arango_service import arango_service
+from app.utils.naming import generate_ids
 
 
 def load_test_flow_template(name: str):
@@ -26,24 +27,35 @@ async def launch_test_flow(command: StartTestFlowCommand) -> str:
     logger.info(f"Запрос на запуск тестового прогона: {command.flow_name}")
     template = load_test_flow_template(command.flow_name)
 
-    # 1. Генерируем общий ID для всего flow
-    queue_id = generate_queue_id(
+    # 1. Генерируем ID для всего flow
+    ids = generate_ids(
         symbol=command.symbol,
         type_=command.flow_name,
         time_range=command.time_range
     )
+    queue_id = ids["queue_id"]
 
     # 2. Формируем полную команду на основе шаблона
-    # Мы передаем список сервисов в StartQueueCommand
-    full_command_data = {
-        "symbol": command.symbol.upper(),
-        "time_range": command.time_range,
-        "services": template["services"]
-    }
-    full_command = StartQueueCommand(**full_command_data)
+    microservices = [MicroserviceConfig(**service) for service in template["services"]]
+    full_command = QueueStartRequest(
+        symbol=command.symbol.upper(),
+        time_range=command.time_range,
+        microservices=microservices
+    )
 
     # 3. Используем существующие сервисы для сохранения и запуска
-    await save_queue_meta(queue_id=queue_id, command=full_command)
-    await launch_jobs(queue_id=queue_id, command=full_command)
+    await arango_service.save_queue_meta(queue_id=queue_id, command=full_command)
 
+    for microservice_config in full_command.microservices:
+        await launch_job(
+            queue_id=queue_id,
+            short_id=ids["short_id"],
+            symbol=full_command.symbol,
+            time_range=full_command.time_range,
+            kafka_topic=ids["kafka_topic"],
+            collection_name=ids["collection_name"],
+            service_config=microservice_config,
+        )
+
+    logger.info(f"✅ Все задания для тестового прогона {queue_id} успешно запущены.")
     return queue_id
