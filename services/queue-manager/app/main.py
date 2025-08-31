@@ -1,5 +1,6 @@
 # app/main.py
 import argparse
+import sys
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -51,6 +52,7 @@ if __name__ == "__main__":
 
     if args.noop:
         logger.info("NOOP mode enabled. Exiting.")
+        sys.exit(0)
     else:
         import uvicorn
         uvicorn.run(app, host="0.0.0.0", port=8000)
