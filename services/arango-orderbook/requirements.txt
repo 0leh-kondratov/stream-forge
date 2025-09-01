@@ -1,1 +1,7 @@
 uvloop
+fastapi
+uvicorn
+python-dotenv
+prometheus-client
+aiokafka
+python-arango
